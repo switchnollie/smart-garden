@@ -4,20 +4,40 @@
 #include <DNSServer.h>
 #include <WiFiClient.h>
 #include <Ticker.h>
+#include <PubSubClient.h>
 
 const uint8_t MOTOR_PIN = D8;
-const uint8_t HUMIDITY_PIN = D0;
+const uint8_t WATERLEVEL_PIN = D0;
 
-Ticker pumpTic;
+Ticker pump_tic;
+Ticker pump_tic_intervall;
+Ticker water_level_tic;
 
-ESP8266WebServer webServer(80);
-DNSServer dnsServer;
+//Webserver
+ESP8266WebServer web_server(80);
+DNSServer dns_server;
 const byte DNS_PORT = 53;
 IPAddress esp_ip(192, 168, 4, 1);
-void WiFiEvent(WiFiEvent_t event);
 
+//MQTT
+const char *MQTT_BROKER = "TODO IP";
+WiFiClient client;
+PubSubClient mqttClient(client);
+const char *WATER_LEVEL_TOPIC = "sensor/waterlevel";
+const char *PUMPED_TOPIC = "sensor/pumped";
+const char *HUMIDITY_TOPIC = "sensor/humidity";
+int humidity_threshhold = 20;   //TODO
+int pump_intervall = 600000000; //TODO
+int pump_duration = 5000;
+
+void WiFiEvent(WiFiEvent_t event);
 void pump();
 void initializeWebServer();
+void publishWaterLevel();
+void intializeMQTT();
+void set_pump_intervall();
+void set_humidty_threshold();
+void set_pump_duration();
 
 void waitforIP()
 {
@@ -38,10 +58,10 @@ void waitforIP()
 
 void change_wlan()
 {
-  webServer.send(200, "text/plain", "OK");
+  web_server.send(200, "text/plain", "OK");
   delay(1000);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(webServer.arg("ssid").c_str(), webServer.arg("pass").c_str());
+  WiFi.begin(web_server.arg("ssid").c_str(), web_server.arg("pass").c_str());
   waitforIP();
 }
 
@@ -51,7 +71,7 @@ void setup()
   Serial.setDebugOutput(true);
 
   pinMode(MOTOR_PIN, OUTPUT);
-  pinMode(HUMIDITY_PIN, INPUT);
+  pinMode(WATERLEVEL_PIN, INPUT);
 
   //Connect to WIFI
 
@@ -61,12 +81,31 @@ void setup()
   waitforIP();
 
   initializeWebServer();
+  intializeMQTT();
+
+  water_level_tic.attach_ms(60000, publishWaterLevel);
+  pump_tic_intervall.attach_ms(pump_intervall, pump);
 }
 
 void loop()
 {
-  webServer.handleClient();
-  dnsServer.processNextRequest();
+  web_server.handleClient();
+  dns_server.processNextRequest();
+}
+
+void set_humidty_threshold()
+{
+  humidity_threshhold = web_server.arg("threshhold").toInt();
+}
+
+void set_pump_intervall()
+{
+  pump_tic_intervall.attach_ms(web_server.arg("intervall").toInt() * 100 * 60 * 60 * 24, pump);
+}
+
+void set_pump_duration()
+{
+  pump_duration = web_server.arg("duration").toInt();
 }
 
 void initializeWebServer()
@@ -78,22 +117,27 @@ void initializeWebServer()
                     IPAddress(255, 255, 255, 0)); //Subnetz-Maske
   WiFi.softAP("ESP");
 
-  webServer.on("/pump", pump);
-  webServer.on("/change_wlan", change_wlan);
+  web_server.on("/pump", pump);
+  web_server.on("/change_wlan", change_wlan);
+  web_server.on("/humidity_threshhold", set_humidty_threshold);
+  web_server.on("/pump_intervall", set_pump_intervall);
+  web_server.on("/pump_duration", set_pump_duration);
+
   //redirect
-  webServer.onNotFound([]() {
-    webServer.sendHeader("Location", "/");
-    webServer.send(302, "text/plain", "Pfad nicht verfügbar!");
+  web_server.onNotFound([]() {
+    web_server.sendHeader("Location", "/");
+    web_server.send(302, "text/plain", "Pfad nicht verfügbar!");
   });
 
-  webServer.begin();
-  dnsServer.start(DNS_PORT, "tibs_pump_controller.de", esp_ip);
+  web_server.begin();
+  dns_server.start(DNS_PORT, "tibs_pump_controller.de", esp_ip);
 }
 
 void pumpStart()
 {
   Serial.println("Pumping");
   digitalWrite(MOTOR_PIN, HIGH);
+  mqttClient.publish(PUMPED_TOPIC, "pumped");
 }
 
 void pumpStop()
@@ -103,15 +147,43 @@ void pumpStop()
 }
 
 //Creates to function calls; one for immediatly starting the pump
-//Other for stopping the pump after certain intervall from user
+//Other for stopping the pump after certain duration from user
 void pump()
 {
-  int intervall = webServer.arg("intervall").toInt();
-  //Serial.printf("Starting to pump for %d seconds", intervall);
-  Serial.printf("Starting to pump for %d seconds", intervall);
-  pumpTic.once_ms(0, pumpStart);
-  pumpTic.once_ms(intervall*1000, pumpStop);
-  webServer.send(200);
+  Serial.printf("Starting to pump for %d seconds", pump_duration);
+  pump_tic.once_ms(0, pumpStart);
+  pump_tic.once_ms(pump_duration * 1000, pumpStop);
+  web_server.send(200);
+}
+
+void mqttCallback(char *topic, byte *payload, unsigned int length)
+{
+  Serial.print("Received MQTT message");
+  Serial.print(topic);
+  for (int i = 0; i < length; i++)
+  {
+    Serial.print((char)payload[i]);
+  }
+
+  if (topic == HUMIDITY_TOPIC)
+  {
+    if ((int)payload[0] <= humidity_threshhold)
+    {
+      pump();
+    }
+  }
+}
+
+void intializeMQTT()
+{
+  mqttClient.setServer(MQTT_BROKER, 1883); //TODO PORT
+  mqttClient.subscribe(HUMIDITY_TOPIC);
+  mqttClient.setCallback(mqttCallback);
+}
+
+void publishWaterLevel()
+{
+  mqttClient.publish(WATER_LEVEL_TOPIC, (char*)analogRead(WATERLEVEL_PIN));
 }
 
 void WiFiEvent(WiFiEvent_t event)
