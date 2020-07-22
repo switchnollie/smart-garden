@@ -2,18 +2,24 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <Ticker.h>
 
 const uint8_t MOISTURE_PIN = A0;
 const long SENS_INTERVAL = 2000;
 void intializeMQTT();
 void publishMoistureLevel();
 
-// MQTT
 const IPAddress broker_address(192,168,0,143);
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 const char *HUMIDITY_TOPIC = "sensor/moisture";
 int humidity_threshhold = 950;  // TODO
+// messages are 10 Bit decimals -> max. 4 characters needed
+#define MSG_BUFFER_SIZE 4
+char messageBuffer[MSG_BUFFER_SIZE];
+
+
+Ticker moisture_level_tic;
 
 void waitforIP() {
   int i = 0;
@@ -69,6 +75,7 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   intializeMQTT();
+  moisture_level_tic.attach_ms(SENS_INTERVAL, publishMoistureLevel);
 }
 
 void loop() { 
@@ -80,14 +87,12 @@ void loop() {
 }
 
 void publishMoistureLevel() {
-  static unsigned long t, lastTime = millis() - SENS_INTERVAL; 
-  t = millis();
-  if ((unsigned long)(t-lastTime) < SENS_INTERVAL) {
-    return;
-  }
   // char* moistureLevel = (char *)analogRead(MOISTURE_PIN);
   Serial.println("Tick");
-  // mqttClient.publish(HUMIDITY_TOPIC, moistureLevel);
+  long randomNumber = random(0, 1023);
+  ltoa(randomNumber, messageBuffer, 10);
+  Serial.println(messageBuffer);
+  mqttClient.publish(HUMIDITY_TOPIC, messageBuffer);
 }
 
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
