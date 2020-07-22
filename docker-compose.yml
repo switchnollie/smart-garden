@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  broker:
+    container_name: broker
+    build: ./broker
+    ports:
+      - '1883:1883'
+    volumes:
+      - './broker:/usr/src/broker'

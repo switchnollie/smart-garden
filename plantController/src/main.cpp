@@ -1,24 +1,17 @@
 #include <Arduino.h>
-#include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include <Ticker.h>
 
 const uint8_t MOISTURE_PIN = A0;
+const long SENS_INTERVAL = 2000;
 void intializeMQTT();
 void publishMoistureLevel();
 
-Ticker moisture_level_tic;
-
-DNSServer dns_server;
-const byte DNS_PORT = 53;
-IPAddress esp_ip(192, 168, 4, 1);
-
 // MQTT
-const char *MQTT_BROKER = "TODO IP";
-WiFiClient client;
-PubSubClient mqttClient(client);
+const IPAddress broker_address(192,168,0,143);
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
 const char *HUMIDITY_TOPIC = "sensor/moisture";
 int humidity_threshhold = 950;  // TODO
 
@@ -36,6 +29,30 @@ void waitforIP() {
   }
 }
 
+void reconnect() {
+  // Loop until we're reconnected
+  while (!mqttClient.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (mqttClient.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      mqttClient.publish("outTopic", "hello world");
+      // ... and resubscribe
+      mqttClient.subscribe("inTopic");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
@@ -44,28 +61,46 @@ void setup() {
   Serial.println("Connecting to WIFI...");
   WiFi.mode(WIFI_STA);
   WiFi.begin("Lunger31",
-             "Hungerbuehl31!");  // TODO this should be generalized //pw:
+             "<pwd>");  // TODO this should be generalized //pw:
   waitforIP();
+  randomSeed(micros());
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
   intializeMQTT();
-  moisture_level_tic.attach_ms(60000, publishMoistureLevel);
 }
 
-void loop() { dns_server.processNextRequest(); }
+void loop() { 
+  if (!mqttClient.connected()) {
+    reconnect();
+  }
+  mqttClient.loop();
+  // publishMoistureLevel();
+}
 
 void publishMoistureLevel() {
-  mqttClient.publish(HUMIDITY_TOPIC, (char *)analogRead(MOISTURE_PIN));
+  static unsigned long t, lastTime = millis() - SENS_INTERVAL; 
+  t = millis();
+  if ((unsigned long)(t-lastTime) < SENS_INTERVAL) {
+    return;
+  }
+  // char* moistureLevel = (char *)analogRead(MOISTURE_PIN);
+  Serial.println("Tick");
+  // mqttClient.publish(HUMIDITY_TOPIC, moistureLevel);
 }
 
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
   Serial.print("Received MQTT message");
   Serial.print(topic);
-  for (int i = 0; i < length; i++) {
+  for (unsigned int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
 }
 
 void intializeMQTT() {
-  mqttClient.setServer(MQTT_BROKER, 1883);  // TODO PORT
+  mqttClient.setServer(broker_address, 1883);
   mqttClient.subscribe(HUMIDITY_TOPIC);
   mqttClient.setCallback(mqttCallback);
 }
+
