@@ -14,8 +14,8 @@ WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 const char *HUMIDITY_TOPIC = "sensor/moisture";
 int humidity_threshhold = 950;  // TODO
-// messages are 10 Bit decimals -> max. 4 characters needed
-#define MSG_BUFFER_SIZE 4
+// messages are 10 Bit decimals -> max. 4 characters + \0 needed
+#define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
 
 
@@ -83,29 +83,17 @@ void loop() {
     reconnect();
   }
   mqttClient.loop();
-  // publishMoistureLevel();
 }
 
 void publishMoistureLevel() {
-  // char* moistureLevel = (char *)analogRead(MOISTURE_PIN);
-  Serial.println("Tick");
-  long randomNumber = random(0, 1023);
-  ltoa(randomNumber, messageBuffer, 10);
+  int moistureLevel = analogRead(MOISTURE_PIN);
+  sprintf(messageBuffer, "%d", moistureLevel);
+  Serial.print("Publishing message ");
   Serial.println(messageBuffer);
   mqttClient.publish(HUMIDITY_TOPIC, messageBuffer);
 }
 
-void mqttCallback(char *topic, byte *payload, unsigned int length) {
-  Serial.print("Received MQTT message");
-  Serial.print(topic);
-  for (unsigned int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-}
-
 void intializeMQTT() {
   mqttClient.setServer(broker_address, 1883);
-  mqttClient.subscribe(HUMIDITY_TOPIC);
-  mqttClient.setCallback(mqttCallback);
 }
 
