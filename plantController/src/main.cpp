@@ -96,4 +96,3 @@ void publishMoistureLevel() {
 void intializeMQTT() {
   mqttClient.setServer(broker_address, 1883);
 }
-
