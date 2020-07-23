@@ -51,9 +51,16 @@ void waitforIP()
   if (i >= 100)
   {
     // Connect to Wi-Fi network with SSID and password
-    Serial.print("Connecting to ");
-    Serial.println("FRITZ!Box 7590 SC");
+    Serial.println("Connected to FRITZ!Box 7590 SC");
   }
+}
+
+void connect_to_wlan()
+{
+  Serial.println("Connecting to WIFI...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin("FRITZ!Box 7590 SC", "61201344397947594581"); //TODO this should be generalized //pw:
+  waitforIP();
 }
 
 void change_wlan()
@@ -74,16 +81,12 @@ void setup()
   pinMode(WATERLEVEL_PIN, INPUT);
 
   //Connect to WIFI
-
-  Serial.println("Connecting to WIFI...");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin("FRITZ!Box 7590 SC", "61201344397947594581"); //TODO this should be generalized //pw:
-  waitforIP();
+  connect_to_wlan();
 
   initializeWebServer();
   intializeMQTT();
 
-  water_level_tic.attach_ms(60000, publishWaterLevel);
+  water_level_tic.attach_ms(6000, publishWaterLevel);
   pump_tic_intervall.attach_ms(pump_intervall, pump);
 }
 
@@ -183,7 +186,8 @@ void intializeMQTT()
 
 void publishWaterLevel()
 {
-  mqttClient.publish(WATER_LEVEL_TOPIC, (char*)analogRead(WATERLEVEL_PIN));
+  Serial.println(analogRead(WATERLEVEL_PIN));
+  //mqttClient.publish(WATER_LEVEL_TOPIC, (char*)analogRead(WATERLEVEL_PIN));
 }
 
 void WiFiEvent(WiFiEvent_t event)
@@ -192,6 +196,10 @@ void WiFiEvent(WiFiEvent_t event)
   {
   case WIFI_EVENT_STAMODE_CONNECTED:
     Serial.println("Wifi connected!");
+    break;
+  case WIFI_EVENT_STAMODE_DISCONNECTED:
+    Serial.println("Wifi disconnected!");
+    connect_to_wlan();
     break;
   default:
     break;
