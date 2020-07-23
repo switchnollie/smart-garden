@@ -59,6 +59,9 @@ void reconnect() {
   }
 }
 
+const uint8_t MOTOR_PIN = D8;
+int motorState = LOW;
+
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
