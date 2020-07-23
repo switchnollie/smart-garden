@@ -11,6 +11,8 @@
   "dependencies": {
     "aedes": "^0.42.5",
     "aedes-logging": "^2.0.1",
-    "aedes-persistence-mongodb": "^8.0.1"
+    "aedes-persistence-mongodb": "^8.0.1",
+    "mongoose": "^5.9.25",
+    "mqemitter-mongodb": "^7.0.2"
   }
 }

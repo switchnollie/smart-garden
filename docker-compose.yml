@@ -1,10 +1,38 @@
 version: '3'
 
 services:
+  database:
+    container_name: mongoDatabase
+    image: mongo:4.2.8
+    ports:
+      - '${MONGO_PORT}:${MONGO_PORT}'
+    volumes: 
+      - mongo-volume:/data/db
+      - ./mongoDB/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+    networks: 
+      - smart-garden-net
+    environment:
+      # MONGO_INITDB_ROOT_USERNAME: '${MONGO_USERNAME}'
+      # MONGO_INITDB_ROOT_PASSWORD: '${MONGO_PASSWORD}'
+      MONGO_INITDB_DATABASE: '${MONGO_DATABASE}'
   broker:
-    container_name: broker
+    container_name: mqttBroker
+    # restart: always
     build: ./broker
+    depends_on: 
+      - database
     ports:
       - '1883:1883'
     volumes:
       - './broker:/usr/src/broker'
+    networks: 
+      - smart-garden-net
+    environment:
+      # MONGO_URI: 'mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin'
+      MONGO_URI: 'mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?readPreference=primary&ssl=false'
+
+volumes:
+  mongo-volume:
+
+networks: 
+  smart-garden-net:
