@@ -11,8 +11,11 @@
 #DB
 	-<TIBS>
 	-Collections:
-		-<Humidity>
-		-<Pumped>
+		-TODO NUTZER ID
+			-Usereingabe ("Pflanzengruppe1")
+				-<Pumped>
+				-<Waterlevel>
+				-<Moisture>
 
 #Connection:
 

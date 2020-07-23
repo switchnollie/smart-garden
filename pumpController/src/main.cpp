@@ -5,9 +5,13 @@
 #include <WiFiClient.h>
 #include <Ticker.h>
 #include <PubSubClient.h>
+#include <EEPROM.h>
 
 const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
+//"FRITZ!Box 7590 SC", "61201344397947594581"
+const char *ssid;
+const char *passphrase;
 
 Ticker pump_tic;
 Ticker pump_tic_intervall;
@@ -20,16 +24,33 @@ const byte DNS_PORT = 53;
 IPAddress esp_ip(192, 168, 4, 1);
 
 //MQTT
-const char *MQTT_BROKER = "TODO IP";
+const IPAddress broker_address(192, 168, 178, 110);
 WiFiClient client;
 PubSubClient mqttClient(client);
-const char *WATER_LEVEL_TOPIC = "sensor/waterlevel";
-const char *PUMPED_TOPIC = "sensor/pumped";
-const char *HUMIDITY_TOPIC = "sensor/humidity";
-int humidity_threshhold = 20;   //TODO
+
+//Water level of pump controller
+const char *water_level_topic;
+//Timestamp when pumpcontroller pumped
+const char *pumped_topic;
+//Moisture from plant controller
+const char *moisture_topic;
+//Request pump to pumpcontroller
+const char *pump_topic;
+//Threshold when pumpcontroller shall pump
+const char *moisture_threshhold_topic;
+//Intervall when pumpcontroller shall pump
+const char *pump_intervall_topic;
+//Time duration for pumping
+const char *pump_duration_topic;
+
+int moisture_threshhold = 20;   //TODO
 int pump_intervall = 600000000; //TODO
 int pump_duration = 5000;
+// messages are 10 Bit decimals -> max. 4 characters + \0 needed
+#define MSG_BUFFER_SIZE 5
+char messageBuffer[MSG_BUFFER_SIZE];
 
+void waitforIP();
 void WiFiEvent(WiFiEvent_t event);
 void pump();
 void initializeWebServer();
@@ -38,38 +59,177 @@ void intializeMQTT();
 void set_pump_intervall();
 void set_humidty_threshold();
 void set_pump_duration();
-
-void waitforIP()
-{
-  int i = 0;
-  while (WiFi.status() != WL_CONNECTED && i < 100)
-  {
-    Serial.println("Trying to connect to WLAN ...");
-    delay(100);
-  }
-
-  if (i >= 100)
-  {
-    // Connect to Wi-Fi network with SSID and password
-    Serial.println("Connected to FRITZ!Box 7590 SC");
-  }
-}
+void mqttCallback(char *topic, byte *payload, unsigned int length);
+bool testWifi();
 
 void connect_to_wlan()
 {
-  Serial.println("Connecting to WIFI...");
+  EEPROM.begin(512);
+  delay(1000);
+
+  //Reading SSID from EEPROM
+  Serial.println("Reading EEPROM ssid");
+  String ssid;
+  for (int i = 0; i < 32; ++i)
+  {
+    ssid += char(EEPROM.read(i));
+  }
+  Serial.println();
+  Serial.print("SSID: ");
+  Serial.println(ssid);
+
+  //Reading PASS from EEPROM
+  Serial.println("Reading EEPROM pass");
+  String epass = "";
+  for (int i = 32; i < 96; ++i)
+  {
+    epass += char(EEPROM.read(i));
+  }
+  Serial.print("PASS: ");
+  Serial.println(epass);
+
+  Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
   WiFi.mode(WIFI_STA);
-  WiFi.begin("FRITZ!Box 7590 SC", "61201344397947594581"); //TODO this should be generalized //pw:
+  WiFi.begin(ssid.c_str(), epass.c_str());
+  if (testWifi())
+  {
+    Serial.println("Succesfully Connected!!!");
+    return;
+  }
+  else
+  {
+    Serial.println("Starting web server!");
+    initializeWebServer();
+  }
+
   waitforIP();
+}
+
+void waitforIP()
+{
+  Serial.printf("Waiting for IP configuration...");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    //Allow user to init/change wlan
+    web_server.handleClient();
+    dns_server.processNextRequest();
+  }
+}
+
+void reconnect_MQTT()
+{
+  // Loop until we're reconnected
+  while (!mqttClient.connected())
+  {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (mqttClient.connect(clientId.c_str()))
+    {
+      Serial.println("connected");
+      mqttClient.subscribe(moisture_topic);
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
 }
 
 void change_wlan()
 {
-  web_server.send(200, "text/plain", "OK");
-  delay(1000);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(web_server.arg("ssid").c_str(), web_server.arg("pass").c_str());
-  waitforIP();
+  // if (!web_server.authenticate("user", "password"))
+  // {
+  //   web_server.requestAuthentication();
+  // }
+  // else
+  // {
+    //https://how2electronics.com/esp8266-manual-wifi-configuration-without-hard-code-with-eeprom/
+    //Write new connection params into EEPROM and connect to WIFI
+    String ssid = web_server.arg("ssid").c_str();
+    String pass = web_server.arg("pass").c_str();
+    Serial.println("Changing WLAN parameters");
+    Serial.printf("SSID: %s", ssid.c_str());
+    Serial.printf("Password: %s", pass.c_str());
+    if (ssid.length() > 0 && pass.length() > 0)
+    {
+      Serial.println("Clearing eeprom");
+      for (int i = 0; i < 96; ++i)
+      {
+        EEPROM.write(i, 0);
+      }
+      Serial.println(ssid);
+      Serial.println("");
+      Serial.println(pass);
+      Serial.println("");
+
+      Serial.println("writing eeprom ssid:");
+      for (int i = 0; i < ssid.length(); ++i)
+      {
+        EEPROM.write(i, ssid[i]);
+        Serial.print("Wrote: ");
+        Serial.println(ssid[i]);
+      }
+      Serial.println("writing eeprom pass:");
+      for (int i = 0; i < pass.length(); ++i)
+      {
+        EEPROM.write(32 + i, pass[i]);
+        Serial.print("Wrote: ");
+        Serial.println(pass[i]);
+      }
+      EEPROM.commit();
+
+      WiFi.mode(WIFI_STA);
+      WiFi.begin(ssid, pass);
+
+      waitforIP();
+      web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden");
+    }
+  // }
+}
+
+bool testWifi()
+{
+  int c = 0;
+  Serial.println("Waiting for Wifi to connect");
+  while (c < 20)
+  {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      return true;
+    }
+    delay(500);
+    Serial.print("*");
+    c++;
+  }
+  Serial.println("");
+  Serial.println("Connect timed out, opening AP");
+  return false;
+}
+
+void init_mqtt_topics()
+{
+  if (!web_server.authenticate("user", "password"))
+  {
+    web_server.requestAuthentication();
+  }
+  else
+  {
+    water_level_topic = web_server.arg("water_level_topic").c_str();
+    pumped_topic = web_server.arg("pumped_topic").c_str();
+    moisture_topic = web_server.arg("moisture_topic").c_str();
+    pump_topic = web_server.arg("pump_topic").c_str();
+    moisture_threshhold_topic = web_server.arg("moisture_threshhold_topic").c_str();
+    pump_intervall_topic = web_server.arg("pump_intervall_topic").c_str();
+    pump_duration_topic = web_server.arg("pump_duration_topic").c_str();
+  }
+  web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
 }
 
 void setup()
@@ -80,11 +240,14 @@ void setup()
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(WATERLEVEL_PIN, INPUT);
 
-  //Connect to WIFI
+  WiFi.onEvent(WiFiEvent);
+
+  //initialize web server first, so the customer is able to initialize/change wlan config
   connect_to_wlan();
 
-  initializeWebServer();
-  intializeMQTT();
+  //init MQTT
+  mqttClient.setServer(broker_address, 1883);
+  mqttClient.setCallback(mqttCallback);
 
   water_level_tic.attach_ms(6000, publishWaterLevel);
   pump_tic_intervall.attach_ms(pump_intervall, pump);
@@ -94,21 +257,11 @@ void loop()
 {
   web_server.handleClient();
   dns_server.processNextRequest();
-}
-
-void set_humidty_threshold()
-{
-  humidity_threshhold = web_server.arg("threshhold").toInt();
-}
-
-void set_pump_intervall()
-{
-  pump_tic_intervall.attach_ms(web_server.arg("intervall").toInt() * 100 * 60 * 60 * 24, pump);
-}
-
-void set_pump_duration()
-{
-  pump_duration = web_server.arg("duration").toInt();
+  if (!mqttClient.connected())
+  {
+    reconnect_MQTT();
+  }
+  mqttClient.loop();
 }
 
 void initializeWebServer()
@@ -120,11 +273,8 @@ void initializeWebServer()
                     IPAddress(255, 255, 255, 0)); //Subnetz-Maske
   WiFi.softAP("ESP");
 
-  web_server.on("/pump", pump);
   web_server.on("/change_wlan", change_wlan);
-  web_server.on("/humidity_threshhold", set_humidty_threshold);
-  web_server.on("/pump_intervall", set_pump_intervall);
-  web_server.on("/pump_duration", set_pump_duration);
+  web_server.on("/init_mqtt_topics", init_mqtt_topics);
 
   //redirect
   web_server.onNotFound([]() {
@@ -134,13 +284,14 @@ void initializeWebServer()
 
   web_server.begin();
   dns_server.start(DNS_PORT, "tibs_pump_controller.de", esp_ip);
+  Serial.println("Webserver gestartet.");
 }
 
 void pumpStart()
 {
   Serial.println("Pumping");
   digitalWrite(MOTOR_PIN, HIGH);
-  mqttClient.publish(PUMPED_TOPIC, "pumped");
+  mqttClient.publish(pumped_topic, "pumped");
 }
 
 void pumpStop()
@@ -168,26 +319,38 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
     Serial.print((char)payload[i]);
   }
 
-  if (topic == HUMIDITY_TOPIC)
+  if (topic == moisture_topic)
   {
-    if ((int)payload[0] <= humidity_threshhold)
+    if ((int)payload[0] <= moisture_threshhold)
     {
       pump();
     }
   }
-}
-
-void intializeMQTT()
-{
-  mqttClient.setServer(MQTT_BROKER, 1883); //TODO PORT
-  mqttClient.subscribe(HUMIDITY_TOPIC);
-  mqttClient.setCallback(mqttCallback);
+  else if (topic == pump_topic)
+  {
+    pump();
+  }
+  else if (topic == moisture_threshhold_topic)
+  {
+    moisture_threshhold = (int)payload[0];
+  }
+  else if (topic == pump_intervall_topic)
+  {
+    pump_tic_intervall.attach_ms((int)payload[0] * 100 * 60 * 60 * 24, pump);
+  }
+  else if (topic == pump_intervall_topic)
+  {
+    pump_duration = (int)payload[0];
+  }
 }
 
 void publishWaterLevel()
 {
-  Serial.println(analogRead(WATERLEVEL_PIN));
-  //mqttClient.publish(WATER_LEVEL_TOPIC, (char*)analogRead(WATERLEVEL_PIN));
+  int water_level = analogRead(WATERLEVEL_PIN);
+  sprintf(messageBuffer, "%d", water_level);
+  Serial.print("Publishing message ");
+  Serial.println(water_level);
+  mqttClient.publish(water_level_topic, messageBuffer);
 }
 
 void WiFiEvent(WiFiEvent_t event)
@@ -195,11 +358,11 @@ void WiFiEvent(WiFiEvent_t event)
   switch (event)
   {
   case WIFI_EVENT_STAMODE_CONNECTED:
-    Serial.println("Wifi connected!");
+    //Serial.println("Wifi connected!");
     break;
   case WIFI_EVENT_STAMODE_DISCONNECTED:
-    Serial.println("Wifi disconnected!");
-    connect_to_wlan();
+    //Serial.println("Wifi disconnected!");
+    //connect_to_wlan();
     break;
   default:
     break;

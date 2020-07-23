@@ -12,8 +12,8 @@ void publishMoistureLevel();
 const IPAddress broker_address(192,168,0,143);
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
-const char *HUMIDITY_TOPIC = "sensor/moisture";
-int humidity_threshhold = 950;  // TODO
+const char *MOISTURE_TOPIC = "sensor/moisture";
+int moisture_threshhold = 950;  // TODO
 // messages are 10 Bit decimals -> max. 4 characters + \0 needed
 #define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
@@ -93,7 +93,7 @@ void publishMoistureLevel() {
   sprintf(messageBuffer, "%d", moistureLevel);
   Serial.print("Publishing message ");
   Serial.println(messageBuffer);
-  mqttClient.publish(HUMIDITY_TOPIC, messageBuffer);
+  mqttClient.publish(MOISTURE_TOPIC, messageBuffer);
 }
 
 void intializeMQTT() {

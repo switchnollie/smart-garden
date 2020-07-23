@@ -7,21 +7,14 @@ PORT: 53
 
 ## Calls
 ### Wlan ändern:
-Pfad: .../change_wlan
-Params: 
-    ssid : String
-    pass : String
-### Pumpen:
-	Pfad: .../pump
-### Pumpintervall setzen:
-    Pfad: .../pump_intervall
-    Params:
-        intervall : int (d)
-### Pumpdauer setzen:
-    Pfad: .../pump_duration
-    Params:
-        durations : int (s)
-### Humidity threshhold setzen
-    Pfad: .../humidity_threshhold
-    Params: 
-        threshhold : int
+.../change_wlan?ssid=""&pass=""
+
+## MQTT Topics ändern
+.../init_mqtt_topics?
+    water_level_topic=""
+    &pumped_topic=""
+    &moisture_topic=""
+    &pump_topic=""
+    &moisture_threshhold_topic=""
+    &pump_intervall_topic=""
+    &pump_duration_topic=""
