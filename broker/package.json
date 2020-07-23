@@ -7,5 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "aedes": "^0.42.5",
+    "aedes-logging": "^2.0.1",
+    "aedes-persistence-mongodb": "^8.0.1"
+  }
 }
