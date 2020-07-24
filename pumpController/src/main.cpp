@@ -28,6 +28,8 @@ const IPAddress broker_address(192, 168, 178, 110);
 WiFiClient client;
 PubSubClient mqttClient(client);
 
+//Start webserver
+const char *webserver_topic;
 //Water level of pump controller
 const char *water_level_topic;
 //Timestamp when pumpcontroller pumped
@@ -42,6 +44,9 @@ const char *moisture_threshhold_topic;
 const char *pump_intervall_topic;
 //Time duration for pumping
 const char *pump_duration_topic;
+//Flag to indicate initialization of topics
+bool mqtt_initialized = false;
+const int mqtt_initialized_eeprom_index = 99;
 
 int moisture_threshhold = 20;   //TODO
 int pump_intervall = 600000000; //TODO
@@ -53,44 +58,32 @@ char messageBuffer[MSG_BUFFER_SIZE];
 void waitforIP();
 void WiFiEvent(WiFiEvent_t event);
 void pump();
-void initializeWebServer();
+void start_web_server();
 void publishWaterLevel();
 void intializeMQTT();
 void set_pump_intervall();
 void set_humidty_threshold();
 void set_pump_duration();
-void mqttCallback(char *topic, byte *payload, unsigned int length);
+void mqtt_callback(char *topic, byte *payload, unsigned int length);
 bool testWifi();
+String read_wlan_ssid();
+String read_wlan_pass();
+void change_wlan();
+void write_wlan_parameters(String ssid, String pass);
+void write_mqtt_parameters();
+void read_mqtt_parameters();
 
 void connect_to_wlan()
 {
   EEPROM.begin(512);
   delay(1000);
 
-  //Reading SSID from EEPROM
-  Serial.println("Reading EEPROM ssid");
-  String ssid;
-  for (int i = 0; i < 32; ++i)
-  {
-    ssid += char(EEPROM.read(i));
-  }
-  Serial.println();
-  Serial.print("SSID: ");
-  Serial.println(ssid);
-
-  //Reading PASS from EEPROM
-  Serial.println("Reading EEPROM pass");
-  String epass = "";
-  for (int i = 32; i < 96; ++i)
-  {
-    epass += char(EEPROM.read(i));
-  }
-  Serial.print("PASS: ");
-  Serial.println(epass);
+  String ssid = read_wlan_ssid();
+  String pass = read_wlan_pass();
 
   Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid.c_str(), epass.c_str());
+  WiFi.begin("FRITZ!Box 7590 SC", pass.c_str()); //TODO ssid.c_str() -> maybe whitespaces make problems
   if (testWifi())
   {
     Serial.println("Succesfully Connected!!!");
@@ -99,7 +92,7 @@ void connect_to_wlan()
   else
   {
     Serial.println("Starting web server!");
-    initializeWebServer();
+    start_web_server();
   }
 
   waitforIP();
@@ -113,6 +106,293 @@ void waitforIP()
     //Allow user to init/change wlan
     web_server.handleClient();
     dns_server.processNextRequest();
+  }
+}
+
+void change_wlan()
+{
+  //https://how2electronics.com/esp8266-manual-wifi-configuration-without-hard-code-with-eeprom/
+  //Write new connection params into EEPROM and connect to WIFI
+  String ssid = web_server.arg("ssid");
+  String pass = web_server.arg("pass");
+  Serial.println("Changing WLAN parameters");
+  Serial.printf("SSID: %s\n", ssid.c_str());
+  Serial.printf("Password: %s\n", pass.c_str());
+  if (ssid.length() > 0 && pass.length() > 0)
+  {
+    write_wlan_parameters(ssid, pass);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, pass);
+
+    if (testWifi())
+    {
+      Serial.println("Succesfully Connected!!!");
+      return;
+    }
+    else
+    {
+      Serial.println("Starting web server!");
+      start_web_server();
+    }
+
+    waitforIP();
+    web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden");
+  }
+}
+
+void write_wlan_parameters(String ssid, String pass)
+{
+  Serial.println("Clearing eeprom");
+  for (int i = 0; i < 96; ++i)
+  {
+    EEPROM.write(i, 0);
+  }
+  Serial.println(ssid);
+  Serial.println("");
+  Serial.println(pass);
+  Serial.println("");
+
+  //TODO encrypt password
+  Serial.println("writing eeprom ssid:");
+  for (int i = 0; i < ssid.length(); ++i)
+  {
+    EEPROM.write(i, ssid[i]);
+    Serial.print("Wrote: ");
+    Serial.println(ssid[i]);
+  }
+  Serial.println("writing eeprom pass:");
+  for (int i = 0; i < pass.length(); ++i)
+  {
+    EEPROM.write(32 + i, pass[i]);
+    Serial.print("Wrote: ");
+    Serial.println(pass[i]);
+  }
+  EEPROM.commit();
+}
+
+String read_wlan_ssid()
+{
+  //Reading SSID from EEPROM
+  Serial.println("Reading EEPROM ssid");
+  String ssid;
+  for (int i = 0; i < 32; ++i)
+  {
+    ssid += char(EEPROM.read(i));
+  }
+  Serial.println();
+  Serial.print("SSID: ");
+  Serial.println(ssid);
+  return ssid;
+}
+
+String read_wlan_pass()
+{
+
+  //Reading PASS from EEPROM
+  Serial.println("Reading EEPROM pass");
+  String pass = "";
+  for (int i = 32; i < 96; ++i)
+  {
+    pass += char(EEPROM.read(i));
+  }
+  Serial.print("PASS: ");
+  Serial.println(pass);
+  return pass;
+}
+
+bool testWifi()
+{
+  int c = 0;
+  Serial.println("Waiting for Wifi to connect");
+  while (c < 20)
+  {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      return true;
+    }
+    delay(500);
+    Serial.print("*");
+    c++;
+  }
+  Serial.println("");
+  Serial.println("Connect timed out, opening AP");
+  return false;
+}
+
+void init_mqtt_topics()
+{
+  water_level_topic = web_server.arg("water_level_topic").c_str();
+  Serial.printf("Water level topic: %s", water_level_topic);
+
+  pump_topic = web_server.arg("pump_topic").c_str();
+  Serial.printf("Pump topic: %s", pump_topic);
+
+  pumped_topic = web_server.arg("pumped_topic").c_str();
+  Serial.printf("Pumped topic: %s", pumped_topic);
+
+  moisture_topic = web_server.arg("moisture_topic").c_str();
+  Serial.printf("Moisture topic: %s", moisture_topic);
+
+  moisture_threshhold_topic = web_server.arg("moisture_threshhold_topic").c_str();
+  Serial.printf("Moisture threshhold topic: %s", moisture_threshhold_topic);
+
+  pump_intervall_topic = web_server.arg("pump_intervall_topic").c_str();
+  Serial.printf("Pump intervall topic: %s", pump_intervall_topic);
+
+  pump_duration_topic = web_server.arg("pump_duration_topic").c_str();
+  Serial.printf("Pump duration topic: %s", pump_duration_topic);
+  //write_mqtt_parameters(); //TODO include
+
+  web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
+}
+void write_mqtt_parameters() //TODO WRITING DOES NOT WORK  ITERATION??
+{
+  Serial.println("\nWriting water level topic:");
+  for (int i = 96; i < strlen(water_level_topic); ++i)
+  {
+    EEPROM.write(i, water_level_topic[i]);
+    Serial.println(water_level_topic[i]);
+  }
+
+  Serial.println("\nWriting pumped topic:");
+  for (int i = 140; strlen(pumped_topic); ++i)
+  {
+    EEPROM.write(i, pumped_topic[i]);
+    Serial.println(pumped_topic[i]);
+  }
+
+  Serial.println("\nWriting moisture topic:");
+  for (int i = 180; strlen(moisture_topic); ++i)
+  {
+    EEPROM.write(i, moisture_topic[i]);
+    Serial.println(moisture_topic[i]);
+  }
+
+  Serial.println("\nWriting pump topic:");
+  for (int i = 220; strlen(pump_topic); ++i)
+  {
+    EEPROM.write(i, pump_topic[i]);
+    Serial.println(pump_topic[i]);
+  }
+
+  Serial.println("\nWriting moisture threshhold topic:");
+  for (int i = 260; strlen(moisture_threshhold_topic); ++i)
+  {
+    EEPROM.write(i, moisture_threshhold_topic[i]);
+    Serial.println(moisture_threshhold_topic[i]);
+  }
+
+  Serial.println("\nWriting pump intervall topic:");
+  for (int i = 300; strlen(pump_intervall_topic); ++i)
+  {
+    EEPROM.write(i, pump_intervall_topic[i]);
+    Serial.print(pump_intervall_topic[i]);
+  }
+
+  Serial.println("\nWriting pump duration topic:");
+  for (int i = 340; strlen(pump_duration_topic); ++i)
+  {
+    EEPROM.write(i, pump_duration_topic[i]);
+    Serial.println(pump_duration_topic[i]);
+  }
+
+  //Write initialized bit
+  EEPROM.write(mqtt_initialized_eeprom_index, 1);
+  mqtt_initialized = true;
+
+  EEPROM.commit();
+}
+
+void read_mqtt_parameters()
+{
+  Serial.println("Reading water level topic");
+  for (int i = 100; i < 140; ++i)
+  {
+    water_level_topic += char(EEPROM.read(i));
+  }
+  Serial.printf("Water level topic: %s\n", water_level_topic);
+
+  Serial.println("Reading pumped topic");
+  for (int i = 140; i < 180; ++i)
+  {
+    pumped_topic += char(EEPROM.read(i));
+  }
+  Serial.printf("Pumped topic: %s\n", pumped_topic);
+
+  Serial.println("Reading moisture topic:");
+  for (int i = 180; i < 220; ++i)
+  {
+    moisture_topic += char(EEPROM.read(i));
+  }
+  Serial.printf("Moisture topic: %s\n", moisture_topic);
+
+  Serial.println("Reading pump topic:");
+  for (int i = 220; i < 260; ++i)
+  {
+    pump_topic += char(EEPROM.read(i));
+  }
+  Serial.printf("Pump topic: %s\n", pump_topic);
+
+  Serial.println("Reading moisture threshhold topic:");
+  for (int i = 260; i < 300; ++i)
+  {
+    moisture_threshhold_topic += char(EEPROM.read(i));
+  }
+  Serial.printf("Moisture threshhold topic: %s\n", moisture_threshhold_topic);
+
+  Serial.println("Reading pump intervall topic:");
+  for (int i = 300; i < 340; ++i)
+  {
+    pump_intervall_topic += char(EEPROM.read(i));
+  }
+  Serial.printf("Pump intervall topic: %s\n", pump_intervall_topic);
+
+  Serial.println("Reading pump duration topic:");
+  for (int i = 340; i < 380; ++i)
+  {
+    pump_duration_topic += char(EEPROM.read(i));
+  }
+  Serial.printf("Pump duration topic: %s\n", pump_duration_topic);
+
+  if (water_level_topic != NULL)
+  {
+    mqtt_initialized = true;
+  }
+  Serial.println(mqtt_initialized);
+}
+
+void wait_for_MQTT()
+{
+  Serial.printf("Waiting for MQTT configuration...");
+  while (!mqtt_initialized)
+  {
+    //Allow user to init/change mqtt topics
+    web_server.handleClient();
+    dns_server.processNextRequest();
+  }
+}
+
+//Read mqtt topics from EEPROM -> if not provided start webserver
+void read_mqtt_topics()
+{
+  //Check if initialization already done
+  int result = EEPROM.read(mqtt_initialized_eeprom_index);
+  if (result != 1)
+  {
+    mqtt_initialized = false;
+  }
+  else
+  {
+    mqtt_initialized = true;
+  }
+
+  if (mqtt_initialized)
+  {
+    read_mqtt_parameters();
+  }
+  {
+    start_web_server();
+    wait_for_MQTT();
   }
 }
 
@@ -142,96 +422,6 @@ void reconnect_MQTT()
   }
 }
 
-void change_wlan()
-{
-  // if (!web_server.authenticate("user", "password"))
-  // {
-  //   web_server.requestAuthentication();
-  // }
-  // else
-  // {
-    //https://how2electronics.com/esp8266-manual-wifi-configuration-without-hard-code-with-eeprom/
-    //Write new connection params into EEPROM and connect to WIFI
-    String ssid = web_server.arg("ssid").c_str();
-    String pass = web_server.arg("pass").c_str();
-    Serial.println("Changing WLAN parameters");
-    Serial.printf("SSID: %s", ssid.c_str());
-    Serial.printf("Password: %s", pass.c_str());
-    if (ssid.length() > 0 && pass.length() > 0)
-    {
-      Serial.println("Clearing eeprom");
-      for (int i = 0; i < 96; ++i)
-      {
-        EEPROM.write(i, 0);
-      }
-      Serial.println(ssid);
-      Serial.println("");
-      Serial.println(pass);
-      Serial.println("");
-
-      Serial.println("writing eeprom ssid:");
-      for (int i = 0; i < ssid.length(); ++i)
-      {
-        EEPROM.write(i, ssid[i]);
-        Serial.print("Wrote: ");
-        Serial.println(ssid[i]);
-      }
-      Serial.println("writing eeprom pass:");
-      for (int i = 0; i < pass.length(); ++i)
-      {
-        EEPROM.write(32 + i, pass[i]);
-        Serial.print("Wrote: ");
-        Serial.println(pass[i]);
-      }
-      EEPROM.commit();
-
-      WiFi.mode(WIFI_STA);
-      WiFi.begin(ssid, pass);
-
-      waitforIP();
-      web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden");
-    }
-  // }
-}
-
-bool testWifi()
-{
-  int c = 0;
-  Serial.println("Waiting for Wifi to connect");
-  while (c < 20)
-  {
-    if (WiFi.status() == WL_CONNECTED)
-    {
-      return true;
-    }
-    delay(500);
-    Serial.print("*");
-    c++;
-  }
-  Serial.println("");
-  Serial.println("Connect timed out, opening AP");
-  return false;
-}
-
-void init_mqtt_topics()
-{
-  if (!web_server.authenticate("user", "password"))
-  {
-    web_server.requestAuthentication();
-  }
-  else
-  {
-    water_level_topic = web_server.arg("water_level_topic").c_str();
-    pumped_topic = web_server.arg("pumped_topic").c_str();
-    moisture_topic = web_server.arg("moisture_topic").c_str();
-    pump_topic = web_server.arg("pump_topic").c_str();
-    moisture_threshhold_topic = web_server.arg("moisture_threshhold_topic").c_str();
-    pump_intervall_topic = web_server.arg("pump_intervall_topic").c_str();
-    pump_duration_topic = web_server.arg("pump_duration_topic").c_str();
-  }
-  web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
-}
-
 void setup()
 {
   Serial.begin(115200);
@@ -242,12 +432,12 @@ void setup()
 
   WiFi.onEvent(WiFiEvent);
 
-  //initialize web server first, so the customer is able to initialize/change wlan config
   connect_to_wlan();
+  read_mqtt_topics();
 
   //init MQTT
   mqttClient.setServer(broker_address, 1883);
-  mqttClient.setCallback(mqttCallback);
+  mqttClient.setCallback(mqtt_callback);
 
   water_level_tic.attach_ms(6000, publishWaterLevel);
   pump_tic_intervall.attach_ms(pump_intervall, pump);
@@ -264,7 +454,7 @@ void loop()
   mqttClient.loop();
 }
 
-void initializeWebServer()
+void start_web_server()
 {
   //WIFI ACCESS POINT
   WiFi.mode(WIFI_AP);
@@ -310,7 +500,7 @@ void pump()
   web_server.send(200);
 }
 
-void mqttCallback(char *topic, byte *payload, unsigned int length)
+void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
   Serial.print("Received MQTT message");
   Serial.print(topic);
@@ -318,8 +508,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
   {
     Serial.print((char)payload[i]);
   }
-
-  if (topic == moisture_topic)
+  if (topic == webserver_topic)
+  {
+    start_web_server();
+  }
+  else if (topic == moisture_topic)
   {
     if ((int)payload[0] <= moisture_threshhold)
     {
@@ -348,8 +541,7 @@ void publishWaterLevel()
 {
   int water_level = analogRead(WATERLEVEL_PIN);
   sprintf(messageBuffer, "%d", water_level);
-  Serial.print("Publishing message ");
-  Serial.println(water_level);
+  Serial.printf("Publishing %d to topic %s", water_level, water_level_topic);
   mqttClient.publish(water_level_topic, messageBuffer);
 }
 

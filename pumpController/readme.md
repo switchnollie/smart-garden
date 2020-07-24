@@ -7,7 +7,7 @@ PORT: 53
 
 ## Calls
 ### Wlan ändern:
-.../change_wlan?ssid=""&pass=""
+.../change_wlan?ssid=&pass=
 
 ## MQTT Topics ändern
 .../init_mqtt_topics?
