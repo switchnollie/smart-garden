@@ -1,0 +1,9 @@
+# Dependency directories
+node_modules/
+
+# k8s secrets
+*.secret.yml
+
+# dotenv environment variables file
+.env
+.env.test

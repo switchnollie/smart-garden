@@ -1,12 +1,12 @@
 const Aedes = require("aedes");
+const mongoose = require('mongoose');
 const logging = require("aedes-logging");
 const mongoPersistence = require("aedes-persistence-mongodb");
 const mqemitter = require('mqemitter-mongodb');
-const mongoose = require('mongoose')
 
 const MONGO_URI = process.env.MONGO_URI;
 const MQTT_PORT = process.env.MQTT_PORT || 1883;
-const MONGO_DATABASE = process.env.MONGO_DATABASE || "smartGardenDB"
+const MONGO_DATABASE = process.env.MONGO_DATABASE;
 
 function initBroker() {
   const aedes = Aedes({

@@ -12,8 +12,8 @@ services:
     networks: 
       - smart-garden-net
     environment:
-      # MONGO_INITDB_ROOT_USERNAME: '${MONGO_USERNAME}'
-      # MONGO_INITDB_ROOT_PASSWORD: '${MONGO_PASSWORD}'
+      MONGO_INITDB_ROOT_USERNAME: '${MONGO_USERNAME}'
+      MONGO_INITDB_ROOT_PASSWORD: '${MONGO_PASSWORD}'
       MONGO_INITDB_DATABASE: '${MONGO_DATABASE}'
   broker:
     container_name: mqttBroker
@@ -28,8 +28,7 @@ services:
     networks: 
       - smart-garden-net
     environment:
-      # MONGO_URI: 'mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin'
-      MONGO_URI: 'mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?readPreference=primary&ssl=false'
+      MONGO_URI: 'mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin'
 
 volumes:
   mongo-volume:
