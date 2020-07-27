@@ -1,0 +1,15 @@
+# External LoadBalancer type Service to expose the MQTT Broker Deployment with an external IP on port 30000
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-service
+  namespace: smart-garden
+spec:
+  selector:
+    app: aedes-broker
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 1883
+      targetPort: 1883
+      nodePort: 30000

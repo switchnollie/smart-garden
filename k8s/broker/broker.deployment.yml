@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: aedes-broker
+  name: aedes-broker-deployment
+  namespace: smart-garden
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aedes-broker
+  template:
+    metadata:
+      labels:
+        app: aedes-broker-test
+    spec:
+      containers:
+        # by default, the image is pulled from docker hub
+        - image: switchnollie/aedes-broker
+          imagePullPolicy: Never # use local registry, don't pull image from docker hub
+          name: aedes-broker
+          envFrom:
+            - secretRef:
+                name: dev-secret
+          ports:
+            - containerPort: 1883
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
