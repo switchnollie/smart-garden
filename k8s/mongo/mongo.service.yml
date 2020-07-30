@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-service
+  name: mongodb
   namespace: smart-garden
 spec:
   selector:
