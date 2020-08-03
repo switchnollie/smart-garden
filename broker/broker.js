@@ -8,12 +8,10 @@ const MQTT_PORT = process.env.MQTT_PORT || 1883;
 
 function initBroker(db) {
   
-  // const aedes = Aedes({
-  //   persistence: mongoPersistence({ db }),
-  //   mq: mqemitter({ db })
-  // });
-
-  const aedes = Aedes();
+  const aedes = Aedes({
+    persistence: mongoPersistence({ db }),
+    mq: mqemitter({ db })
+  });
 
   const mqttServer = require("net").createServer(aedes.handle);
 
