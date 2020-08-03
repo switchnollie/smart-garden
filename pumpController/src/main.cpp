@@ -30,21 +30,21 @@ WiFiClient client;
 PubSubClient mqttClient(client);
 
 //Start webserver
-const char *webserver_topic;
+const char *webserver_topic = "";
 //Water level of pump controller
-const char *water_level_topic;
+const char *water_level_topic = "";
 //Timestamp when pumpcontroller pumped
-const char *pumped_topic;
+const char *pumped_topic = "";
 //Moisture from plant controller
-const char *moisture_topic;
+const char *moisture_topic = "";
 //Request pump to pumpcontroller
-const char *pump_topic;
+const char *pump_topic = "";
 //Threshold when pumpcontroller shall pump
-const char *moisture_threshhold_topic;
+const char *moisture_threshhold_topic = "";
 //Intervall when pumpcontroller shall pump
-const char *pump_intervall_topic;
+const char *pump_intervall_topic = "";
 //Time duration for pumping
-const char *pump_duration_topic;
+const char *pump_duration_topic = "";
 //Flag to indicate initialization of topics
 bool mqtt_initialized = false;
 const int mqtt_initialized_eeprom_index = 99;
@@ -253,59 +253,52 @@ void init_mqtt_topics()
 void write_mqtt_parameters()
 {
   Serial.println("\nWriting water level topic...");
-  std::string water_level = std::string(water_level_topic);
-  for (int i = 100; i < 100 + water_level.length(); ++i)
+  for (int i = 0; i < strlen(water_level_topic); ++i)
   {
-    EEPROM.write(i, water_level[i]);
-    Serial.println(water_level[i]);
+    EEPROM.write(100 + i, water_level_topic[i]);
+    Serial.print(water_level_topic[i]);
   }
 
   Serial.println("\nWriting pumped topic...");
-  std::string pumped = std::string(pumped_topic);
-  for (int i = 140; i < 140 + pumped.length(); ++i)
+  for (int i = 0; i < strlen(pumped_topic); ++i)
   {
-    EEPROM.write(i, pumped[i]);
-    Serial.println(pumped[i]);
+    EEPROM.write(140 + i, pumped_topic[i]);
+    Serial.print(pumped_topic[i]);
   }
 
   Serial.println("\nWriting moisture topic...");
-  std::string moisture = std::string(moisture_topic);
-  for (int i = 180; i < 180 + moisture.length(); ++i)
+  for (int i = 0; i < strlen(moisture_topic); ++i)
   {
-    EEPROM.write(i, moisture[i]);
-    Serial.println(moisture[i]);
+    EEPROM.write(180 + i, moisture_topic[i]);
+    Serial.print(moisture_topic[i]);
   }
 
   Serial.println("\nWriting pump topic...");
-  std::string pump = std::string(pump_topic);
-  for (int i = 220; i < 220 + pump.length(); ++i)
+  for (int i = 0; i < strlen(pump_topic); ++i)
   {
-    EEPROM.write(i, pump[i]);
-    Serial.println(pump[i]);
+    EEPROM.write(220 + i, pump_topic[i]);
+    Serial.print(pump_topic[i]);
   }
 
   Serial.println("\nWriting moisture threshhold topic...");
-  std::string moisture_threshhold = std::string(moisture_threshhold_topic);
-  for (int i = 260; i < 260 + moisture_threshhold.length(); ++i)
+  for (int i = 0; i < strlen(moisture_threshhold_topic); ++i)
   {
-    EEPROM.write(i, moisture_threshhold[i]);
-    Serial.println(moisture_threshhold[i]);
+    EEPROM.write(260 + i, moisture_threshhold_topic[i]);
+    Serial.print(moisture_threshhold_topic[i]);
   }
 
   Serial.println("\nWriting pump intervall topic...");
-  std::string pump_intervall = std::string(pump_intervall_topic);
-  for (int i = 300; i < 300 + pump_intervall.length(); ++i)
+  for (int i = 0; i < strlen(pump_intervall_topic); ++i)
   {
-    EEPROM.write(i, pump_intervall[i]);
-    Serial.print(pump_intervall[i]);
+    EEPROM.write(300 + i, pump_intervall_topic[i]);
+    Serial.print(pump_intervall_topic[i]);
   }
 
   Serial.println("\nWriting pump duration topic...");
-  std::string pump_duration = std::string(pump_duration_topic);
-  for (int i = 340; i < 340 + pump_duration.length(); ++i)
+  for (int i = 0; i < strlen(pump_duration_topic); ++i)
   {
-    EEPROM.write(i, pump_duration[i]);
-    Serial.println(pump_duration[i]);
+    EEPROM.write(340 + i, pump_duration_topic[i]);
+    Serial.print(pump_duration_topic[i]);
   }
 
   //Write initialized bit
@@ -318,59 +311,67 @@ void write_mqtt_parameters()
 void read_mqtt_parameters()
 {
   Serial.println("Reading water level topic...");
+  String water_level = "";
   for (int i = 100; i < 140; ++i)
   {
-    Serial.println(char(EEPROM.read(i)));
-    water_level_topic += char(EEPROM.read(i));
+    water_level += char(EEPROM.read(i));
   }
+  water_level_topic = water_level.c_str();
   Serial.printf("Water level topic: %s\n", water_level_topic);
 
-  Serial.println("Reading pumped topic");
+  Serial.println("Reading pumped topic...");
+  String pumped = "";
   for (int i = 140; i < 180; ++i)
   {
-    pumped_topic += char(EEPROM.read(i));
+    pumped += char(EEPROM.read(i));
   }
+  pumped_topic = pumped.c_str();
   Serial.printf("Pumped topic: %s\n", pumped_topic);
 
   Serial.println("Reading moisture topic...");
+  String moisture = "";
   for (int i = 180; i < 220; ++i)
   {
-    moisture_topic += char(EEPROM.read(i));
+    moisture += char(EEPROM.read(i));
   }
+  moisture_topic = moisture.c_str();
   Serial.printf("Moisture topic: %s\n", moisture_topic);
 
   Serial.println("Reading pump topic...");
+  String pump = "";
   for (int i = 220; i < 260; ++i)
   {
-    pump_topic += char(EEPROM.read(i));
+    pump += char(EEPROM.read(i));
   }
+  pump_topic = pump.c_str();
   Serial.printf("Pump topic: %s\n", pump_topic);
 
   Serial.println("Reading moisture threshhold topic...");
+  String moisture_threshhold = "";
   for (int i = 260; i < 300; ++i)
   {
-    moisture_threshhold_topic += char(EEPROM.read(i));
+    moisture_threshhold += char(EEPROM.read(i));
   }
+  moisture_threshhold_topic = moisture_threshhold.c_str();
   Serial.printf("Moisture threshhold topic: %s\n", moisture_threshhold_topic);
 
   Serial.println("Reading pump intervall topic...");
+  String pump_intervall = "";
   for (int i = 300; i < 340; ++i)
   {
-    pump_intervall_topic += char(EEPROM.read(i));
+    pump_intervall += char(EEPROM.read(i));
   }
+  pump_intervall_topic = pump_intervall.c_str();
   Serial.printf("Pump intervall topic: %s\n", pump_intervall_topic);
 
   Serial.println("Reading pump duration topic...");
+  String pump_duration = "";
   for (int i = 340; i < 380; ++i)
   {
-    pump_duration_topic += char(EEPROM.read(i));
+    pump_duration += char(EEPROM.read(i));
   }
+  pump_duration_topic = pump_duration.c_str();
   Serial.printf("Pump duration topic: %s\n", pump_duration_topic);
-
-  if (water_level_topic != NULL)
-  {
-    mqtt_initialized = true;
-  }
 }
 
 void wait_for_MQTT()
@@ -391,7 +392,6 @@ void read_mqtt_topics()
   delay(1000);
   //Check if initialization already done
   int result = EEPROM.read(mqtt_initialized_eeprom_index);
-  Serial.printf("result: %d", result);
   if (result != 1)
   {
     mqtt_initialized = false;
@@ -402,12 +402,13 @@ void read_mqtt_topics()
   }
 
   //TODO remove this
-  //mqtt_initialized = false;
+  // mqtt_initialized = false;
 
-  if (mqtt_initialized) 
+  if (mqtt_initialized)
   {
     read_mqtt_parameters();
   }
+  else
   {
     start_web_server();
     wait_for_MQTT();
@@ -447,14 +448,6 @@ void setup()
 
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(WATERLEVEL_PIN, INPUT);
-
-  //TODO can be used to clear eeprom
-  // EEPROM.begin(512);
-  // delay(1000);
-  // for (int i = 90; i < 512; ++i)
-  // {
-  //   EEPROM.write(i, 0);
-  // }
 
   WiFi.onEvent(WiFiEvent);
 
@@ -565,10 +558,13 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
 void publishWaterLevel()
 {
-  int water_level = analogRead(WATERLEVEL_PIN);
-  sprintf(messageBuffer, "%d", water_level);
-  Serial.printf("Publishing %d to topic %s", water_level, water_level_topic);
-  mqttClient.publish(water_level_topic, messageBuffer);
+  if (mqttClient.connected())
+  {
+    int water_level = analogRead(WATERLEVEL_PIN);
+    sprintf(messageBuffer, "%d", water_level);
+    Serial.printf("Publishing %d to topic %s\n", water_level, water_level_topic);
+    mqttClient.publish(water_level_topic, messageBuffer);
+  }
 }
 
 void WiFiEvent(WiFiEvent_t event)
