@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <DNSServer.h>
 #include <WiFiClient.h>
 #include <Ticker.h>
 #include <PubSubClient.h>
@@ -10,7 +9,6 @@
 
 const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
-//"FRITZ!Box 7590 SC", "61201344397947594581"
 const char *ssid;
 const char *passphrase;
 
@@ -20,7 +18,6 @@ Ticker water_level_tic;
 
 //Webserver
 ESP8266WebServer web_server(80);
-DNSServer dns_server;
 const byte DNS_PORT = 53;
 IPAddress esp_ip(192, 168, 4, 1);
 
@@ -30,7 +27,7 @@ WiFiClient client;
 PubSubClient mqttClient(client);
 
 //Start webserver
-const char *webserver_topic = "";
+const char *WEBSERVER_TOPIC = "";
 //Water level of pump controller
 const char *water_level_topic = "";
 //Timestamp when pumpcontroller pumped
@@ -61,19 +58,18 @@ void WiFiEvent(WiFiEvent_t event);
 void pump();
 void start_web_server();
 void publishWaterLevel();
-void intializeMQTT();
+void intialize_mqtt();
 void set_pump_intervall();
 void set_humidty_threshold();
 void set_pump_duration();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
-bool testWifi();
+bool test_wifi();
 String read_wlan_ssid();
 String read_wlan_pass();
 void change_wlan();
 void write_wlan_parameters(String ssid, String pass);
 void write_mqtt_parameters();
 void read_mqtt_parameters();
-int get_string_size(const char *value);
 
 void connect_to_wlan()
 {
@@ -86,7 +82,7 @@ void connect_to_wlan()
   Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid.c_str(), pass.c_str());
-  if (testWifi())
+  if (test_wifi())
   {
     Serial.println("Succesfully Connected!!!");
     return;
@@ -107,7 +103,6 @@ void waitforIP()
   {
     //Allow user to init/change wlan
     web_server.handleClient();
-    dns_server.processNextRequest();
   }
 }
 
@@ -126,7 +121,7 @@ void change_wlan()
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
 
-    if (testWifi())
+    if (test_wifi())
     {
       Serial.println("Succesfully Connected!!!");
       return;
@@ -159,15 +154,13 @@ void write_wlan_parameters(String ssid, String pass)
   for (int i = 0; i < ssid.length(); ++i)
   {
     EEPROM.write(i, ssid[i]);
-    Serial.print("Wrote: ");
-    Serial.println(ssid[i]);
+    Serial.print(ssid[i]);
   }
-  Serial.println("writing eeprom pass:");
+  Serial.println("\nwriting eeprom pass:");
   for (int i = 0; i < pass.length(); ++i)
   {
     EEPROM.write(32 + i, pass[i]);
-    Serial.print("Wrote: ");
-    Serial.println(pass[i]);
+    Serial.print(pass[i]);
   }
   EEPROM.commit();
 }
@@ -202,7 +195,7 @@ String read_wlan_pass()
   return pass;
 }
 
-bool testWifi()
+bool test_wifi()
 {
   int c = 0;
   Serial.println("Waiting for Wifi to connect");
@@ -381,7 +374,6 @@ void wait_for_MQTT()
   {
     //Allow user to init/change mqtt topics
     web_server.handleClient();
-    dns_server.processNextRequest();
   }
 }
 
@@ -400,9 +392,6 @@ void read_mqtt_topics()
   {
     mqtt_initialized = true;
   }
-
-  //TODO remove this
-  // mqtt_initialized = false;
 
   if (mqtt_initialized)
   {
@@ -441,6 +430,21 @@ void reconnect_MQTT()
   }
 }
 
+void clear_eeprom()
+{
+  // Reset EEPROM bytes to '0' for the length of the data structure
+  EEPROM.begin(512);
+  for (int i = 0; i < 512; i++)
+  {
+    EEPROM.write(i, 0);
+  }
+  delay(200);
+  EEPROM.commit();
+  EEPROM.end();
+
+  Serial.println("EEPROM cleared");
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -465,7 +469,6 @@ void setup()
 void loop()
 {
   web_server.handleClient();
-  dns_server.processNextRequest();
   if (!mqttClient.connected())
   {
     reconnect_MQTT();
@@ -492,7 +495,6 @@ void start_web_server()
   });
 
   web_server.begin();
-  dns_server.start(DNS_PORT, "tibs_pump_controller.de", esp_ip);
   Serial.println("Webserver gestartet.");
 }
 
@@ -527,7 +529,7 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
   {
     Serial.print((char)payload[i]);
   }
-  if (topic == webserver_topic)
+  if (topic == WEBSERVER_TOPIC)
   {
     start_web_server();
   }
