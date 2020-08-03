@@ -1,0 +1,15 @@
+# Internal Cluster IP Service which is accessed via the ingress node
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-service
+  namespace: smart-garden
+spec:
+  selector:
+    app: aedes-broker
+  # type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8883
+      targetPort: 1883
+      # nodePort: 30000

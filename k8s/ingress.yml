@@ -1,0 +1,17 @@
+apiVersion: voyager.appscode.com/v1beta1
+kind: Ingress
+metadata:
+  name: smart-garden-ingress
+  namespace: smart-garden
+spec:
+  tls:
+    - secretName: tls-secret
+      hosts:
+      - smartgarden.app
+  rules:
+  - host: smartgarden.app
+    tcp:
+      port: '8883'
+      backend:
+        serviceName: broker-service
+        servicePort: '1883'

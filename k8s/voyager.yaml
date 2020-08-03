@@ -1,0 +1,314 @@
+---
+# Source: voyager/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: voyager-operator
+  namespace: kube-system
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: voyager/templates/apiregistration.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: voyager-operator-apiserver-cert
+  namespace: kube-system
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURQakNDQWlhZ0F3SUJBZ0lRRUVFdmVhSFNINDNiT2VVR3FLTEw5VEFOQmdrcWhraUc5dzBCQVFzRkFEQU4KTVFzd0NRWURWUVFERXdKallUQWVGdzB5TURBNE1ESXdPREl4TVROYUZ3MHpNREEzTXpFd09ESXhNVE5hTUJzeApHVEFYQmdOVkJBTVRFSFp2ZVdGblpYSXRiM0JsY21GMGIzSXdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCCkR3QXdnZ0VLQW9JQkFRQ1pCTklxalA3aE8rc3dJTE5UdHN2ZWVhZjNsVkVmUGwxU21pRVdmZkNUdlFJWTU1RkMKR2YrQ0d5NlEwL2RIVG1zQ1hGNVNzWDBiVEdEWkZVeExRbTZMYTlLUEh6YmpJS2xjZnlwYjBLWnRES1c1cHVEZQpBTVF5VS90Q1BIeXlKRHhTSy9GbTgyUVZxTkFGUWZxMjBkV3ppNnNaYkhOMVYvdlh6enNxZCtyMDFGY3RQUURLCitaZGlTUHo5ZkJ5NDJpNDlTUERQbFNQSFRHVm83MDhMaXhvUEVheVd1ZkMreTdZdjZORW5VNVJZejFmRmZyQ3YKb0NEeWtHcUVHbVR4VE9yU21jekJYRHJQelNQTmdxWlVaRU85dTUrN2RaOEpQbGpONFBQT0JldU0zWUNWVm1Mawpic3NmUGZBTndmMzZ4QTZPVEZZNExsMVlhck82YVFNTG1sMS9BZ01CQUFHamdZc3dnWWd3RGdZRFZSMFBBUUgvCkJBUURBZ1dnTUIwR0ExVWRKUVFXTUJRR0NDc0dBUVVGQndNQkJnZ3JCZ0VGQlFjREFqQU1CZ05WSFJNQkFmOEUKQWpBQU1Fa0dBMVVkRVFSQ01FQ0NISFp2ZVdGblpYSXRiM0JsY21GMGIzSXVhM1ZpWlMxemVYTjBaVzJDSUhadgplV0ZuWlhJdGIzQmxjbUYwYjNJdWEzVmlaUzF6ZVhOMFpXMHVjM1pqTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCCkFRQ1RIOFBlaFRydlZ3RHFUUWVZc25acjBkSFovU0g5M2UrbHZOam43ZGpSOVNPSUp0cEJsRlY3a3N2ZXl1blkKKzV6cUxCWWRWempyQ1ZYdFl0eWpoT2hxbEQwVjFZRTZ1UnJacmV1bWVQc25lUlNjVi96cUQ1MUxzRVJwenk4YQp6T0VRVWF2TW05Ymh0RjVhaDZhRWkrU3lnRjlpTzJtN1pFN2xlWlNiek13cnExWE1Id0p3MFpJN3ZUbHAzQVFQCmNtUWNaa2VieVd6dFFNL2d4aGovME0xZ1hBbHRXQStEb0lLMEZjTHRtZzNSRWFjdDdybGxZeVk4QzZWZ0gxemEKdVh5TjN0QldHNHVkY2Z3S2YvcUprWFlybzFGSWxEcks1eEVuSnl2MzRtMUQzS29iTUMxTVlPZ0tndjYyY3JYUgo0SW4wZHI5NVdvd1FnSGhiNkFucFdhZkEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBbVFUU0tveis0VHZyTUNDelU3Ykwzbm1uOTVWUkh6NWRVcG9oRm4zd2s3MENHT2VSClFobi9naHN1a05QM1IwNXJBbHhlVXJGOUcweGcyUlZNUzBKdWkydlNqeDgyNHlDcFhIOHFXOUNtYlF5bHVhYmcKM2dERU1sUDdRang4c2lROFVpdnhadk5rRmFqUUJVSDZ0dEhWczR1ckdXeHpkVmY3MTg4N0tuZnE5TlJYTFQwQQp5dm1YWWtqOC9Yd2N1Tm91UFVqd3o1VWp4MHhsYU85UEM0c2FEeEdzbHJud3ZzdTJMK2pSSjFPVVdNOVh4WDZ3CnI2QWc4cEJxaEJwazhVenEwcG5Nd1Z3Nno4MGp6WUttVkdSRHZidWZ1M1dmQ1Q1WXplRHp6Z1hyak4yQWxWWmkKNUc3TEh6M3dEY0g5K3NRT2preFdPQzVkV0dxenVta0RDNXBkZndJREFRQUJBb0lCQUFpMDVvUjNTMVZqaEdsVApvd0NEYVN3NmZkMHZpTk1mU0U0WDZRUVBuRzI3bG0vMlZTU091Q1FlQ2ROQnpGTXBXaHRqU0JhcWRMVGw3cWpMCmRuRGQwYzVyRHlzSG1xYm54OXMwZlNPR1JzSHpzMFpTQVgrQVNhbVhiN2VBRzVSRFRZOWJZcnY1NDFyOEpRSDMKbEIxczZSenpPSVFVMEtqL25adlU5Y2ZmMU9XalROL1VxRHltRzBhdzV3OHNISDRNMllKMHdJNFZRMi8zbytlVQp0QVY0NUlWTGZXcURXaWhHa3pxSzN0R2s2UFVhaWhhZ2lxdlV6WGhYQS9LK1RPbUNrOEVsa3kzQy9PL1MwcWt4CktzOXhlQmozdUFsR2ltMG95aERKOGF1dlArSXpaeFN5d1lHTUNmOU1mNzRNSEVxTlZaQSs3VmVDbXhodENJdk0KVVU0dGoyRUNnWUVBd3RLbVcvcGRtUUJoY29BQlpLZ0hZckdYRXUrMDVna1JtVzNTS0wxd1Y2MW5DSVZoV3JwVQpNdEIwNG1LUUR6dU4xcDM3N2paZzUzZk5VTFdJVFE5NHdxeFQrQU1aWFJiSlJ5UXFaSWp6RTZFNDdLUWF4TFNCCmt5c1h0TmhkYmdpZ0lXWXVuUEFCWStNZnpQK3VxK29TNGZjRkp0a01SY2UxTUdBUlluT3FRRThDZ1lFQXlSR2sKL0x4bkFBdEJKZGVzMjNxRnpIeGVISkIxaFlsTFdicnp0aStQaVF1Q09haUlIWDNjUWlWdmxUWlUwQ1lsZTA2OApaL2RDQkw3bU92dGgvaFVUMk03SjVMYy9VU05mUmFER2NSOCs5NE5MT3ExMGpJQlE1OXBra21WdGV1Qjh0NnNtCmhnVVNlTWxNaXRGbDRuWXZKQnRsMU8yV2U1WjNoZWVSSmx4S0U5RUNnWUE4aHdlS1lmRjhYSUxwK056MThjSkIKcGwwQ1ZCakdzeUNWbzJuOG9FWnI1d0t3d2dlcUVXT2hXZVJHaFVxdWdOa2pTWGdBM1VJa0I3TnhGTVVnOCtLWAowTVJSdEZ6SDhCRmVtZHpWMlRwejZjM3VyMWxsclpMb0x5WXhXRnRHbVVWdXV2bFdaclozMnhPQk5CcUhiTFNyCklYeW5RaDJ1L0VuTm1yc3I5RFY3dndLQmdRQ3RDdVJsSm5lMmova0hhbkEzaTJDdk5iR0EvOHBFbkg0ZXdVaVIKV0trOUZveUN0c28rSjExeUIrbmFEcUk3YVRrRXdDUmhqV2hoMFRFdlBiMStBQUhPcTFrUjM2czhWeWJkTTVyVgpMRUR5bnlvVlc4WmNUT3BVUDU0aVord3F2aHhYclpJLzhRbU9yaCtUc05id2FTbjA5eWRTY3c3NVdldVBjRlY1CklDQVlvUUtCZ0FlYU43YVFsdks1VlBFbHU4aG9KR1R4S1c4RkFxWjB4UmNERklnU2dreVpPQWFZVzhsVU9aaGwKamlaREU5ZGV2Sjc4S2JhMFNHcFRoclZZbGxQeUl0algwcGVrR1hmbUl5c29QUWtkd2VTNC9kVG5vNlI2NERodAowN2lJUldvM2c1VDExcC92SXNvUEFkZG5QWGhJTjBXM3FONlVFWHM3VjUrakNUUVY3T3luCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
+---
+# Source: voyager/templates/cluster-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: voyager-operator
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs: ["*"]
+- apiGroups:
+  - apiregistration.k8s.io
+  resources:
+  - apiservices
+  verbs: ["get", "patch", "delete"]
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - validatingwebhookconfigurations
+  verbs: ["delete", "get", "list", "watch", "patch"]
+- apiGroups:
+  - voyager.appscode.com
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs: ["*"]
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs: ["*"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  - ingresses/status
+  verbs: ["*"]
+- apiGroups: [""]
+  resources:
+  - replicationcontrollers
+  - services
+  - endpoints
+  - configmaps
+  verbs: ["*"]
+- apiGroups: [""]
+  resources:
+  - secrets
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources:
+  - events
+  verbs: ["create"]
+- apiGroups: [""]
+  resources:
+  - pods
+  verbs: ["get", "list", "watch", "delete", "deletecollection"]
+- apiGroups: [""]
+  resources:
+  - nodes
+  verbs: ["list", "watch", "get"]
+- apiGroups: [""]
+  resources:
+  - serviceaccounts
+  verbs: ["get", "create", "delete", "patch"]
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  - roles
+  verbs: ["get", "create", "delete", "patch"]
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["get", "list"]
+---
+# Source: voyager/templates/apiregistration.yaml
+# to delegate authentication and authorization
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: voyager-operator-apiserver-auth-delegator
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: voyager-operator
+  namespace: kube-system
+---
+# Source: voyager/templates/cluster-role-binding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: voyager-operator
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: voyager-operator
+subjects:
+- kind: ServiceAccount
+  name: voyager-operator
+  namespace: kube-system
+---
+# Source: voyager/templates/apiregistration.yaml
+# to read the config for terminating authentication
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: voyager-operator-apiserver-extension-server-authentication-reader
+  namespace: kube-system
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: extension-apiserver-authentication-reader
+subjects:
+- kind: ServiceAccount
+  name: voyager-operator
+  namespace: kube-system
+---
+# Source: voyager/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: voyager-operator
+  namespace: kube-system
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+  # Port used to expose admission webhook apiserver
+  - name: admission
+    port: 443
+    targetPort: 8443
+  # Port used to respond to Let's Encrypt HTTP challenges
+  - name: acme
+    port: 56791
+    targetPort: 56791
+  selector:
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+---
+# Source: voyager/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voyager-operator
+  namespace: kube-system
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: voyager
+      app.kubernetes.io/instance: voyager-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: voyager
+        app.kubernetes.io/instance: voyager-operator
+      annotations:
+        checksum/apiregistration.yaml: dcc90677314d86eff99d76416871eac0a2d8d6314e9a19010bc8c0c43e0752e0
+    spec:
+      serviceAccountName: voyager-operator
+      containers:
+      - name: voyager
+        securityContext:
+          {}
+        image: appscode/voyager:v12.0.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - run
+        - --cloud-provider=minikube
+        - --cloud-config=
+        - --v=3
+        - --ingress-class=
+        - --operator-service=voyager-operator
+        - --docker-registry=appscode
+        - --haproxy-image-tag=1.9.15-v12.0.0-alpine
+        - --haproxy-image-repository=haproxy
+        - --exporter-image-tag=v12.0.0
+        - --exporter-image-repository=voyager
+        - --secure-port=8443
+        - --audit-log-path=-
+        - --tls-cert-file=/var/serving-cert/tls.crt
+        - --tls-private-key-file=/var/serving-cert/tls.key
+        - --enable-validating-webhook=true
+        - --bypass-validating-webhook-xray=false
+        - --use-kubeapiserver-fqdn-for-aks=true
+        - --enable-analytics=true
+        ports:
+        - containerPort: 8443
+        - containerPort: 56791
+        env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          {}
+        volumeMounts:
+        - mountPath: /var/serving-cert
+          name: serving-cert
+      volumes:
+      - name: serving-cert
+        secret:
+          defaultMode: 420
+          secretName: voyager-operator-apiserver-cert
+      securityContext:
+        fsGroup: 65535
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+        beta.kubernetes.io/os: linux
+---
+# Source: voyager/templates/apiregistration.yaml
+apiVersion: apiregistration.k8s.io/v1beta1
+kind: APIService
+metadata:
+  name: v1beta1.admission.voyager.appscode.com
+  labels:
+    helm.sh/chart: voyager-v12.0.0
+    app.kubernetes.io/name: voyager
+    app.kubernetes.io/instance: voyager-operator
+    app.kubernetes.io/version: "v12.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  group: admission.voyager.appscode.com
+  version: v1beta1
+  service:
+    namespace: kube-system
+    name: voyager-operator
+  caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1akNDQWM2Z0F3SUJBZ0lRRVdLNmVXdHp3anJKU3Q1enRpcjA4VEFOQmdrcWhraUc5dzBCQVFzRkFEQU4KTVFzd0NRWURWUVFERXdKallUQWVGdzB5TURBNE1ESXdPREl4TVROYUZ3MHpNREEzTXpFd09ESXhNVE5hTUEweApDekFKQmdOVkJBTVRBbU5oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF0Sys3CjhuZXcvU2VEOWU4VzhobjFVNlc1SmlQYVVoR3F5ZzJRSmN5eUkrSHVGMzFiZVdzNzdzMEtsY0owR0RzVEE1bWMKQ2JLYXRSUGw4a2JoU3p6YnRBU3ZQOUV5MWRSRFEzTkI1d011a2JEeDRMRERFL0Y0WWw1MkRua3p6VWptNmw0TApWY0FBQnRsWDEyYkx1Wm5DdStZTEFnSi9aQU5Ib2hBSXc2a2NuWVBTRjdSZVJEQU9XZS9HV2VPcVdjaW5YOFBPCkEySFNIZFhneDZSRkM1bHlHbHk4YzR0bnNDa05OU2VqZDE0SDhmQi8xTGc1cU1ENGd3cWRVZVpDLzBkZUlFSjkKWHFwd3BBdUpjcjBYa2NRNEh4dDNtNk13UnFybng2cVIrek0xZmlxT25tV2VVY09DTUJFQ1JCK01tYUczb2pWbgpJWnZWRnAvZktNQXpUNTZybFFJREFRQUJvMEl3UURBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3CkZBWUlLd1lCQlFVSEF3RUdDQ3NHQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdEUVlKS29aSWh2Y04KQVFFTEJRQURnZ0VCQURFSk03WkFQT25BbTRXNEdrZ01HTG1FVkwyZExqL3hjY1A5WkVodHJsUDdHQnRWYVVPZgpLemZVc2lZQTh2OVpsTExYSmk0VGxmMFkwVXFmNUd0Q2hUakh3akNnalNONlhyMHliR1pSWUdZZGFJbkVaNzdKCnF1MzFIYnQxVDJVS0ZVVGtKSzVoaWFJanlNUHY1Nk4yb1l2MWNTdUdKbTFNL0MvK2haZXdiUmxoMlU1OVdLamMKRHpPWXFaMFFrSkdyN250Vm9takVxUTlNSklpc2M0d2dmS2RMTkdhSFNJclFmR3ZPQlg3UnlhQ0dscWxTTUdDaQorcldZczlmQjhEZVdvcmRGc1lwNnQ4dFBUdGVpZnpaUG9aYzZtVklMN1RpeStKV0lrQ3NXODMxM3NNU2xDeTE5CmtDWVg0eSt5YkM4Ly9OTEVEbkdvUVFVYmFhNE50dlhFcFpNPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  groupPriorityMinimum: 10000
+  versionPriority: 15

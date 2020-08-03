@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: aedes-broker
+  name: aedes-broker-deployment
+  namespace: smart-garden
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aedes-broker
+  template:
+    metadata:
+      labels:
+        app: aedes-broker
+    spec:
+      containers:
+        - image: switchnollie/aedes-broker
+          imagePullPolicy: Always
+          name: aedes-broker
+          envFrom:
+            - secretRef:
+                name: dev-secret
+          ports:
+            - containerPort: 1883
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
