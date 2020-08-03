@@ -4,6 +4,7 @@ node_modules/
 # k8s secrets
 *.secret.yml
 **/secrets
+**/certs
 
 # dotenv environment variables file
 .env

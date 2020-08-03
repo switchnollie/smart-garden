@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: smart-garden-ingress
   namespace: smart-garden
+  annotations:
+    ingress.appscode.com/type: NodePort
 spec:
   tls:
     - secretName: tls-secret

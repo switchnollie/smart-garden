@@ -1,35 +1,43 @@
 version: '3'
 
 services:
-  mongodb:
-    container_name: mongoDatabase
-    image: mongo:4.2.8
-    ports:
-      - '${MONGO_PORT}:${MONGO_PORT}'
-    volumes: 
-      - mongo-volume:/data/db
-      - ./mongoDB/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
-    networks: 
-      - smart-garden-net
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: '${MONGO_USERNAME}'
-      MONGO_INITDB_ROOT_PASSWORD: '${MONGO_PASSWORD}'
-      MONGO_INITDB_DATABASE: '${MONGO_DATABASE}'
+  # mongodb:
+  #   container_name: mongoDatabase
+  #   image: mongo:4.2.8
+  #   ports:
+  #     - '${MONGO_PORT}:${MONGO_PORT}'
+  #   volumes: 
+  #     - mongo-volume:/data/db
+  #     - ./mongoDB/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+  #   networks: 
+  #     - smart-garden-net
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: '${MONGO_USERNAME}'
+  #     MONGO_INITDB_ROOT_PASSWORD: '${MONGO_PASSWORD}'
+  #     MONGO_INITDB_DATABASE: '${MONGO_DATABASE}'
   broker:
     container_name: mqttBroker
     # restart: always
     build: ./broker
-    depends_on: 
-      - mongodb
-    ports:
-      - '1883:1883'
+    # depends_on: 
+    #   - mongodb
     volumes:
       - './broker:/usr/src/broker'
     networks: 
       - smart-garden-net
     environment:
       MONGO_URI: 'mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin'
-
+  haproxy:
+    container_name: haproxy
+    build: ./haproxy
+    ports:
+      - '1883:1883'
+      - '8883:8883'
+    volumes:
+      - './haproxy:/etc/haproxy'
+      - './certs:/certs'
+    networks:
+      - smart-garden-net
 volumes:
   mongo-volume:
 

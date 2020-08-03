@@ -5,9 +5,9 @@ metadata:
   name: broker-service
   namespace: smart-garden
 spec:
+  type: LoadBalancer
   selector:
     app: aedes-broker
-  # type: LoadBalancer
   ports:
     - protocol: TCP
       port: 8883

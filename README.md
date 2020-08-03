@@ -22,10 +22,10 @@ docker-compose up
 
 - Install the Kubernetes Development Environment `minikube` and `kubectl`
 
-- Configure minikube to use a vm-driver (Ingress Nodes are not supported in the default Docker environment). Recommended driver is `hyperkit`. (If minikube can't access the Docker Registry, follow [these steps](https://github.com/kubernetes/minikube/issues/4589#issuecomment-614631444))
+- Start minikube with the standard docker driver
 
 ```sh
-minikube start --driver=hyperkit
+minikube start
 ```
 
 - Install Voyager in your minikube cluster. If the above is not working follow the [official installation instructions](https://voyagermesh.com/docs/v12.0.0/setup/install/#script)
@@ -62,6 +62,17 @@ kubectl apply -f ./k8s/broker -f ./k8s/ingress.yml
 
 ```sh
 docker run -it --rm --env-file .env <image-name>
+```
+
+### Get Information about the Voyager Ingress
+
+> voyager ingress shows up under a custom ressource definitions (CRD) and not under 
+> the ingress type ressources!
+> this means that neither commands like `kubectl get ingress` nor the minikube dashboard
+> will show the instances. Use type **ingress.voyager.appscode.com** instead!
+
+```sh
+kubectl get ingress.voyager.appscode.com -n smart-garden smart-garden-ingress
 ```
 
 ### Test MQTT connection using the mosquitto client
