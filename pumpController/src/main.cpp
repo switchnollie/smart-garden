@@ -79,7 +79,6 @@ void update()
 void connect_to_wlan()
 {
   EEPROM.begin(512);
-  delay(1000);
 
   String ssid = read_wlan_ssid();
   String pass = read_wlan_pass();
@@ -211,29 +210,40 @@ bool test_wifi()
 
 void init_mqtt_topics()
 {
-  water_level_topic = web_server.arg("water_level_topic").c_str();
+  String username = web_server.arg("username");
+  String group = web_server.arg("group");
+  String prefix = username + "/" + group + "/" + ESP.getFlashChipId() + "/";
+
+  String water_level = prefix + "water_level";
+  water_level_topic = water_level.c_str();
   Serial.printf("Water level topic: %s", water_level_topic);
 
-  pump_topic = web_server.arg("pump_topic").c_str();
+  String pump = prefix + "pump";
+  pump_topic = pump.c_str();
   Serial.printf("Pump topic: %s", pump_topic);
 
-  pumped_topic = web_server.arg("pumped_topic").c_str();
+  String pumped = prefix + "pumped";
+  pumped_topic = pump.c_str();
   Serial.printf("Pumped topic: %s", pumped_topic);
 
-  moisture_topic = web_server.arg("moisture_topic").c_str();
+  String moisture = prefix + "moisture";
+  moisture_topic = moisture.c_str();
   Serial.printf("Moisture topic: %s", moisture_topic);
 
-  moisture_threshhold_topic = web_server.arg("moisture_threshhold_topic").c_str();
+  String moisture_threshhold = prefix + "moisture_threshhold";
+  moisture_threshhold_topic = moisture_threshhold.c_str();
   Serial.printf("Moisture threshhold topic: %s", moisture_threshhold_topic);
 
-  pump_intervall_topic = web_server.arg("pump_intervall_topic").c_str();
+  String pump_intervall = prefix + "pump_intervall";
+  pump_intervall_topic = pump_intervall.c_str();
   Serial.printf("Pump intervall topic: %s", pump_intervall_topic);
 
-  pump_duration_topic = web_server.arg("pump_duration_topic").c_str();
+  String pump_duration = prefix + "pump_duration";
+  pump_duration_topic = pump_duration.c_str();
   Serial.printf("Pump duration topic: %s", pump_duration_topic);
 
   EEPROM.begin(512);
-  delay(1000);
+
   write_mqtt_parameters();
 
   web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
@@ -376,7 +386,7 @@ void wait_for_MQTT()
 void read_mqtt_topics()
 {
   EEPROM.begin(512);
-  delay(1000);
+
   //Check if initialization already done
   int result = EEPROM.read(mqtt_initialized_eeprom_index);
   if (result != 1)

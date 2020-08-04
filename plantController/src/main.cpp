@@ -74,7 +74,6 @@ void start_web_server()
 void connect_to_wlan()
 {
   EEPROM.begin(512);
-  delay(1000);
 
   String ssid = read_wlan_ssid();
   String pass = read_wlan_pass();
@@ -206,11 +205,13 @@ bool test_wifi()
 
 void init_mqtt_topics()
 {
-  MOISTURE_TOPIC = web_server.arg("moisture_topic").c_str();
+  String username = web_server.arg("username");
+  String group = web_server.arg("group");
+  String moisture = username + "/"+ group + "/" + ESP.getFlashChipId() + "/" + "moisture";
+  MOISTURE_TOPIC = moisture.c_str();
   Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
 
   EEPROM.begin(512);
-  delay(1000);
 
   Serial.println("\nWriting moisture topic...");
   for (int i = 0; i < strlen(MOISTURE_TOPIC); ++i)
@@ -253,7 +254,7 @@ void wait_for_MQTT()
 void read_mqtt_topics()
 {
   EEPROM.begin(512);
-  delay(1000);
+
   //Check if initialization already done
   int result = EEPROM.read(mqtt_initialized_eeprom_index);
   if (result != 1)
