@@ -8,19 +8,57 @@
 	- Account: TimHendrik
 	- Password: HSAATIBSPflanze
 
-# DB Schema
-	-<TIBS>
-	-Collections:
-		-TODO NUTZER ID
-			-Usereingabe ("Pflanzengruppe1")
-				-<Pumped>
-				-<Waterlevel>
-				-<Moisture>
-
 # Connection
 
 	- Connection String:
 		- mongodb+srv://TimHendrik:HSAATIBSPflanze@cluster0-e7c5u.mongodb.net
 
 	- App:
-		- mongodb://127.0.0.1:27017/TIBS
+		- mongodb+srv://TimHendrik:HSAATIBSPflanze@cluster0-e7c5u.mongodb.net/TIBS?retryWrites=true&w=majority
+  
+# DB Schema
+	TIBS: DB
+		Data: Collection 
+			{
+				[
+					{
+					userId:"String",
+					groups: [
+						{
+							groupId:"String",
+							devices: 
+							[
+								{
+									deviceId : "String",
+									data : 
+									{
+										pumped : [
+											"2020:08:04.13:31",
+											"2020:07:04.13:31",
+										],
+										waterLevel : [
+											{
+												date: "2020:08:04.13:31",
+												value: "20",
+											},
+											{
+												date: "2020:07:04.13:31",
+												value: "20",
+											}
+										],
+										moisture : [
+											{
+												date: "2020:08:04.13:31",
+												value: "30",
+											},
+											{
+												date: "2020:07:04.13:31",
+												value: "31",
+											}
+										]
+									}
+								}
+							]
+						],
+					}
+				],

@@ -6,11 +6,15 @@
 #include <PubSubClient.h>
 #include <EEPROM.h>
 #include <string>
+#include <ESP8266HTTPUpdateServer.h>
+#include <ESP8266mDNS.h>
 
 const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
 const char *ssid;
 const char *passphrase;
+//https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
+const char *host = "esp8266-webupdate";
 
 Ticker pump_tic;
 Ticker pump_tic_intervall;
@@ -18,6 +22,7 @@ Ticker water_level_tic;
 
 //Webserver
 ESP8266WebServer web_server(80);
+ESP8266HTTPUpdateServer http_updater;
 const byte DNS_PORT = 53;
 IPAddress esp_ip(192, 168, 4, 1);
 
@@ -54,7 +59,6 @@ int pump_duration = 5000;
 char messageBuffer[MSG_BUFFER_SIZE];
 
 void waitforIP();
-void WiFiEvent(WiFiEvent_t event);
 void pump();
 void start_web_server();
 void publishWaterLevel();
@@ -70,6 +74,10 @@ void change_wlan();
 void write_wlan_parameters(String ssid, String pass);
 void write_mqtt_parameters();
 void read_mqtt_parameters();
+
+void update()
+{
+}
 
 void connect_to_wlan()
 {
@@ -103,6 +111,7 @@ void waitforIP()
   {
     //Allow user to init/change wlan
     web_server.handleClient();
+    MDNS.update();
   }
 }
 
@@ -453,8 +462,6 @@ void setup()
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(WATERLEVEL_PIN, INPUT);
 
-  WiFi.onEvent(WiFiEvent);
-
   connect_to_wlan();
   read_mqtt_topics();
 
@@ -468,7 +475,10 @@ void setup()
 
 void loop()
 {
-  web_server.handleClient();
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    connect_to_wlan();
+  }
   if (!mqttClient.connected())
   {
     reconnect_MQTT();
@@ -494,8 +504,15 @@ void start_web_server()
     web_server.send(302, "text/plain", "Pfad nicht verfügbar!");
   });
 
+  MDNS.begin(host);
+
+  http_updater.setup(&web_server);
+
   web_server.begin();
   Serial.println("Webserver gestartet.");
+
+  MDNS.addService("http", "tcp", 80);
+  Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
 }
 
 void pumpStart()
@@ -566,21 +583,5 @@ void publishWaterLevel()
     sprintf(messageBuffer, "%d", water_level);
     Serial.printf("Publishing %d to topic %s\n", water_level, water_level_topic);
     mqttClient.publish(water_level_topic, messageBuffer);
-  }
-}
-
-void WiFiEvent(WiFiEvent_t event)
-{
-  switch (event)
-  {
-  case WIFI_EVENT_STAMODE_CONNECTED:
-    //Serial.println("Wifi connected!");
-    break;
-  case WIFI_EVENT_STAMODE_DISCONNECTED:
-    //Serial.println("Wifi disconnected!");
-    //connect_to_wlan();
-    break;
-  default:
-    break;
   }
 }
