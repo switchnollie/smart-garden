@@ -22,9 +22,9 @@
       e.preventDefault();
       const ssid = ssidField.value;
       const password = passwordField.value;
-      
+
       axios.get(`/change_wlan?ssid=${ssid}&pass=${password}`)
-        .then(() => window.location.replace("/mqttconfig.html"));
+        .then(() => window.location.replace("/groups.html"));
     }
   </script>
 </body>

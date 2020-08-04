@@ -1,0 +1,63 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Garden</title>
+  </head>
+  <body>
+    <h1>Watering Groups</h1>
+    <form class="groupsForm">
+      <p>
+        Please enter a Username (If you have already configured devices in your
+        system, enter the Username that was used to configure these devices):
+      </p>
+      <input type="text" placeholder="Your Username" />
+      <p>
+        Do you have already have watering groups to which you want to add this
+        pump?
+      </p>
+      <div>
+        <input type="checkbox" id="checkbox" /><label id="checkbox-label"
+          >No</label
+        >
+      </div>
+      <input
+        id="group-field"
+        type="text"
+        placeholder="Your new plant group name"
+      />
+    </form>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>
+    <script>
+      const checkbox = document.getElementById("checkbox");
+      const checkboxLabel = document.getElementById("checkbox-label");
+      const groupField = document.getElementById("group-field");
+      const groupsForm = document.querySelector(".groups-form");
+
+      checkbox.onchange = function (e) {
+        if (e.target.checked) {
+          checkboxLabel.innerText = "Yes";
+          groupField.placeholder = "Your existing plant group";
+        } else {
+          checkboxLabel.innerText = "No";
+        }
+      };
+
+      groupsForm.onsubmit = function (e) {
+        e.preventDefault();
+        const groupId = groupField.value;
+
+        axios
+          .get(`/init_mqtt_topics?groupid=${groupId}`)
+          .then(() => {
+            alert("Your Pump was successfully added to the system.");
+          })
+          .catch(() => {
+            alert(
+              "The system could not be initialized. Please try again."
+            );
+          });
+      };
+    </script>
+  </body>
+</html>
