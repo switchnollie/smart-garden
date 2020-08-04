@@ -18,6 +18,7 @@ IP: 192.168.4.1
 
 ### MQTT Topics ändern:
 .../init_mqtt_topics?
-    moisture_topic=
+    username=
+    group=
 
-192.168.4.1/init_mqtt_topics?moisture_topic=Hans/Gruppe1/moisture
+192.168.4.1/init_mqtt_topics?username=Hannes&group=Gruppe1

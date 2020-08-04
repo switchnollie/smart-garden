@@ -23,16 +23,15 @@ Ticker water_level_tic;
 //Webserver
 ESP8266WebServer web_server(80);
 ESP8266HTTPUpdateServer http_updater;
-const byte DNS_PORT = 53;
 IPAddress esp_ip(192, 168, 4, 1);
+File wlan_html_file;
+File groups_html_file;
 
 //MQTT
 const IPAddress broker_address(192, 168, 178, 110);
 WiFiClient client;
-PubSubClient mqttClient(client);
+PubSubClient mqtt_client(client);
 
-//Start webserver
-const char *WEBSERVER_TOPIC = "";
 //Water level of pump controller
 const char *water_level_topic = "";
 //Timestamp when pumpcontroller pumped
@@ -58,7 +57,6 @@ int pump_duration = 5000;
 #define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
 
-void waitforIP();
 void pump();
 void start_web_server();
 void publishWaterLevel();
@@ -75,43 +73,26 @@ void write_wlan_parameters(String ssid, String pass);
 void write_mqtt_parameters();
 void read_mqtt_parameters();
 
-void update()
-{
-}
-
 void connect_to_wlan()
 {
   EEPROM.begin(512);
-  delay(1000);
 
   String ssid = read_wlan_ssid();
   String pass = read_wlan_pass();
 
   Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
-  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid.c_str(), pass.c_str());
   if (test_wifi())
   {
     Serial.println("Succesfully Connected!!!");
     return;
   }
-  else
-  {
-    Serial.println("Starting web server!");
-    start_web_server();
-  }
 
-  waitforIP();
-}
-
-void waitforIP()
-{
   Serial.printf("Waiting for IP configuration...");
   while (WiFi.status() != WL_CONNECTED)
   {
-    //Allow user to init/change wlan
+    //Wait till connected
     web_server.handleClient();
-    MDNS.update();
   }
 }
 
@@ -135,14 +116,15 @@ void change_wlan()
       Serial.println("Succesfully Connected!!!");
       return;
     }
-    else
+
+    Serial.printf("Waiting for IP configuration...");
+    while (WiFi.status() != WL_CONNECTED)
     {
-      Serial.println("Starting web server!");
-      start_web_server();
+      //Wait till connected
+      web_server.handleClient();
     }
 
-    waitforIP();
-    web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden");
+    web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden!");
   }
 }
 
@@ -219,35 +201,46 @@ bool test_wifi()
     c++;
   }
   Serial.println("");
-  Serial.println("Connect timed out, opening AP");
+  Serial.println("Connect timed out");
   return false;
 }
 
 void init_mqtt_topics()
 {
-  water_level_topic = web_server.arg("water_level_topic").c_str();
+  String username = web_server.arg("username");
+  String group = web_server.arg("group");
+  String prefix = username + "/" + group + "/" + ESP.getFlashChipId() + "/";
+
+  String water_level = prefix + "water_level";
+  water_level_topic = water_level.c_str();
   Serial.printf("Water level topic: %s", water_level_topic);
 
-  pump_topic = web_server.arg("pump_topic").c_str();
+  String pump = prefix + "pump";
+  pump_topic = pump.c_str();
   Serial.printf("Pump topic: %s", pump_topic);
 
-  pumped_topic = web_server.arg("pumped_topic").c_str();
+  String pumped = prefix + "pumped";
+  pumped_topic = pump.c_str();
   Serial.printf("Pumped topic: %s", pumped_topic);
 
-  moisture_topic = web_server.arg("moisture_topic").c_str();
+  String moisture = prefix + "moisture";
+  moisture_topic = moisture.c_str();
   Serial.printf("Moisture topic: %s", moisture_topic);
 
-  moisture_threshhold_topic = web_server.arg("moisture_threshhold_topic").c_str();
+  String moisture_threshhold = prefix + "moisture_threshhold";
+  moisture_threshhold_topic = moisture_threshhold.c_str();
   Serial.printf("Moisture threshhold topic: %s", moisture_threshhold_topic);
 
-  pump_intervall_topic = web_server.arg("pump_intervall_topic").c_str();
+  String pump_intervall = prefix + "pump_intervall";
+  pump_intervall_topic = pump_intervall.c_str();
   Serial.printf("Pump intervall topic: %s", pump_intervall_topic);
 
-  pump_duration_topic = web_server.arg("pump_duration_topic").c_str();
+  String pump_duration = prefix + "pump_duration";
+  pump_duration_topic = pump_duration.c_str();
   Serial.printf("Pump duration topic: %s", pump_duration_topic);
 
   EEPROM.begin(512);
-  delay(1000);
+
   write_mqtt_parameters();
 
   web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
@@ -390,7 +383,7 @@ void wait_for_MQTT()
 void read_mqtt_topics()
 {
   EEPROM.begin(512);
-  delay(1000);
+
   //Check if initialization already done
   int result = EEPROM.read(mqtt_initialized_eeprom_index);
   if (result != 1)
@@ -408,7 +401,6 @@ void read_mqtt_topics()
   }
   else
   {
-    start_web_server();
     wait_for_MQTT();
   }
 }
@@ -416,22 +408,22 @@ void read_mqtt_topics()
 void reconnect_MQTT()
 {
   // Loop until we're reconnected
-  while (!mqttClient.connected())
+  while (!mqtt_client.connected())
   {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (mqttClient.connect(clientId.c_str()))
+    if (mqtt_client.connect(clientId.c_str()))
     {
       Serial.println("connected");
-      mqttClient.subscribe(moisture_topic);
+      mqtt_client.subscribe(moisture_topic);
     }
     else
     {
       Serial.print("failed, rc=");
-      Serial.print(mqttClient.state());
+      Serial.print(mqtt_client.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -454,6 +446,13 @@ void clear_eeprom()
   Serial.println("EEPROM cleared");
 }
 
+void load_static_files()
+{
+  SPIFFS.begin();
+  // wlan_html_file = SPIFFS.open("static/wlan.html", "r");
+  // web_server.send(200, "text/html", wlan_html_file);
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -462,12 +461,14 @@ void setup()
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(WATERLEVEL_PIN, INPUT);
 
+  WiFi.mode(WIFI_AP_STA);
+  start_web_server();
   connect_to_wlan();
   read_mqtt_topics();
 
   //init MQTT
-  mqttClient.setServer(broker_address, 1883);
-  mqttClient.setCallback(mqtt_callback);
+  mqtt_client.setServer(broker_address, 1883);
+  mqtt_client.setCallback(mqtt_callback);
 
   water_level_tic.attach_ms(6000, publishWaterLevel);
   pump_tic_intervall.attach_ms(pump_intervall, pump);
@@ -475,25 +476,29 @@ void setup()
 
 void loop()
 {
+  web_server.handleClient();
+
   if (WiFi.status() != WL_CONNECTED)
   {
     connect_to_wlan();
   }
-  if (!mqttClient.connected())
+
+  if (!mqtt_client.connected())
   {
     reconnect_MQTT();
   }
-  mqttClient.loop();
+
+  mqtt_client.loop();
+  MDNS.update();
 }
 
 void start_web_server()
 {
   //WIFI ACCESS POINT
-  WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(esp_ip,                       //Eigene Adresse
                     esp_ip,                       //Gateway Adresse
                     IPAddress(255, 255, 255, 0)); //Subnetz-Maske
-  WiFi.softAP("ESP", "ESPPASSWORD");
+  WiFi.softAP("ESP Pump", "ESPPASSWORD");
 
   web_server.on("/change_wlan", change_wlan);
   web_server.on("/init_mqtt_topics", init_mqtt_topics);
@@ -504,22 +509,25 @@ void start_web_server()
     web_server.send(302, "text/plain", "Pfad nicht verfügbar!");
   });
 
-  MDNS.begin(host);
+  //load_static_files();
+  //web_server.serveStatic("/", SPIFFS, "/static/");
 
-  http_updater.setup(&web_server);
+  //MDNS.begin(host);
+
+  //http_updater.setup(&web_server);
 
   web_server.begin();
   Serial.println("Webserver gestartet.");
 
-  MDNS.addService("http", "tcp", 80);
-  Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
+  //MDNS.addService("http", "tcp", 80);
+  //Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
 }
 
 void pumpStart()
 {
   Serial.println("Pumping");
   digitalWrite(MOTOR_PIN, HIGH);
-  mqttClient.publish(pumped_topic, "pumped");
+  mqtt_client.publish(pumped_topic, "pumped");
 }
 
 void pumpStop()
@@ -546,11 +554,7 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
   {
     Serial.print((char)payload[i]);
   }
-  if (topic == WEBSERVER_TOPIC)
-  {
-    start_web_server();
-  }
-  else if (topic == moisture_topic)
+  if (topic == moisture_topic)
   {
     if ((int)payload[0] <= moisture_threshhold)
     {
@@ -577,11 +581,11 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
 void publishWaterLevel()
 {
-  if (mqttClient.connected())
+  if (mqtt_client.connected())
   {
     int water_level = analogRead(WATERLEVEL_PIN);
     sprintf(messageBuffer, "%d", water_level);
     Serial.printf("Publishing %d to topic %s\n", water_level, water_level_topic);
-    mqttClient.publish(water_level_topic, messageBuffer);
+    mqtt_client.publish(water_level_topic, messageBuffer);
   }
 }

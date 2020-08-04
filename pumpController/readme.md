@@ -17,14 +17,8 @@ IP: 192.168.4.1
 
 ## MQTT Topics ändern
 .../init_mqtt_topics?
-    water_level_topic=
-    &pumped_topic=
-    &moisture_topic=
-    &pump_topic=
-    &moisture_threshhold_topic=
-    &pump_intervall_topic=
-    &pump_duration_topic=
+    username=
+    group=
 
 
-192.168.4.1/init_mqtt_topics?water_level_topic=Hans/Gruppe1/waterlevel&pump_topic=Hans/Gruppe1/pump&pumped_topic=Hans/Gruppe1/pumed
-&moisture_topic=Hans/Gruppe1/moisture&moisture_threshhold_topic=Hans/Gruppe1/moisture_threshhold&pump_intervall_topic=Hans/Gruppe1/pump_intervall&pump_duration_topic=Hans/Gruppe1/pump_duration 
+192.168.4.1/init_mqtt_topics?username=Hannes&group=Gruppe1
