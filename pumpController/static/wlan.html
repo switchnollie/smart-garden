@@ -1,0 +1,31 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Garden</title>
+</head>
+<body>
+  <h1>Welcome to Smart Garden</h1>
+  <h2>Please enter your Wifi Credentials to get started</h2>
+  <form class="wifi-form">
+    <input id="ssid-field" type="text" placeholder="SSID">
+    <input id="password-field" type="password" placeholder="Password">
+    <button type="submit">Submit</button>
+  </form>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>
+  <script type="text/javascript">
+    const ssidField = document.querySelector("#ssid-field");
+    const passwordField = document.querySelector("#password-field");
+    const wifiForm = document.querySelector(".wifi-form");
+
+    wifiForm.onsubmit = function(e) {
+      e.preventDefault();
+      const ssid = ssidField.value;
+      const password = passwordField.value;
+
+      axios.get(`/change_wlan?ssid=${ssid}&pass=${password}`)
+        .then(() => window.location.replace("/groups.html"));
+    }
+  </script>
+</body>
+</html>

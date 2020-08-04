@@ -13,7 +13,6 @@ const char *passphrase;
 
 //Webserver
 ESP8266WebServer web_server(80);
-const byte DNS_PORT = 53;
 IPAddress esp_ip(192, 168, 4, 1);
 
 void intialize_mqtt();
@@ -52,7 +51,6 @@ void start_web_server()
   Serial.println("Starting web server!");
 
   //WIFI ACCESS POINT
-  WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(esp_ip,                       //Eigene Adresse
                     esp_ip,                       //Gateway Adresse
                     IPAddress(255, 255, 255, 0)); //Subnetz-Maske
@@ -199,7 +197,7 @@ bool test_wifi()
     c++;
   }
   Serial.println("");
-  Serial.println("Connect timed out, opening AP");
+  Serial.println("Connect timed out");
   return false;
 }
 
@@ -207,7 +205,7 @@ void init_mqtt_topics()
 {
   String username = web_server.arg("username");
   String group = web_server.arg("group");
-  String moisture = username + "/"+ group + "/" + ESP.getFlashChipId() + "/" + "moisture";
+  String moisture = username + "/" + group + "/" + ESP.getFlashChipId() + "/" + "moisture";
   MOISTURE_TOPIC = moisture.c_str();
   Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
 
@@ -276,7 +274,7 @@ void read_mqtt_topics()
   }
 }
 
-void reconnect()
+void reconnect_MQTT()
 {
   // Loop until we're reconnected
   while (!mqtt_client.connected())
@@ -325,8 +323,8 @@ void setup()
 
   pinMode(MOISTURE_PIN, INPUT);
 
+  WiFi.mode(WIFI_AP_STA);
   start_web_server();
-
   connect_to_wlan();
   read_mqtt_topics();
 
@@ -341,11 +339,19 @@ void setup()
 
 void loop()
 {
+  web_server.handleClient();
+
+    if (WiFi.status() != WL_CONNECTED)
+  {
+    connect_to_wlan();
+  }
+
   if (!mqtt_client.connected())
   {
-    reconnect();
+    reconnect_MQTT();
   }
-  web_server.handleClient();
+
+
   mqtt_client.loop();
 }
 

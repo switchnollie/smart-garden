@@ -23,8 +23,9 @@ Ticker water_level_tic;
 //Webserver
 ESP8266WebServer web_server(80);
 ESP8266HTTPUpdateServer http_updater;
-const byte DNS_PORT = 53;
 IPAddress esp_ip(192, 168, 4, 1);
+File wlan_html_file;
+File groups_html_file;
 
 //MQTT
 const IPAddress broker_address(192, 168, 178, 110);
@@ -72,10 +73,6 @@ void write_wlan_parameters(String ssid, String pass);
 void write_mqtt_parameters();
 void read_mqtt_parameters();
 
-void update()
-{
-}
-
 void connect_to_wlan()
 {
   EEPROM.begin(512);
@@ -84,7 +81,6 @@ void connect_to_wlan()
   String pass = read_wlan_pass();
 
   Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
-  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid.c_str(), pass.c_str());
   if (test_wifi())
   {
@@ -96,6 +92,7 @@ void connect_to_wlan()
   while (WiFi.status() != WL_CONNECTED)
   {
     //Wait till connected
+    web_server.handleClient();
   }
 }
 
@@ -127,7 +124,7 @@ void change_wlan()
       web_server.handleClient();
     }
 
-    web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden");
+    web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden!");
   }
 }
 
@@ -204,7 +201,7 @@ bool test_wifi()
     c++;
   }
   Serial.println("");
-  Serial.println("Connect timed out, opening AP");
+  Serial.println("Connect timed out");
   return false;
 }
 
@@ -449,6 +446,13 @@ void clear_eeprom()
   Serial.println("EEPROM cleared");
 }
 
+void load_static_files()
+{
+  SPIFFS.begin();
+  // wlan_html_file = SPIFFS.open("static/wlan.html", "r");
+  // web_server.send(200, "text/html", wlan_html_file);
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -457,8 +461,8 @@ void setup()
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(WATERLEVEL_PIN, INPUT);
 
+  WiFi.mode(WIFI_AP_STA);
   start_web_server();
-
   connect_to_wlan();
   read_mqtt_topics();
 
@@ -472,15 +476,18 @@ void setup()
 
 void loop()
 {
+  web_server.handleClient();
+
   if (WiFi.status() != WL_CONNECTED)
   {
     connect_to_wlan();
   }
+
   if (!mqtt_client.connected())
   {
     reconnect_MQTT();
   }
-  web_server.handleClient();
+
   mqtt_client.loop();
   MDNS.update();
 }
@@ -488,7 +495,6 @@ void loop()
 void start_web_server()
 {
   //WIFI ACCESS POINT
-  WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(esp_ip,                       //Eigene Adresse
                     esp_ip,                       //Gateway Adresse
                     IPAddress(255, 255, 255, 0)); //Subnetz-Maske
@@ -503,15 +509,18 @@ void start_web_server()
     web_server.send(302, "text/plain", "Pfad nicht verfügbar!");
   });
 
-  MDNS.begin(host);
+  //load_static_files();
+  //web_server.serveStatic("/", SPIFFS, "/static/");
 
-  http_updater.setup(&web_server);
+  //MDNS.begin(host);
+
+  //http_updater.setup(&web_server);
 
   web_server.begin();
   Serial.println("Webserver gestartet.");
 
-  MDNS.addService("http", "tcp", 80);
-  Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
+  //MDNS.addService("http", "tcp", 80);
+  //Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
 }
 
 void pumpStart()
