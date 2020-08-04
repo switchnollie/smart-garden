@@ -1,26 +1,10 @@
 version: '3'
 
 services:
-  # mongodb:
-  #   container_name: mongoDatabase
-  #   image: mongo:4.2.8
-  #   ports:
-  #     - '${MONGO_PORT}:${MONGO_PORT}'
-  #   volumes: 
-  #     - mongo-volume:/data/db
-  #     - ./mongoDB/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
-  #   networks: 
-  #     - smart-garden-net
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: '${MONGO_USERNAME}'
-  #     MONGO_INITDB_ROOT_PASSWORD: '${MONGO_PASSWORD}'
-  #     MONGO_INITDB_DATABASE: '${MONGO_DATABASE}'
   broker:
     container_name: mqttBroker
     # restart: always
     build: ./broker
-    # depends_on: 
-    #   - mongodb
     volumes:
       - './broker:/usr/src/broker'
     networks: 
@@ -33,13 +17,21 @@ services:
     ports:
       - '1883:1883'
       - '8883:8883'
+      - '80:80'
     volumes:
-      - './haproxy:/etc/haproxy'
+      - './haproxy:/usr/local/etc/haproxy'
       - './certs:/certs'
     networks:
       - smart-garden-net
-volumes:
-  mongo-volume:
+  dashboard:
+    container_name: dashboard
+    build: ./dashboard
+    volumes:
+      - './dashboard:/usr/src/app'
+      - /usr/src/app/node_modules
+      - /usr/src/app/.next
+    networks:
+      - smart-garden-net
 
 networks: 
   smart-garden-net:
