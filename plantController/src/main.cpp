@@ -25,16 +25,14 @@ String read_wlan_pass();
 bool test_wifi();
 void write_wlan_parameters(String ssid, String pass);
 void init_mqtt_topics();
-void waitforIP();
+
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
 const IPAddress broker_address(192, 168, 0, 143);
 WiFiClient espClient;
-PubSubClient mqttClient(espClient);
+PubSubClient mqtt_client(espClient);
 //Publish moisture
 const char *MOISTURE_TOPIC = "";
-//Start webserver
-const char *WEBSERVER_TOPIC = "";
 //Flag to indicate initialization of topics
 bool mqtt_initialized = false;
 const int mqtt_initialized_eeprom_index = 99;
@@ -51,12 +49,14 @@ int motorState = LOW;
 
 void start_web_server()
 {
+  Serial.println("Starting web server!");
+
   //WIFI ACCESS POINT
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(esp_ip,                       //Eigene Adresse
                     esp_ip,                       //Gateway Adresse
                     IPAddress(255, 255, 255, 0)); //Subnetz-Maske
-  WiFi.softAP("ESP", "ESPPASSWORD");
+  WiFi.softAP("ESP Plant", "ESPPASSWORD");
 
   web_server.on("/change_wlan", change_wlan);
   web_server.on("/init_mqtt_topics", init_mqtt_topics);
@@ -87,17 +87,7 @@ void connect_to_wlan()
     Serial.println("Succesfully Connected!!!");
     return;
   }
-  else
-  {
-    Serial.println("Starting web server!");
-    start_web_server();
-  }
 
-  waitforIP();
-}
-
-void waitforIP()
-{
   Serial.printf("Waiting for IP configuration...");
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -126,13 +116,14 @@ void change_wlan()
       Serial.println("Succesfully Connected!!!");
       return;
     }
-    else
+
+    Serial.printf("Waiting for IP configuration...");
+    while (WiFi.status() != WL_CONNECTED)
     {
-      Serial.println("Starting web server!");
-      start_web_server();
+      //Allow user to init/change wlan
+      web_server.handleClient();
     }
 
-    waitforIP();
     web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden");
   }
 }
@@ -280,7 +271,6 @@ void read_mqtt_topics()
   }
   else
   {
-    start_web_server();
     wait_for_MQTT();
   }
 }
@@ -288,25 +278,25 @@ void read_mqtt_topics()
 void reconnect()
 {
   // Loop until we're reconnected
-  while (!mqttClient.connected())
+  while (!mqtt_client.connected())
   {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (mqttClient.connect(clientId.c_str()))
+    if (mqtt_client.connect(clientId.c_str()))
     {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      mqttClient.publish("outTopic", "hello world");
+      mqtt_client.publish("outTopic", "hello world");
       // ... and resubscribe
-      mqttClient.subscribe("inTopic");
+      mqtt_client.subscribe("inTopic");
     }
     else
     {
       Serial.print("failed, rc=");
-      Serial.print(mqttClient.state());
+      Serial.print(mqtt_client.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -334,12 +324,14 @@ void setup()
 
   pinMode(MOISTURE_PIN, INPUT);
 
+  start_web_server();
+
   connect_to_wlan();
   read_mqtt_topics();
 
   //init MQTT
-  mqttClient.setServer(broker_address, 1883);
-  mqttClient.setCallback(mqtt_callback);
+  mqtt_client.setServer(broker_address, 1883);
+  mqtt_client.setCallback(mqtt_callback);
 
   randomSeed(micros());
 
@@ -348,22 +340,23 @@ void setup()
 
 void loop()
 {
-  if (!mqttClient.connected())
+  if (!mqtt_client.connected())
   {
     reconnect();
   }
-  mqttClient.loop();
+  web_server.handleClient();
+  mqtt_client.loop();
 }
 
 void publish_moisture_level()
 {
-  if (mqttClient.connected())
+  if (mqtt_client.connected())
   {
     int moistureLevel = analogRead(MOISTURE_PIN);
     sprintf(messageBuffer, "%d", moistureLevel);
     Serial.print("Publishing message ");
     Serial.println(messageBuffer);
-    mqttClient.publish(MOISTURE_TOPIC, messageBuffer);
+    mqtt_client.publish(MOISTURE_TOPIC, messageBuffer);
   }
 }
 
@@ -374,9 +367,5 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
   for (int i = 0; i < length; i++)
   {
     Serial.print((char)payload[i]);
-  }
-  if (topic == WEBSERVER_TOPIC)
-  {
-    start_web_server();
   }
 }

@@ -3,13 +3,7 @@ IP-Address: 192.168.0.143
 Port: 1883
 
 #Topics:
-INIT 
-    -Value assigned in initialization
-    -can be whatever -> needed to assign pump and plantcontroller
-    -bsp. USERID/ErstePflanzengruppe(Nutzereingabe)/waterlevel
-
-//Start webserver
-MQTT_ID/webserver
+INIT: USERID/GROUPID/CHIPID/TOPIC
 
 //Water level of pump controller
 INIT/waterlevel
