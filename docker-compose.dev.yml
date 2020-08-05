@@ -20,7 +20,7 @@ services:
       - '8080:80'
     volumes:
       - './haproxy:/usr/local/etc/haproxy'
-      - './certs:/certs'
+      - './certs:/etc/letsencrypt/live/smartgarden.timweise.com'
     networks:
       - smart-garden-net
   dashboard:

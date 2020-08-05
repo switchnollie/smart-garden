@@ -8,7 +8,7 @@
 - MONGO_PORT
 - MONGO_HOST
 
-## Start all containers locally using Docker Compose and an externally managed instance of MongoDB
+## Start all containers locally using Docker Compose, self signed certificates and an externally managed instance of MongoDB
 
 - Install Docker Community Edition in a up-to-date version.
 - Provide the mongo environment variables (e.g. as a `.env` File)
@@ -82,12 +82,4 @@ docker run -it --rm --env-file .env <image-name>
 
 ```sh
 kubectl get ingress.voyager.appscode.com -n smart-garden smart-garden-ingress
-```
-
-### Test MQTT connection using the mosquitto client
-
-- Publish a message on the test topic
-
-```sh
-mosquitto_pub
 ```
