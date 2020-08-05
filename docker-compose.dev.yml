@@ -17,7 +17,7 @@ services:
     ports:
       - '1883:1883'
       - '8883:8883'
-      - '80:80'
+      - '8080:80'
     volumes:
       - './haproxy:/usr/local/etc/haproxy'
       - './certs:/certs'
@@ -27,11 +27,14 @@ services:
     container_name: dashboard
     build: ./dashboard
     volumes:
-      - './dashboard:/usr/src/app'
-      - /usr/src/app/node_modules
-      - /usr/src/app/.next
+      - 'web-root:/usr/src/dashboard/packages/server/public'
+      - './dashboard:/usr/src/dashboard'
+      - /usr/src/dashboard/node_modules
     networks:
       - smart-garden-net
+
+volumes:
+  web-root:
 
 networks: 
   smart-garden-net:

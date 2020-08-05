@@ -1,21 +1,10 @@
-FROM node:12
-
-ENV PORT 3000
-
-# Create app directory
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
-# Installing dependencies
-COPY package*.json /usr/src/app/
-RUN npm install
-
-# Copying source files
-COPY . /usr/src/app
-
-# Building app
-RUN npm run build
-EXPOSE 3000
-
-# Running the app
-CMD "npm" "run" "start"
+FROM node:latest
+WORKDIR /usr/src/dashboard
+COPY package*.json ./
+COPY lerna.json .
+COPY packages/react-app ./packages/react-app
+COPY packages/server ./packages/server
+RUN yarn
+RUN yarn build
+EXPOSE 4000
+CMD ["yarn", "prod"]

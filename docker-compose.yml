@@ -23,7 +23,7 @@ services:
       - './haproxy:/usr/local/etc/haproxy'
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
-      - 'next-root:/var/www/next'
+      - 'web-root:/var/www/next'
     networks:
       - smart-garden-net
   dashboard:
@@ -31,26 +31,26 @@ services:
     build: ./dashboard
     restart: unless-stopped
     volumes:
-      - 'next-root:/usr/src/app/.next'
-      - './dashboard:/usr/src/app'
-      - /usr/src/app/node_modules
+      - 'web-root:/usr/src/dashboard/packages/server/public'
+      - './dashboard:/usr/src/dashboard'
+      - /usr/src/dashboard/node_modules
     networks:
       - smart-garden-net
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - next-root:/var/www/next
-    depends_on:
-      - dashboard
-    command: certonly --webroot --webroot-path=/var/www/next/server/pages --email timweise@hotmail.de --agree-tos --no-eff-email --staging -d smartgarden.timweise.com  -d www.smartgarden.timweise.com
+    certbot:
+      image: certbot/certbot
+      container_name: certbot
+      volumes:
+        - certbot-etc:/etc/letsencrypt
+        - certbot-var:/var/lib/letsencrypt
+        - web-root:/var/www/react
+      depends_on:
+        - dashboard
+      command: certonly --webroot --webroot-path=/var/www/next/server/pages --email timweise@hotmail.de --agree-tos --no-eff-email --staging -d smartgarden.timweise.com  -d www.smartgarden.timweise.com
 
-volume:
+volumes:
   certbot-etc:
   certbot-var:
-  next-root:
+  web-root:
   
 
 networks: 

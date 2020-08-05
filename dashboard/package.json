@@ -1,15 +1,15 @@
 {
   "name": "smartgarden-dashboard",
-  "version": "0.1.0",
   "private": true,
+  "workspaces": [
+     "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "build": "lerna run build && rm -rf ./packages/server/public && mkdir -p ./packages/server/public && mv ./packages/react-app/build/* ./packages/server/public && rm -rf ./packages/react-app/build",
+    "dev": "lerna run start",
+    "prod": "lerna run start --scope=@smartgarden-dashboard/server"
   },
-  "dependencies": {
-    "next": "9.5.1",
-    "react": "16.13.1",
-    "react-dom": "16.13.1"
+  "devDependencies": {
+    "lerna": "^3.22.1"
   }
 }
