@@ -19,6 +19,9 @@ services:
       - '1883:1883'
       - '8883:8883'
       - '80:80'
+    depends_on:
+      - dashboard
+      - broker
     volumes:
       - './haproxy:/usr/local/etc/haproxy'
       - certbot-etc:/etc/letsencrypt
