@@ -36,16 +36,16 @@ services:
       - /usr/src/dashboard/node_modules
     networks:
       - smart-garden-net
-    certbot:
-      image: certbot/certbot
-      container_name: certbot
-      volumes:
-        - certbot-etc:/etc/letsencrypt
-        - certbot-var:/var/lib/letsencrypt
-        - web-root:/var/www/react
-      depends_on:
-        - dashboard
-      command: certonly --webroot --webroot-path=/var/www/react --email timweise@hotmail.de --agree-tos --no-eff-email --staging -d smartgarden.timweise.com  -d www.smartgarden.timweise.com
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/react
+    depends_on:
+      - dashboard
+    command: certonly --webroot --webroot-path=/var/www/react --email timweise@hotmail.de --agree-tos --no-eff-email --staging -d smartgarden.timweise.com  -d www.smartgarden.timweise.com
 
 volumes:
   certbot-etc:
