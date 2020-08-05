@@ -48,7 +48,7 @@ services:
       - web-root:/var/www/react
     depends_on:
       - dashboard
-    command: certonly --webroot --webroot-path=/var/www/react --email timweise@hotmail.de --agree-tos --no-eff-email --staging -d smartgarden.timweise.com  -d www.smartgarden.timweise.com -d broker.smartgarden.timweise.com
+    command: certonly --webroot --webroot-path=/var/www/react --email timweise@hotmail.de --agree-tos --no-eff-email --force-renewal -d smartgarden.timweise.com  -d www.smartgarden.timweise.com -d broker.smartgarden.timweise.com
 
 volumes:
   certbot-etc:
