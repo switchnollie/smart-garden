@@ -3,7 +3,6 @@ version: '3'
 services:
   broker:
     container_name: mqttBroker
-    restart: unless-stopped
     build: ./broker
     volumes:
       - './broker:/usr/src/broker'
@@ -21,37 +20,18 @@ services:
       - '80:80'
     volumes:
       - './haproxy:/usr/local/etc/haproxy'
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - 'next-root:/var/www/next'
+      - './certs:/certs'
     networks:
       - smart-garden-net
   dashboard:
     container_name: dashboard
     build: ./dashboard
-    restart: unless-stopped
     volumes:
-      - 'next-root:/usr/src/app/.next'
       - './dashboard:/usr/src/app'
       - /usr/src/app/node_modules
+      - /usr/src/app/.next
     networks:
       - smart-garden-net
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - next-root:/var/www/next
-    depends_on:
-      - dashboard
-    command: certonly --webroot --webroot-path=/var/www/next/server/pages --email timweise@hotmail.de --agree-tos --no-eff-email --staging -d smartgarden.timweise.com  -d www.smartgarden.timweise.com
-
-volume:
-  certbot-etc:
-  certbot-var:
-  next-root:
-  
 
 networks: 
   smart-garden-net:

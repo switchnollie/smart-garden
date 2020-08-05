@@ -8,14 +8,23 @@
 - MONGO_PORT
 - MONGO_HOST
 
-## Start all containers locally using Docker Compose and a local instance of MongoDB
+## Start all containers locally using Docker Compose and an externally managed instance of MongoDB
 
 - Install Docker Community Edition in a up-to-date version.
 - Provide the mongo environment variables (e.g. as a `.env` File)
+- Create the self signed certificates. This will prompt you to: 
+  1. enter a passphrase for the CA keys 
+  2. Enter Information about your self signed CA cert
+  3. Enter Information about the server cert.
+
+```sh
+./createCerts.sh
+```
+
 - Start the Docker Containers using Docker Compose: 
 
 ```sh
-docker-compose up
+docker-compose up -f docker-compose.dev.yml
 ```
 
 ## Start a local cluster using Kubernetes minikube, haproxy and an externally managed instance of MongoDB
