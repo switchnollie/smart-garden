@@ -49,7 +49,9 @@ services:
       - web-root:/${CERTBOT_WEBROOT}
     depends_on:
       - dashboard
-    command: certonly --webroot --webroot-path=/${CERTBOT_WEBROOT} --email ${CERT_MAIL} --agree-tos --no-eff-email --staging -d smartgarden.timweise.com  -d www.smartgarden.timweise.com -d broker.smartgarden.timweise.com
+    command: "certonly --webroot --webroot-path=/${CERTBOT_WEBROOT} --email ${CERT_MAIL} --agree-tos --no-eff-email --force-renewal \
+      -d smartgarden.timweise.com  -d www.smartgarden.timweise.com -d broker.smartgarden.timweise.com &&\
+      cat /etc/letsencrypt/live/smartgarden.timweise.com/fullchain.pem /etc/letsencrypt/live/smartgarden.timweise.com/privkey.pem > etc/ssl/smartgarden.timweise.com.pem"
 
 volumes:
   certbot-etc:
