@@ -14,7 +14,7 @@ const char *passphrase;
 
 //Webserver
 ESP8266WebServer web_server(80);
-IPAddress esp_ip(192, 168, 4, 1);
+IPAddress ESP_IP(192, 168, 4, 1);
 File wlan_html_file;
 File   groups_html_file;
 File root_ca_file;
@@ -32,14 +32,14 @@ void init_mqtt_topics();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
 const IPAddress BROKER_ADDRESS(139, 59, 210, 39);
-uint16_t BROKER_PORT = 8883;
+const uint16_t BROKER_PORT = 8883;
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 //Publish moisture
 const char *MOISTURE_TOPIC = "";
 //Flag to indicate initialization of topics
 bool mqtt_initialized = false;
-const int mqtt_initialized_eeprom_index = 99;
+const int MQTT_INIT_EEPROM_INDEX = 99;
 
 int moisture_threshhold = 950; // TODO
 // messages are 10 Bit decimals -> max. 4 characters + \0 needed
@@ -64,8 +64,8 @@ void start_web_server()
     Serial.println("Starting web server!");
 
     //WIFI ACCESS POINT
-    WiFi.softAPConfig(esp_ip,                       //Eigene Adresse
-        esp_ip,                       //Gateway Adresse
+    WiFi.softAPConfig(ESP_IP,                       //Eigene Adresse
+        ESP_IP,                       //Gateway Adresse
         IPAddress(255, 255, 255, 0)); //Subnetz-Maske
     WiFi.softAP("ESP Plant", "ESPPASSWORD");
 
@@ -227,7 +227,7 @@ void init_mqtt_topics()
     }
 
     //Write initialized bit
-    EEPROM.write(mqtt_initialized_eeprom_index, 1);
+    EEPROM.write(MQTT_INIT_EEPROM_INDEX, 1);
     mqtt_initialized = true;
 
     EEPROM.commit();
@@ -262,7 +262,7 @@ void read_mqtt_topics()
     EEPROM.begin(512);
 
     //Check if initialization already done
-    int result = EEPROM.read(mqtt_initialized_eeprom_index);
+    int result = EEPROM.read(MQTT_INIT_EEPROM_INDEX);
     if (result != 1)
     {
         mqtt_initialized = false;
