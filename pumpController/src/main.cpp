@@ -421,13 +421,7 @@ void reconnect_MQTT()
             Serial.print("failed, rc=");
             Serial.print(mqtt_client.state());
             Serial.println(" try again in 5 seconds");
-
-            SPIFFS.begin();
-            wlan_html_file = SPIFFS.open("/wlan.html", "r");
             // Wait 5 seconds before retrying
-            if (!wlan_html_file) {
-                Serial.println("Fehler beim Einlesen der wlan.html Datei");
-            }
             web_server.handleClient();
             delay(5000);
         }
@@ -451,8 +445,6 @@ void clear_eeprom()
 
 void load_static_files()
 {
-    delay(2000); //TODO REMOVE
-
     if (SPIFFS.begin()) {
         Serial.println("Flash storage succesfully started!");
     }
@@ -470,9 +462,6 @@ void load_static_files()
     output +="]";
     Serial.println(output);
 
-
-
-
     wlan_html_file = SPIFFS.open("/wlan.html", "r");
     groups_html_file = SPIFFS.open("/groups.html", "r");
 
@@ -483,7 +472,6 @@ void load_static_files()
     if (!groups_html_file) {
         Serial.println("Fehler beim Einlesen der group.html Datei");
     }
-
 }
 
 void setup()
