@@ -48,6 +48,7 @@ int motorState = LOW;
 
 void start_web_server()
 {
+  delay(2000);
   Serial.println("Starting web server!");
 
   //WIFI ACCESS POINT
