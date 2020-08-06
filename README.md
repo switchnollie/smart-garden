@@ -83,3 +83,17 @@ docker run -it --rm --env-file .env <image-name>
 ```sh
 kubectl get ingress.voyager.appscode.com -n smart-garden smart-garden-ingress
 ```
+
+### Test the Production MQTT Connection with the Mosquitto Client
+
+- Subscribe to the topic `test`
+
+```sh
+mosquitto_sub -h smartgarden.timweise.com -p 8883 -t test -d --cafile letsencryptRootCa.pem
+```
+
+- Publish `test1234` on the topic `test`
+
+```sh
+mosquitto_pub -h smartgarden.timweise.com -p 8883 -t test -m "test1234" --cafile letsencryptRootCa.pem
+```
