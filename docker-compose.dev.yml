@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  broker:
+    container_name: mqttBroker
+    build: ./broker
+    volumes:
+      - './broker:/usr/src/broker'
+      - /usr/src/broker/node_modules
+    networks: 
+      - smart-garden-net
+    environment:
+      MONGO_URI: 'mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}/${MONGO_DATABASE}?authSource=admin'
+  haproxy:
+    container_name: haproxy
+    image: mminks/haproxy-docker-logging:latest
+    ports:
+      - '1883:1883'
+      - '8883:8883'
+      - '8080:80'
+    volumes:
+      - './haproxy:/usr/local/etc/haproxy'
+      - './certs:/etc/ssl'
+    networks:
+      - smart-garden-net
+  dashboard:
+    container_name: dashboard
+    build: ./dashboard
+    volumes:
+      - 'web-root:/usr/src/dashboard/packages/server/public'
+      - './dashboard:/usr/src/dashboard'
+      - /usr/src/dashboard/node_modules
+    networks:
+      - smart-garden-net
+
+volumes:
+  web-root:
+
+networks: 
+  smart-garden-net:

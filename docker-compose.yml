@@ -1,28 +1,13 @@
 version: '3'
 
 services:
-  # mongodb:
-  #   container_name: mongoDatabase
-  #   image: mongo:4.2.8
-  #   ports:
-  #     - '${MONGO_PORT}:${MONGO_PORT}'
-  #   volumes: 
-  #     - mongo-volume:/data/db
-  #     - ./mongoDB/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
-  #   networks: 
-  #     - smart-garden-net
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: '${MONGO_USERNAME}'
-  #     MONGO_INITDB_ROOT_PASSWORD: '${MONGO_PASSWORD}'
-  #     MONGO_INITDB_DATABASE: '${MONGO_DATABASE}'
   broker:
     container_name: mqttBroker
-    # restart: always
+    restart: unless-stopped
     build: ./broker
-    # depends_on: 
-    #   - mongodb
     volumes:
       - './broker:/usr/src/broker'
+      - /usr/src/broker/node_modules
     networks: 
       - smart-garden-net
     environment:
@@ -33,13 +18,46 @@ services:
     ports:
       - '1883:1883'
       - '8883:8883'
+      - '80:80'
+      - '443:443'
+    depends_on:
+      - dashboard
+      - broker
     volumes:
-      - './haproxy:/etc/haproxy'
-      - './certs:/certs'
+      - './haproxy:/usr/local/etc/haproxy'
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - 'web-root:/var/www/next'
     networks:
       - smart-garden-net
+  dashboard:
+    container_name: dashboard
+    build: ./dashboard
+    restart: unless-stopped
+    volumes:
+      - 'web-root:/usr/src/dashboard/packages/server/public'
+      - './dashboard:/usr/src/dashboard'
+      - /usr/src/dashboard/node_modules
+    networks:
+      - smart-garden-net
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/${CERTBOT_WEBROOT}
+    depends_on:
+      - dashboard
+    command: "certonly --webroot --webroot-path=/${CERTBOT_WEBROOT} --email ${CERT_MAIL} --agree-tos --no-eff-email --force-renewal \
+      -d smartgarden.timweise.com  -d www.smartgarden.timweise.com -d broker.smartgarden.timweise.com &&\
+      cat /etc/letsencrypt/live/smartgarden.timweise.com/fullchain.pem /etc/letsencrypt/live/smartgarden.timweise.com/privkey.pem > etc/ssl/smartgarden.timweise.com.pem"
+
 volumes:
-  mongo-volume:
+  certbot-etc:
+  certbot-var:
+  web-root:
+  
 
 networks: 
   smart-garden-net:

@@ -12,7 +12,7 @@ openssl req -new -out certs/server.csr -key certs/server.key
 openssl x509 -req -in certs/server.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial -out certs/server.crt -days 365
 
 # Create a Combined PEM SSL Certificate/Key File for HAProxy
-cat certs/server.crt certs/server.key > certs/smartgarden.app.pem
+cat certs/server.crt certs/server.key > certs/fullchain.pem
 
 # Cleanup
 rm server.csr
