@@ -1,9 +1,11 @@
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Garden</title>
 </head>
+
 <body>
   <h1>Welcome to Smart Garden</h1>
   <h2>Please enter your Wifi Credentials to get started</h2>
@@ -18,14 +20,22 @@
     const passwordField = document.querySelector("#password-field");
     const wifiForm = document.querySelector(".wifi-form");
 
-    wifiForm.onsubmit = function(e) {
+    wifiForm.onsubmit = function (e) {
       e.preventDefault();
       const ssid = ssidField.value;
       const password = passwordField.value;
 
       axios.get(`/change_wlan?ssid=${ssid}&pass=${password}`)
-        .then(() => window.location.replace("/groups.html"));
+        .then(response => {
+          console.log(response);
+        })
+        .catch(() => {
+          alert(
+            "The WLAN could not be connected. Please try again."
+          );
+        });
     }
   </script>
 </body>
+
 </html>

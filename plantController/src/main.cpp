@@ -4,6 +4,7 @@
 #include <PubSubClient.h>
 #include <Ticker.h>
 #include <EEPROM.h>
+#include <FS.h>
 
 const uint8_t MOISTURE_PIN = A0;
 const long SENS_INTERVAL = 2000;
@@ -14,6 +15,8 @@ const char *passphrase;
 //Webserver
 ESP8266WebServer web_server(80);
 IPAddress esp_ip(192, 168, 4, 1);
+File wlan_html_file;
+ File   groups_html_file ;
 
 void intialize_mqtt();
 void publish_moisture_level();
@@ -46,9 +49,17 @@ Ticker moisture_level_tic;
 const uint8_t MOTOR_PIN = D8;
 int motorState = LOW;
 
+void serve_wlan_html() {
+    web_server.streamFile(wlan_html_file, "text/html");
+}
+
+void serve_groups_html() {
+    web_server.streamFile(groups_html_file, "text/html");
+}
+
 void start_web_server()
 {
-  delay(2000);
+  delay(2000); //TODO remove
   Serial.println("Starting web server!");
 
   //WIFI ACCESS POINT
@@ -57,17 +68,21 @@ void start_web_server()
                     IPAddress(255, 255, 255, 0)); //Subnetz-Maske
   WiFi.softAP("ESP Plant", "ESPPASSWORD");
 
-  web_server.on("/change_wlan", change_wlan);
-  web_server.on("/init_mqtt_topics", init_mqtt_topics);
+    web_server.on("/wlan", serve_wlan_html);
+    web_server.on("/change_wlan", change_wlan);
+    web_server.on("/groups", serve_groups_html);
+    web_server.on("/init_mqtt_topics", init_mqtt_topics);
 
   //redirect
   web_server.onNotFound([]() {
     web_server.sendHeader("Location", "/");
-    web_server.send(302, "text/plain", "Pfad nicht verfügbar!");
+    web_server.send(302, "text/plain", "Path not available!");
   });
 
+  load_static_files();
+
   web_server.begin();
-  Serial.println("Webserver gestartet.");
+  Serial.println("Webserver started.");
 }
 
 void connect_to_wlan()
@@ -106,23 +121,15 @@ void change_wlan()
   if (ssid.length() > 0 && pass.length() > 0)
   {
     write_wlan_parameters(ssid, pass);
-    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
 
     if (test_wifi())
     {
       Serial.println("Succesfully Connected!!!");
-      return;
-    }
-
-    Serial.printf("Waiting for IP configuration...");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-      //Allow user to init/change wlan
-      web_server.handleClient();
-    }
-
-    web_server.send(200, "text/plain", "Erfolgreich mit dem WLAN verbunden");
+      web_server.send(200, "text/plane", "Succesfully Connected");
+    }     else {
+            web_server.send(400, "text/plain", "Error setting WLAN. Try again!");
+        }
   }
 }
 
@@ -205,7 +212,7 @@ bool test_wifi()
 void init_mqtt_topics()
 {
   String username = web_server.arg("username");
-  String group = web_server.arg("group");
+  String group = web_server.arg("groupid");
   String moisture = username + "/" + group + "/" + ESP.getFlashChipId() + "/" + "moisture";
   MOISTURE_TOPIC = moisture.c_str();
   Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
@@ -315,6 +322,37 @@ void clear_eeprom()
   delay(200);
   EEPROM.commit();
   EEPROM.end();
+}
+
+void load_static_files()
+{
+    if (SPIFFS.begin()) {
+        Serial.println("Flash storage succesfully started!");
+    }
+    else {
+        Serial.println("Error starting up flash storage");
+    }
+
+    Dir dir = SPIFFS.openDir("/");
+    String output = "[";
+    while (dir.next()) {
+        File entry = dir.openFile("r");
+        output += String(entry.name()).substring(1);
+        entry.close();
+    }
+    output +="]";
+    Serial.println(output);
+
+    wlan_html_file = SPIFFS.open("/wlan.html", "r");
+    groups_html_file = SPIFFS.open("/groups.html", "r");
+
+    if (!wlan_html_file) {
+        Serial.println("Fehler beim Einlesen der wlan.html Datei");
+    }
+
+    if (!groups_html_file) {
+        Serial.println("Fehler beim Einlesen der group.html Datei");
+    }
 }
 
 void setup()
