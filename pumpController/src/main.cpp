@@ -27,9 +27,11 @@ ESP8266HTTPUpdateServer http_updater;
 IPAddress esp_ip(192, 168, 4, 1);
 File wlan_html_file;
 File groups_html_file;
+File root_ca_file;
 
 //MQTT
-const IPAddress broker_address(192, 168, 178, 110);
+const IPAddress BROKER_ADDRESS(139, 59, 210, 39);
+uint16_t BROKER_PORT = 8883;
 WiFiClient client;
 PubSubClient mqtt_client(client);
 
@@ -464,13 +466,15 @@ void load_static_files()
 
     wlan_html_file = SPIFFS.open("/wlan.html", "r");
     groups_html_file = SPIFFS.open("/groups.html", "r");
-
+    root_ca_file = SPIFFS.open("/letsencryptRootCA.pem.html", "r");
     if (!wlan_html_file) {
         Serial.println("Fehler beim Einlesen der wlan.html Datei");
     }
-
     if (!groups_html_file) {
         Serial.println("Fehler beim Einlesen der group.html Datei");
+    }
+    if (!root_ca_file) {
+        Serial.println("Fehler beim Einlesen der RootCA Datei");
     }
 }
 
@@ -491,7 +495,7 @@ void setup()
     read_mqtt_topics();
 
     //init MQTT
-    mqtt_client.setServer(broker_address, 8883);
+    mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
     mqtt_client.setCallback(mqtt_callback);
 
     water_level_tic.attach_ms(6000, publishWaterLevel);

@@ -31,7 +31,8 @@ void init_mqtt_topics();
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
-const IPAddress broker_address(192, 168, 0, 143);
+const IPAddress BROKER_ADDRESS(139, 59, 210, 39);
+uint16_t BROKER_PORT = 8883;
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 //Publish moisture
@@ -371,7 +372,7 @@ void setup()
     read_mqtt_topics();
 
     //init MQTT
-    mqtt_client.setServer(broker_address, 8883);
+    mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
     mqtt_client.setCallback(mqtt_callback);
 
     randomSeed(micros());
