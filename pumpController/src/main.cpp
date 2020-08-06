@@ -482,6 +482,7 @@ void setup()
     pinMode(MOTOR_PIN, OUTPUT);
     pinMode(WATERLEVEL_PIN, INPUT);
 
+    load_static_files();
     //clear_eeprom();
 
     WiFi.mode(WIFI_AP_STA);
@@ -490,7 +491,7 @@ void setup()
     read_mqtt_topics();
 
     //init MQTT
-    mqtt_client.setServer(broker_address, 1883);
+    mqtt_client.setServer(broker_address, 8883);
     mqtt_client.setCallback(mqtt_callback);
 
     water_level_tic.attach_ms(6000, publishWaterLevel);
@@ -505,13 +506,12 @@ void loop()
     {
         connect_to_wlan();
     }
-    //TODO incomment
-      // if (!mqtt_client.connected())
-      // {
-      //   reconnect_MQTT();
-      // }
+    if (!mqtt_client.connected())
+    {
+        reconnect_MQTT();
+    }
 
-      // mqtt_client.loop();
+    mqtt_client.loop();
     MDNS.update();
 }
 
@@ -541,8 +541,6 @@ void start_web_server()
         web_server.sendHeader("Location", "/");
         web_server.send(302, "text/plain", "Path not available!");
         });
-
-    load_static_files();
 
     //MDNS.begin(host);
 
