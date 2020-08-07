@@ -27,9 +27,7 @@
       const password = passwordField.value;
 
       axios.get(`/change_user?username=${username}&pass=${password}`)
-        .then(response => {
-          console.log(response);
-        })
+      .then(() => window.location.replace("192.168.4.1/groups"))
         .catch(() => {
           alert(
             "Wrong username or password. Please try again."

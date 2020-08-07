@@ -82,7 +82,7 @@ void start_web_server()
     String ap_pass = read_ap_password();
     WiFi.softAP("ESP Pump", ap_pass.c_str());
 
-     //WLAN and AP
+    //WLAN and AP
     web_server.on("/wlan", serve_wlan_html);
     web_server.on("/change_wlan", change_wlan);
 
@@ -111,7 +111,7 @@ void connect_to_wlan()
     String ssid = read_wlan_ssid();
     String pass = read_wlan_pass();
 
-    Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
+    Serial.printf("Trying to connect to %s", (char *)ssid.c_str());
     WiFi.begin(ssid.c_str(), pass.c_str());
 
     while (WiFi.status() != WL_CONNECTED)
@@ -120,7 +120,7 @@ void connect_to_wlan()
         web_server.handleClient();
     }
 
-    Serial.println("Succesfully Connected!!!");
+    Serial.println("Successfully Connected!!!");
     return;
 }
 
@@ -313,6 +313,12 @@ void init_mqtt_topics()
 
     EEPROM.begin(512);
 
+    //Clear data
+    for (int i = 100; i < 140; i++)
+    {
+        EEPROM.write(i, 0);
+    }
+
     Serial.println("\nWriting moisture topic...");
     for (int i = 0; i < strlen(MOISTURE_TOPIC); ++i)
     {
@@ -444,7 +450,7 @@ void load_static_files()
     if (!wlan_html_file) {
         Serial.println("Error reading wlan.html file");
     }
-        if (!user_html_file) {
+    if (!user_html_file) {
         Serial.println("Error reading user.html file");
     }
     if (!groups_html_file) {
@@ -487,10 +493,11 @@ void loop()
         connect_to_wlan();
     }
 
-    if (!mqtt_client.connected())
-    {
-        reconnect_MQTT();
-    }
+    //TODO incomment -> dont block for 5s to be able to handle web server
+        // if (!mqtt_client.connected())
+        // {
+        //     reconnect_MQTT();
+        // }
 
 
     mqtt_client.loop();

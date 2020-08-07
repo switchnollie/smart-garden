@@ -330,6 +330,13 @@ void init_mqtt_topics()
 }
 void write_mqtt_parameters()
 {
+    //Clear data
+    EEPROM.begin(512);
+    for (int i = 100; i < 380; i++)
+    {
+        EEPROM.write(i, 0);
+    }
+
     Serial.println("\nWriting water level topic...");
     for (int i = 0; i < strlen(WATER_LEVEL_TOPIC); ++i)
     {
@@ -523,9 +530,7 @@ void clear_eeprom()
     {
         EEPROM.write(i, 0);
     }
-    delay(200);
     EEPROM.commit();
-    EEPROM.end();
 
     Serial.println("EEPROM cleared");
 }
