@@ -32,6 +32,8 @@ String read_wlan_pass();
 bool test_wifi();
 void write_wlan_parameters(String ssid, String pass);
 void init_mqtt_topics();
+void change_user();
+String read_ap_password();
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 

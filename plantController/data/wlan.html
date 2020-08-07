@@ -37,9 +37,8 @@
       console.log(document.getElementById("ssid-field"));
 
       axios.get(`/change_wlan?ssid=${ssid}&pass=${password}&ap-pass=${apPassword}`)
-        .then(response => {
-          console.log(response);
-        })
+        .then(() => window.open("192.168.4.1/groups.html", "_self"))
+
         .catch(() => {
           alert(
             "The WLAN could not be connected. Please try again."
