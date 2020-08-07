@@ -1,14 +1,17 @@
 const { Schema, model } = require("mongoose");
 
 const WateringGroupSchema = new Schema({
+  displayName: String,
   ownedBy: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "User"
   },
-  devices: [{
+  devices: [
+    {
       type: Schema.Types.ObjectId,
-      ref: "Device",
-  }]
+      ref: "Device"
+    }
+  ]
 });
 
 module.exports = model("WateringGroup", WateringGroupSchema);

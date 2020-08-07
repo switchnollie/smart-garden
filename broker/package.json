@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start:dev": "nodemon -r dotenv/config index.js dotenv_config_path=../.env",
-    "start": "node index.js"
+    "start": "node index.js",
+    "seed": "node -r dotenv/config seed.js dotenv_config_path=../.env"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Tim Weise",
+  "license": "MIT",
   "dependencies": {
     "aedes": "^0.42.5",
     "aedes-logging": "^2.0.1",

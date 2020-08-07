@@ -26,21 +26,24 @@ function initBroker(mongoConnection) {
     const topicParts = packet.topic.split("/");
     const clientId = client.id;
     if (topicParts.length < 4) {
-      const error = new Error("topics must have 4 levels: <userid>/<groupid>/<deviceid>/+");
+      const error = new Error(
+        "topics must have 4 levels: <userid>/<groupid>/<deviceid>/+"
+      );
       console.error(error);
       return callback(error);
     }
     const topicDeviceId = topicParts[2];
 
     if (topicDeviceId !== clientId) {
-      const error = new Error("the mqtt client id doesn't match the deviceId in the message topic");
+      const error = new Error(
+        "the mqtt client id doesn't match the deviceId in the message topic"
+      );
       console.error(error);
       return callback(error);
     }
-    console.log("authorized!")
     // All validation checks passed, return null to authorize
     return callback(null);
-  }
+  };
 
   // react to moisture messages
   aedes.mq.on("+/+/+/moisture", (package, cb) => {
