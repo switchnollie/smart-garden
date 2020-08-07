@@ -1,9 +1,10 @@
 const { createServer } = require("net");
 const Aedes = require("aedes");
-const mongoose = require("mongoose");
 const logging = require("aedes-logging");
 const mongoPersistence = require("aedes-persistence-mongodb");
 const mqemitter = require("mqemitter-mongodb");
+const { writeLogToDb } = require("./dbController");
+const { parseTopic } = require("./helpers/topicSchema");
 
 const MQTT_PORT = process.env.MQTT_PORT || 1883;
 
@@ -23,18 +24,17 @@ function initBroker(mongoConnection) {
   });
 
   aedes.authorizePublish = (client, packet, callback) => {
-    const topicParts = packet.topic.split("/");
+    const { deviceId, length } = parseTopic(packet.topic);
     const clientId = client.id;
-    if (topicParts.length < 4) {
+    if (length < 4) {
       const error = new Error(
         "topics must have 4 levels: <userid>/<groupid>/<deviceid>/+"
       );
       console.error(error);
       return callback(error);
     }
-    const topicDeviceId = topicParts[2];
 
-    if (topicDeviceId !== clientId) {
+    if (deviceId !== clientId) {
       const error = new Error(
         "the mqtt client id doesn't match the deviceId in the message topic"
       );
@@ -46,9 +46,9 @@ function initBroker(mongoConnection) {
   };
 
   // react to moisture messages
-  aedes.mq.on("+/+/+/moisture", (package, cb) => {
-    const stringMessage = package.payload.toString();
-    console.log(stringMessage);
+  aedes.mq.on("+/+/+/moisture", pkg => {
+    const { deviceId } = parseTopic(pkg.topic);
+    writeLogToDb(deviceId, pkg);
   });
 }
 

@@ -3,10 +3,10 @@ const { Schema, model } = require("mongoose");
 const DeviceSchema = Schema({
   type: String,
   displayName: String,
-  logs: [
+  logBuckets: [
     {
-      date: Date,
-      value: Number
+      type: Schema.Types.ObjectId,
+      ref: "DeviceLogBucket"
     }
   ],
   groupedBy: {

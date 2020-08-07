@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+const getDayDate = require("./helpers/getDayDate");
 const User = require("./models/user");
 const WateringGroup = require("./models/wateringGroup");
 const Device = require("./models/device");
+const DeviceLogBucket = require("./models/deviceLogBucket");
 
 const initialUsers = [
   {
@@ -31,16 +33,7 @@ const initialDevices = [
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "moisture",
-    logs: [
-      {
-        date: Date.now() - 30000,
-        value: 42
-      },
-      {
-        date: Date.now(),
-        value: 42
-      }
-    ]
+    logs: []
   },
   {
     _id: mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
@@ -48,16 +41,7 @@ const initialDevices = [
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "pump",
-    logs: [
-      {
-        date: Date.now() - 30000,
-        value: 1
-      },
-      {
-        date: Date.now(),
-        value: 0
-      }
-    ]
+    logs: []
   },
   {
     _id: mongoose.Types.ObjectId("5f2d30f7c22d4d3103a19b22"),
@@ -65,21 +49,53 @@ const initialDevices = [
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "waterlevel",
-    logs: [
-      {
-        date: Date.now() - 30000,
-        value: 100
-      },
-      {
-        date: Date.now(),
-        value: 42
-      }
+    logs: []
+  }
+];
+const nowTimestamp = Date.now();
+const lastTimestamp = nowTimestamp - 5000;
+
+const initialDeviceLogBuckets = [
+  {
+    _id: mongoose.Types.ObjectId("5f2d6fb18fd7805f913cc40a"),
+    deviceId: mongoose.Types.ObjectId("5f2d2f46c254098c1222a484"),
+    nsamples: 2,
+    day: getDayDate(),
+    first: nowTimestamp,
+    last: lastTimestamp,
+    samples: [
+      { val: 42, time: lastTimestamp },
+      { val: 42, time: nowTimestamp }
+    ]
+  },
+  {
+    _id: mongoose.Types.ObjectId("5f2d728d1407c5e120a3980e"),
+    deviceId: mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
+    nsamples: 2,
+    day: getDayDate(),
+    first: nowTimestamp,
+    last: lastTimestamp,
+    samples: [
+      { val: 42, time: lastTimestamp },
+      { val: 42, time: nowTimestamp }
+    ]
+  },
+  {
+    _id: mongoose.Types.ObjectId("5f2d72f56a21f09e868acf71"),
+    deviceId: mongoose.Types.ObjectId("5f2d30f7c22d4d3103a19b22"),
+    nsamples: 2,
+    day: getDayDate(),
+    first: nowTimestamp,
+    last: lastTimestamp,
+    samples: [
+      { val: 42, time: lastTimestamp },
+      { val: 42, time: nowTimestamp }
     ]
   }
 ];
 
 async function clearCollections() {
-  for (let model of [User, WateringGroup, Device]) {
+  for (const model of [User, WateringGroup, Device, DeviceLogBucket]) {
     try {
       await model.collection.drop();
     } catch (e) {
@@ -128,6 +144,12 @@ async function applySeeding() {
       return new Device(device).save();
     });
     await Promise.all(insertDevicesBatch);
+
+    const insertDeviceLogBucketsBatch = initialDeviceLogBuckets.map(bucket => {
+      console.log(`inserting new Device Log Bucket, ${bucket._id}`);
+      return new DeviceLogBucket(bucket).save();
+    });
+    await Promise.all(insertDeviceLogBucketsBatch);
 
     mongoose.disconnect();
     process.exit(0);
