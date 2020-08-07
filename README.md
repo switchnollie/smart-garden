@@ -12,8 +12,8 @@
 
 - Install Docker Community Edition in a up-to-date version.
 - Provide the mongo environment variables (e.g. as a `.env` File)
-- Create the self signed certificates. This will prompt you to: 
-  1. enter a passphrase for the CA keys 
+- Create the self signed certificates. This will prompt you to:
+  1. enter a passphrase for the CA keys
   2. Enter Information about your self signed CA cert
   3. Enter Information about the server cert.
 
@@ -21,7 +21,7 @@
 ./createCerts.sh
 ```
 
-- Start the Docker Containers using Docker Compose: 
+- Start the Docker Containers using Docker Compose:
 
 ```sh
 docker-compose up -f docker-compose.dev.yml
@@ -75,7 +75,7 @@ docker run -it --rm --env-file .env <image-name>
 
 ### Get Information about the Voyager Ingress
 
-> voyager ingress shows up under a custom ressource definitions (CRD) and not under 
+> voyager ingress shows up under a custom ressource definitions (CRD) and not under
 > the ingress type ressources!
 > this means that neither commands like `kubectl get ingress` nor the minikube dashboard
 > will show the instances. Use type **ingress.voyager.appscode.com** instead!
@@ -92,8 +92,9 @@ kubectl get ingress.voyager.appscode.com -n smart-garden smart-garden-ingress
 mosquitto_sub -h smartgarden.timweise.com -p 8883 -t test -d --cafile letsencryptRootCa.pem
 ```
 
-- Publish `test1234` on the topic `test`
+- Publish Moisture Value `42` on the topic `5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture`
+  (DeviceId 5f2d2f46c254098c1222a484, WateringGroupId: 5f2d2bfe7824f2b9fd33cb66, UserId: 5f2d2b58d65dd0c3e0ac05e7)
 
 ```sh
-mosquitto_pub -h smartgarden.timweise.com -p 8883 -t test -m "test1234" --cafile letsencryptRootCa.pem
+mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture -m 42 --cafile letsencryptRootCa.pem
 ```
