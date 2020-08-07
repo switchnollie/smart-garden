@@ -11,11 +11,11 @@ function parseTopic(topic) {
   }
   return {
     length: topicParts.length,
-    deviceId: topicParts[0],
-    userId: topicParts[1],
-    groupId: topicParts[2],
+    userId: topicParts[0],
+    groupId: topicParts[1],
+    deviceId: topicParts[2],
     type: topicParts[3]
   };
 }
 
-module.export = { parseTopic };
+module.exports = { parseTopic };

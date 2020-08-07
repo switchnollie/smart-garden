@@ -49,6 +49,7 @@ function initBroker(mongoConnection) {
   aedes.mq.on("+/+/+/moisture", pkg => {
     const { deviceId } = parseTopic(pkg.topic);
     writeLogToDb(deviceId, pkg);
+    // TODO: Check Threshold, if necessary emit pumped on the deviceGroup
   });
 }
 
