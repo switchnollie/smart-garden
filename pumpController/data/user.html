@@ -10,7 +10,7 @@
   <h1>Welcome to Smart Garden</h1>
   <form class="wifi-form">
     <p>
-      Please enter a new password for the access point to keep your system safe!
+      Please enter a password for the access point to keep your system safe!
     </p>
     <p>
       <input id="ap-pass-field" type="text" placeholder="ESPPASSWORD">
@@ -25,7 +25,6 @@
   <script type="text/javascript">
     const ssidField = document.querySelector("#ssid-field");
     const passwordField = document.querySelector("#password-field");
-    const apPasswordField = document.querySelector("#ap-pass-field");
     const wifiForm = document.querySelector(".wifi-form");
     console.log(document.getElementById("ssid-field"));
 
@@ -33,9 +32,8 @@
       e.preventDefault();
       const ssid = ssidField.value;
       const password = passwordField.value;
-      const apPassword = apPasswordField.value;
 
-      axios.get(`/change_wlan?ssid=${ssid}&pass=${password}&ap-pass=${apPassword}`)
+      axios.get(`/change_wlan?ssid=${ssid}&pass=${password}`)
         .then(response => {
           console.log(response);
         })

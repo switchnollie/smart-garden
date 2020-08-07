@@ -51,10 +51,6 @@ Ticker moisture_level_tic;
 const uint8_t MOTOR_PIN = D8;
 int motorState = LOW;
 
-void serve_ap_password_html() {
-    web_server.streamFile(wlan_html_file, "text/html");
-}
-
 void serve_wlan_html() {
     web_server.streamFile(wlan_html_file, "text/html");
 }
@@ -71,10 +67,10 @@ void start_web_server()
     WiFi.softAPConfig(ESP_IP,                       //Eigene Adresse
         ESP_IP,                       //Gateway Adresse
         IPAddress(255, 255, 255, 0)); //Subnetz-Maske
-    WiFi.softAP("ESP Plant", "ESPPASSWORD");
+    
+    String ap_pass = read_ap_password();
+    WiFi.softAP("ESP Pump", ap_pass.c_str());
 
-    web_server.on("/AP_password", serve_ap_password_html);
-    web_server.on("/change_ap_password", change_ap_password);
     web_server.on("/wlan", serve_wlan_html);
     web_server.on("/change_wlan", change_wlan);
     web_server.on("/groups", serve_groups_html);
@@ -82,7 +78,7 @@ void start_web_server()
 
     //redirect
     web_server.onNotFound([]() {
-        web_server.sendHeader("Location", "/");
+        web_server.sendHeader("Location", "/wlan");
         web_server.send(302, "text/plain", "Path not available!");
         });
 
@@ -98,7 +94,6 @@ void connect_to_wlan()
     String pass = read_wlan_pass();
 
     Serial.printf("Trying to connect to %s", (char *)ssid.c_str());
-    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), pass.c_str());
     if (test_wifi())
     {
@@ -114,9 +109,36 @@ void connect_to_wlan()
     }
 }
 
-void change_ap_password(){ //TODO
+void change_ap_password() {
     String pass = web_server.arg("pass");
-    Serial.println("Changing AP password");
+
+    Serial.println("Writing AP password: ");
+    EEPROM.begin(512);
+    for (int i = 0; i < pass.length(); ++i)
+    {
+        EEPROM.write(400 + i, pass[i]);
+        Serial.print(pass[i]);
+    }
+
+    EEPROM.commit();
+}
+
+String read_ap_password() {
+    //Reading PASS from EEPROM
+    delay(3000);
+    Serial.println("Reading AP password: ");
+    EEPROM.begin(512);
+    String pass = "";
+    for (int i = 400; i < 440; ++i)
+    {
+        pass += char(EEPROM.read(i));
+    }
+    Serial.print("PASS: ");
+    Serial.println(pass);
+    if (!pass) {
+        return "ESPPASSWORD";
+    }
+    return pass;
 }
 
 void change_wlan()
@@ -299,11 +321,11 @@ void reconnect_MQTT()
     while (!mqtt_client.connected())
     {
         Serial.print("Attempting MQTT connection...");
-        // Create a random client ID
-        String clientId = "ESP8266Client-";
-        clientId += String(random(0xffff), HEX);
+        char mqtt_id[10];
+        sprintf(mqtt_id, "%d", ESP.getFlashChipId());
+        Serial.printf("Client ID: %s", mqtt_id);
         // Attempt to connect
-        if (mqtt_client.connect(clientId.c_str()))
+        if (mqtt_client.connect(mqtt_id))
         {
             Serial.println("connected");
             // Once connected, publish an announcement...

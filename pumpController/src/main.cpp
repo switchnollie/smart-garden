@@ -14,7 +14,6 @@ const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
 const char *ssid;
 const char *passphrase;
-const char *ap_pass = "ESPPASSWORD";
 //https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
 const char *host = "esp8266-webupdate";
 
@@ -102,7 +101,7 @@ void connect_to_wlan()
 }
 
 void change_ap_password() {
-    String pass = web_server.arg("pass");
+    String pass = web_server.arg("ap-pass");
 
     Serial.println("Writing AP password: ");
     EEPROM.begin(512);
@@ -113,27 +112,30 @@ void change_ap_password() {
     }
 
     EEPROM.commit();
-
-    ap_pass = pass.c_str();
-    start_web_server();
 }
 
-void read_ap_password() {
+String read_ap_password() {
     //Reading PASS from EEPROM
-    Serial.println("Reading AP password");
+    Serial.println("Reading AP password: ");
     EEPROM.begin(512);
     String pass = "";
     for (int i = 400; i < 440; ++i)
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("\nPASS: ");
+    Serial.print("PASS: ");
     Serial.println(pass);
-    ap_pass = pass.c_str();
+    if (!pass) {
+        return "ESPPASSWORD";
+    }
+    return pass;
 }
 
 void change_wlan()
 {
+
+    change_ap_password();
+
     //https://how2electronics.com/esp8266-manual-wifi-configuration-without-hard-code-with-eeprom/
     //Write new connection params into EEPROM and connect to WIFI
     String ssid = web_server.arg("ssid");
@@ -441,11 +443,11 @@ void reconnect_MQTT()
     while (!mqtt_client.connected())
     {
         Serial.print("Attempting MQTT connection...");
-        // Create a random client ID
-        String clientId = "ESP8266Client-";
-        clientId += String(random(0xffff), HEX);
         // Attempt to connect
-        if (mqtt_client.connect(clientId.c_str()))
+        char mqtt_id[10];
+        sprintf(mqtt_id, "%d", ESP.getFlashChipId());
+        Serial.printf("Client ID: %s", mqtt_id);
+        if (mqtt_client.connect(mqtt_id))
         {
             Serial.println("connected");
             mqtt_client.subscribe(MOISTURE_TOPIC);
@@ -547,12 +549,8 @@ void loop()
         reconnect_MQTT();
     }
 
-    mqtt_client.loop();
+    //mqtt_client.loop();
     MDNS.update();
-}
-
-void serve_ap_password_html() {
-    web_server.streamFile(wlan_html_file, "text/html");
 }
 
 void serve_wlan_html() {
@@ -565,15 +563,15 @@ void serve_groups_html() {
 
 void start_web_server()
 {
-    read_ap_password();
+
     //WIFI ACCESS POINT
     WiFi.softAPConfig(ESP_IP,                       //Eigene Adresse
         ESP_IP,                       //Gateway Adresse
         IPAddress(255, 255, 255, 0)); //Subnetz-Maske
-    WiFi.softAP("ESP Pump", ap_pass);
 
-    web_server.on("/ap_password", serve_ap_password_html);
-    web_server.on("/change_ap_password", change_ap_password);
+    String ap_pass = read_ap_password();
+    WiFi.softAP("ESP Pump", ap_pass.c_str());
+
     web_server.on("/wlan", serve_wlan_html);
     web_server.on("/change_wlan", change_wlan);
     web_server.on("/groups", serve_groups_html);
@@ -581,7 +579,7 @@ void start_web_server()
 
     //redirect
     web_server.onNotFound([]() {
-        web_server.sendHeader("Location", "/");
+        web_server.sendHeader("Location", "/wlan");
         web_server.send(302, "text/plain", "Path not available!");
         });
 
