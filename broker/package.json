@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "nodemon -r dotenv/config index.js dotenv_config_path=../.env",
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,5 +15,11 @@
     "aedes-persistence-mongodb": "^8.0.1",
     "mongoose": "^5.9.25",
     "mqemitter-mongodb": "^7.0.2"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0",
+    "eslint": "^7.6.0",
+    "eslint-config-node": "^4.1.0",
+    "nodemon": "^2.0.4"
   }
 }
