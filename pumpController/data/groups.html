@@ -10,12 +10,7 @@
   <h1>Watering Groups</h1>
   <form class="groups-form">
     <p>
-      Please enter a Username (If you have already configured devices in your
-      system, enter the Username that was used to configure these devices):
-    </p>
-    <input id="username-field" type="text" placeholder="Your Username" />
-    <p>
-      Do you have already have watering groups to which you want to add this
+      Do you already have watering groups to which you want to add this
       pump?
     </p>
     <div>
@@ -28,7 +23,6 @@
   </form>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>
   <script>
-    const usernameField = document.getElementById("username-field");
     const checkbox = document.getElementById("checkbox");
     const checkboxLabel = document.getElementById("checkbox-label");
     const groupField = document.getElementById("group-field");
@@ -37,19 +31,19 @@
     checkbox.onchange = function (e) {
       if (e.target.checked) {
         checkboxLabel.innerText = "Yes";
-        groupField.placeholder = "Your existing plant group";
+        
       } else {
         checkboxLabel.innerText = "No";
+        groupField.placeholder = "Your new plant group name";
       }
     };
 
     groupsForm.onsubmit = function (e) {
       e.preventDefault();
-      const username = usernameField.value;
       const groupId = groupField.value;
 
       axios
-        .get(`/init_mqtt_topics?username=${username}&groupid=${groupId}`)
+        .get(`/init_mqtt_topics?groupid=${groupId}`)
         .then(() => {
           alert("Your Pump was successfully added to the system.");
         })

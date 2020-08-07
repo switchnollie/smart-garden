@@ -12,10 +12,14 @@ const long SENS_INTERVAL = 2000;
 const char *ssid;
 const char *passphrase;
 
+WiFiClient client;
+const char* API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
+
 //Webserver
 ESP8266WebServer web_server(80);
 IPAddress ESP_IP(192, 168, 4, 1);
 File wlan_html_file;
+File user_html_file;
 File   groups_html_file;
 File root_ca_file;
 
@@ -33,8 +37,9 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
 const IPAddress BROKER_ADDRESS(139, 59, 210, 39);
 const uint16_t BROKER_PORT = 8883;
-WiFiClient espClient;
-PubSubClient mqtt_client(espClient);
+WiFiClient esp_client;
+PubSubClient mqtt_client(esp_client);
+String user = "";
 //Publish moisture
 const char *MOISTURE_TOPIC = "";
 //Flag to indicate initialization of topics
@@ -55,6 +60,10 @@ void serve_wlan_html() {
     web_server.streamFile(wlan_html_file, "text/html");
 }
 
+void serve_user_html() {
+    web_server.streamFile(user_html_file, "text/html");
+}
+
 void serve_groups_html() {
     web_server.streamFile(groups_html_file, "text/html");
 }
@@ -67,12 +76,19 @@ void start_web_server()
     WiFi.softAPConfig(ESP_IP,                       //Eigene Adresse
         ESP_IP,                       //Gateway Adresse
         IPAddress(255, 255, 255, 0)); //Subnetz-Maske
-    
+
     String ap_pass = read_ap_password();
     WiFi.softAP("ESP Pump", ap_pass.c_str());
 
+     //WLAN and AP
     web_server.on("/wlan", serve_wlan_html);
     web_server.on("/change_wlan", change_wlan);
+
+    //User credentials
+    web_server.on("/user", serve_user_html);
+    web_server.on("/change_user", change_user);
+
+    //Groups
     web_server.on("/groups", serve_groups_html);
     web_server.on("/init_mqtt_topics", init_mqtt_topics);
 
@@ -93,20 +109,17 @@ void connect_to_wlan()
     String ssid = read_wlan_ssid();
     String pass = read_wlan_pass();
 
-    Serial.printf("Trying to connect to %s", (char *)ssid.c_str());
+    Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
     WiFi.begin(ssid.c_str(), pass.c_str());
-    if (test_wifi())
-    {
-        Serial.println("Succesfully Connected!!!");
-        return;
-    }
 
-    Serial.printf("Waiting for IP configuration...");
     while (WiFi.status() != WL_CONNECTED)
     {
-        //Allow user to init/change wlan
+        //Wait till connected
         web_server.handleClient();
     }
+
+    Serial.println("Succesfully Connected!!!");
+    return;
 }
 
 void change_ap_password() {
@@ -242,11 +255,57 @@ bool test_wifi()
     return false;
 }
 
+void send_user_data_to_backend(String username, String pass) {
+
+    if (client.connect(API_USER_ENDPOINT, 80))
+    {
+        Serial.println("Successfully connected to API Endpoint!");
+        client.print(String("GET /") + " HTTP/1.1\r\n" +
+            "Host: " + API_USER_ENDPOINT +"?username=" + username + "&pass=" + pass
+            + "\r\n" +
+            "Connection: close\r\n" +
+            "\r\n"
+        );
+        //Check if data transmitted
+        while (client.connected() || client.available())
+        {
+            if (client.available())
+            {
+                String line = client.readStringUntil('\n');
+                if (!line) {
+                    client.stop();
+                    Serial.println("\n[Disconnected]");
+                    web_server.send(400, "text/plain", "Failed to send user credentials to API Endpoint!");
+                }
+                else {
+                    client.stop();
+                    Serial.println("\n[Disconnected]");
+                    web_server.send(200, "text/plain", "Successfully send user credentials to API Endpoint!");
+                }
+            }
+        }
+    }
+    else
+    {
+        Serial.println("Failed to connect to API Endpoint!");
+        client.stop();
+        Serial.println("\n[Disconnected]");
+        web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
+    }
+
+}
+
+void change_user() {
+    String username = web_server.arg("username");
+    String pass = web_server.arg("pass");
+    send_user_data_to_backend(username, pass);
+    user = username;
+}
+
 void init_mqtt_topics()
 {
-    String username = web_server.arg("username");
     String group = web_server.arg("groupid");
-    String moisture = username + "/" + group + "/" + ESP.getFlashChipId() + "/" + "moisture";
+    String moisture = user + "/" + group + "/" + ESP.getFlashChipId() + "/" + "moisture";
     MOISTURE_TOPIC = moisture.c_str();
     Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
 
@@ -377,10 +436,14 @@ void load_static_files()
     Serial.println(output);
 
     wlan_html_file = SPIFFS.open("/wlan.html", "r");
+    user_html_file = SPIFFS.open("/user.html", "r");
     groups_html_file = SPIFFS.open("/groups.html", "r");
     root_ca_file = SPIFFS.open("/letsencryptRootCA.pem", "r");
     if (!wlan_html_file) {
         Serial.println("Error reading wlan.html file");
+    }
+        if (!user_html_file) {
+        Serial.println("Error reading user.html file");
     }
     if (!groups_html_file) {
         Serial.println("Error reading group.html file");
