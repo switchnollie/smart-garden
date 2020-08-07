@@ -8,12 +8,7 @@
     <h1>Watering Groups</h1>
     <form class="groups-form">
       <p>
-        Please enter a Username (If you have already configured devices in your
-        system, enter the Username that was used to configure these devices):
-      </p>
-      <input type="text" placeholder="Your Username" />
-      <p>
-        Do you have already have watering groups to which you want to add this
+        Do you already have watering groups to which you want to add this
         plant controller?
       </p>
       <div>
@@ -40,6 +35,7 @@
           groupField.placeholder = "Your existing plant group";
         } else {
           checkboxLabel.innerText = "No";
+          groupField.placeholder = "Your new plant group name";
         }
       };
 
@@ -48,7 +44,7 @@
         const groupId = groupField.value;
 
         axios
-          .get(`/init_mqtt_topics?username=${username}&groupid=${groupId}`)
+          .get(`/init_mqtt_topics?groupid=${groupId}`)
           .then(() => {
             alert("Your plant controller was successfully added to the system.");
           })
