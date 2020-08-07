@@ -22,3 +22,7 @@ IP: 192.168.4.1
 
 
 192.168.4.1/init_mqtt_topics?username=Hannes&group=Gruppe1
+
+## AP Passwort ändern:
+../change_ap_password?
+    pass=

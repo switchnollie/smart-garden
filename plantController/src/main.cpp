@@ -51,6 +51,10 @@ Ticker moisture_level_tic;
 const uint8_t MOTOR_PIN = D8;
 int motorState = LOW;
 
+void serve_ap_password_html() {
+    web_server.streamFile(wlan_html_file, "text/html");
+}
+
 void serve_wlan_html() {
     web_server.streamFile(wlan_html_file, "text/html");
 }
@@ -69,6 +73,8 @@ void start_web_server()
         IPAddress(255, 255, 255, 0)); //Subnetz-Maske
     WiFi.softAP("ESP Plant", "ESPPASSWORD");
 
+    web_server.on("/AP_password", serve_ap_password_html);
+    web_server.on("/change_ap_password", change_ap_password);
     web_server.on("/wlan", serve_wlan_html);
     web_server.on("/change_wlan", change_wlan);
     web_server.on("/groups", serve_groups_html);
@@ -106,6 +112,11 @@ void connect_to_wlan()
         //Allow user to init/change wlan
         web_server.handleClient();
     }
+}
+
+void change_ap_password(){ //TODO
+    String pass = web_server.arg("pass");
+    Serial.println("Changing AP password");
 }
 
 void change_wlan()
@@ -345,15 +356,15 @@ void load_static_files()
 
     wlan_html_file = SPIFFS.open("/wlan.html", "r");
     groups_html_file = SPIFFS.open("/groups.html", "r");
-    root_ca_file = SPIFFS.open("/letsencryptRootCA.pem.html", "r");
+    root_ca_file = SPIFFS.open("/letsencryptRootCA.pem", "r");
     if (!wlan_html_file) {
-        Serial.println("Fehler beim Einlesen der wlan.html Datei");
+        Serial.println("Error reading wlan.html file");
     }
     if (!groups_html_file) {
-        Serial.println("Fehler beim Einlesen der group.html Datei");
+        Serial.println("Error reading group.html file");
     }
     if (!root_ca_file) {
-        Serial.println("Fehler beim Einlesen der RootCA Datei");
+        Serial.println("Error reading RootCA file");
     }
 }
 

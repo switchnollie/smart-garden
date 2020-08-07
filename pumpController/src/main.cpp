@@ -14,6 +14,7 @@ const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
 const char *ssid;
 const char *passphrase;
+const char *ap_pass = "ESPPASSWORD";
 //https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
 const char *host = "esp8266-webupdate";
 
@@ -100,6 +101,37 @@ void connect_to_wlan()
     }
 }
 
+void change_ap_password() {
+    String pass = web_server.arg("pass");
+
+    Serial.println("Writing AP password: ");
+    EEPROM.begin(512);
+    for (int i = 0; i < pass.length(); ++i)
+    {
+        EEPROM.write(400 + i, pass[i]);
+        Serial.print(pass[i]);
+    }
+
+    EEPROM.commit();
+
+    ap_pass = pass.c_str();
+    start_web_server();
+}
+
+void read_ap_password() {
+    //Reading PASS from EEPROM
+    Serial.println("Reading AP password");
+    EEPROM.begin(512);
+    String pass = "";
+    for (int i = 400; i < 440; ++i)
+    {
+        pass += char(EEPROM.read(i));
+    }
+    Serial.print("\nPASS: ");
+    Serial.println(pass);
+    ap_pass = pass.c_str();
+}
+
 void change_wlan()
 {
     //https://how2electronics.com/esp8266-manual-wifi-configuration-without-hard-code-with-eeprom/
@@ -179,7 +211,7 @@ String read_wlan_pass()
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("PASS: ");
+    Serial.print("Pass: ");
     Serial.println(pass);
     return pass;
 }
@@ -466,15 +498,15 @@ void load_static_files()
 
     wlan_html_file = SPIFFS.open("/wlan.html", "r");
     groups_html_file = SPIFFS.open("/groups.html", "r");
-    root_ca_file = SPIFFS.open("/letsencryptRootCA.pem.html", "r");
+    root_ca_file = SPIFFS.open("/letsencryptRootCA.pem", "r");
     if (!wlan_html_file) {
-        Serial.println("Fehler beim Einlesen der wlan.html Datei");
+        Serial.println("Error reading wlan.html file");
     }
     if (!groups_html_file) {
-        Serial.println("Fehler beim Einlesen der group.html Datei");
+        Serial.println("Error reading group.html file");
     }
     if (!root_ca_file) {
-        Serial.println("Fehler beim Einlesen der RootCA Datei");
+        Serial.println("Error reading RootCA file");
     }
 }
 
@@ -519,6 +551,10 @@ void loop()
     MDNS.update();
 }
 
+void serve_ap_password_html() {
+    web_server.streamFile(wlan_html_file, "text/html");
+}
+
 void serve_wlan_html() {
     web_server.streamFile(wlan_html_file, "text/html");
 }
@@ -529,12 +565,15 @@ void serve_groups_html() {
 
 void start_web_server()
 {
+    read_ap_password();
     //WIFI ACCESS POINT
     WiFi.softAPConfig(ESP_IP,                       //Eigene Adresse
         ESP_IP,                       //Gateway Adresse
         IPAddress(255, 255, 255, 0)); //Subnetz-Maske
-    WiFi.softAP("ESP Pump", "ESPPASSWORD");
+    WiFi.softAP("ESP Pump", ap_pass);
 
+    web_server.on("/ap_password", serve_ap_password_html);
+    web_server.on("/change_ap_password", change_ap_password);
     web_server.on("/wlan", serve_wlan_html);
     web_server.on("/change_wlan", change_wlan);
     web_server.on("/groups", serve_groups_html);
