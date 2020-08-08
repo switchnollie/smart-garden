@@ -1,4 +1,5 @@
 const DeviceLogBucket = require("./models/deviceLogBucket");
+const WateringGroup = require("./models/wateringGroup");
 const getDayString = require("./helpers/getDayString");
 
 async function writeLogToDb(deviceId, pckg) {
@@ -29,4 +30,36 @@ async function writeLogToDb(deviceId, pckg) {
   );
 }
 
-module.exports = { writeLogToDb };
+/**
+ * Check if the measured moisture value has fallen below the threshold
+ */
+async function checkMoistureThreshold(groupId, moistureVal) {
+  const group = await WateringGroup.findOne(
+    { _id: groupId },
+    "moistureThreshold"
+  ).exec();
+  return group.moistureThreshold > parseInt(moistureVal, 10);
+}
+
+async function getLastPumped(groupId) {
+  const group = await WateringGroup.findOne(
+    { _id: groupId },
+    "lastPumped"
+  ).exec();
+  return group.lastPumped;
+}
+
+async function updateLastPumped(groupId) {
+  console.log(`updating last pumped of group ${groupId} to ${Date.now()}`);
+  await WateringGroup.updateOne(
+    { _id: groupId },
+    { lastPumped: new Date() }
+  ).exec();
+}
+
+module.exports = {
+  writeLogToDb,
+  checkMoistureThreshold,
+  getLastPumped,
+  updateLastPumped
+};

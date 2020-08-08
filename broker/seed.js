@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
-const getDayDate = require("./helpers/getDayDate");
+const getDayString = require("./helpers/getDayString");
 const User = require("./models/user");
 const WateringGroup = require("./models/wateringGroup");
 const Device = require("./models/device");
 const DeviceLogBucket = require("./models/deviceLogBucket");
+
+const nowTimestamp = Date.now();
+const lastTimestamp = nowTimestamp - 5000;
 
 const initialUsers = [
   {
@@ -18,6 +21,8 @@ const initialWateringGroups = [
     _id: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     displayName: "orchid",
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
+    lastPumped: nowTimestamp,
+    moistureThreshold: 55,
     devices: [
       mongoose.Types.ObjectId("5f2d2f46c254098c1222a484"),
       mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
@@ -33,7 +38,7 @@ const initialDevices = [
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "moisture",
-    logs: []
+    logBuckets: [mongoose.Types.ObjectId("5f2d6fb18fd7805f913cc40a")]
   },
   {
     _id: mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
@@ -41,7 +46,7 @@ const initialDevices = [
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "pump",
-    logs: []
+    logBuckets: [mongoose.Types.ObjectId("5f2d728d1407c5e120a3980e")]
   },
   {
     _id: mongoose.Types.ObjectId("5f2d30f7c22d4d3103a19b22"),
@@ -49,18 +54,16 @@ const initialDevices = [
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "waterlevel",
-    logs: []
+    logBuckets: [mongoose.Types.ObjectId("5f2d72f56a21f09e868acf71")]
   }
 ];
-const nowTimestamp = Date.now();
-const lastTimestamp = nowTimestamp - 5000;
 
 const initialDeviceLogBuckets = [
   {
     _id: mongoose.Types.ObjectId("5f2d6fb18fd7805f913cc40a"),
     deviceId: mongoose.Types.ObjectId("5f2d2f46c254098c1222a484"),
     nsamples: 2,
-    day: getDayDate(),
+    day: getDayString(),
     first: nowTimestamp,
     last: lastTimestamp,
     samples: [
@@ -72,7 +75,7 @@ const initialDeviceLogBuckets = [
     _id: mongoose.Types.ObjectId("5f2d728d1407c5e120a3980e"),
     deviceId: mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
     nsamples: 2,
-    day: getDayDate(),
+    day: getDayString(),
     first: nowTimestamp,
     last: lastTimestamp,
     samples: [
@@ -84,7 +87,7 @@ const initialDeviceLogBuckets = [
     _id: mongoose.Types.ObjectId("5f2d72f56a21f09e868acf71"),
     deviceId: mongoose.Types.ObjectId("5f2d30f7c22d4d3103a19b22"),
     nsamples: 2,
-    day: getDayDate(),
+    day: getDayString(),
     first: nowTimestamp,
     last: lastTimestamp,
     samples: [
