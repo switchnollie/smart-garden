@@ -1,32 +1,33 @@
-import { disconnect, createConnection } from "mongoose";
+import { disconnect, connect } from "mongoose";
 
-export default function connectToMongo() {
-  const connection = createConnection(
+export default async function connectToMongo() {
+  const db = await connect(
     `${process.env.MONGO_URI}/${process.env.MONGO_DATABASE}`,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     }
   );
-  connection.on("connecting", () => {
+
+  db.connection.on("connecting", () => {
     console.info("[MongoDB] connecting");
   });
 
-  connection.on("connected", () => {
+  db.connection.on("connected", () => {
     console.log("[MongoDB] Connected");
   });
 
-  connection.on("error", (error) => {
+  db.connection.on("error", (error) => {
     console.error(`[MongoDB] connection ${error}`);
     disconnect();
   });
 
-  connection.on("disconnected", () => {
+  db.connection.on("disconnected", () => {
     console.warn("[MongoDB] disconnected");
   });
 
-  connection.on("reconnectFailed", () => {
+  db.connection.on("reconnectFailed", () => {
     console.error("[MongoDB] reconnectFailed");
   });
-  return connection;
+  return db;
 }

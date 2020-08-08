@@ -12,13 +12,14 @@ app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 
+connectToMongo();
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.listen(PORT, () => {
-  console.log(`Dashboard started an listening on port ${PORT}`);
+  console.log(`Dashboard started and listening on port ${PORT}`);
 });
 
 initRoutes(app);
-connectToMongo();
 
 export default app;

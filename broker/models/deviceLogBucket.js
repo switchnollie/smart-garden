@@ -3,7 +3,7 @@
 // https://www.mongodb.com/blog/post/time-series-data-and-mongodb-part-2-schema-design-best-practices
 const { Schema, model } = require("mongoose");
 
-const DeviceLogBucketSchema = Schema(
+const DeviceLogBucketSchema = new Schema(
   {
     deviceId: {
       type: Schema.Types.ObjectId,

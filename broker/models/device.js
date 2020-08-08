@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 
-const DeviceSchema = Schema({
+const DeviceSchema = new Schema({
   type: String,
   displayName: String,
   logBuckets: [
