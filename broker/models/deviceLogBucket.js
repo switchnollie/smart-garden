@@ -3,21 +3,23 @@
 // https://www.mongodb.com/blog/post/time-series-data-and-mongodb-part-2-schema-design-best-practices
 const { Schema, model } = require("mongoose");
 
-const DeviceLogBucketSchema = Schema({
-  deviceId: {
-    type: Schema.Types.ObjectId,
-    ref: "Device"
+const DeviceLogBucketSchema = Schema(
+  {
+    deviceId: {
+      type: Schema.Types.ObjectId,
+      ref: "Device"
+    },
+    nsamples: Number,
+    day: Schema.Types.Date,
+    first: Number, // Unix Timestamp
+    last: Number, // Unix Timestamp
+    samples: [
+      {
+        time: Number
+      }
+    ]
   },
-  nsamples: Number,
-  day: Schema.Types.Date,
-  first: Number, // Unix Timestamp
-  last: Number, // Unix Timestamp
-  samples: [
-    {
-      val: Date,
-      time: Number
-    }
-  ]
-});
+  { strict: false }
+);
 
 module.exports = model("DeviceLogBucket", DeviceLogBucketSchema);

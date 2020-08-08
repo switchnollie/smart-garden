@@ -8,8 +8,7 @@ const { parseTopic } = require("./helpers/topicSchema");
 
 const MQTT_PORT = process.env.MQTT_PORT || 1883;
 
-function initBroker(mongoConnection) {
-  const db = mongoConnection.useDb("logPersistence").db;
+function initBroker(db) {
   const aedes = Aedes({
     persistence: mongoPersistence({ db }),
     mq: mqemitter({ db })
@@ -46,7 +45,7 @@ function initBroker(mongoConnection) {
   };
 
   // react to moisture messages
-  aedes.mq.on("+/+/+/moisture", pkg => {
+  aedes.mq.on("+/+/+/moisture", async (pkg, cb) => {
     const { deviceId } = parseTopic(pkg.topic);
     writeLogToDb(deviceId, pkg);
     // TODO: Check Threshold, if necessary emit pumped on the deviceGroup

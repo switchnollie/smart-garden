@@ -7,5 +7,5 @@ module.exports = function () {
     "-" +
     currentDate.getDate();
 
-  return new Date(date);
+  return date;
 };
