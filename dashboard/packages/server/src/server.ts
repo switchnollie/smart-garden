@@ -14,10 +14,6 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/api", (_, res) => {
-  res.send("API is working properly");
-});
-
 app.listen(PORT, () => {
   console.log(`Dashboard started an listening on port ${PORT}`);
 });
