@@ -22,7 +22,7 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - dashboard
+      - mobileApp
       - broker
     volumes:
       - "./haproxy:/usr/local/etc/haproxy"
@@ -31,12 +31,12 @@ services:
       - "web-root:/var/www/next"
     networks:
       - smart-garden-net
-  dashboard:
-    container_name: dashboard
-    build: ./dashboard
+  mobileApp:
+    container_name: mobileApp
+    build: ./mobileApp
     restart: unless-stopped
     volumes:
-      - "web-root:/usr/src/dashboard/packages/server/public"
+      - "web-root:/usr/src/mobileApp/packages/server/public"
     networks:
       - smart-garden-net
     environment:
@@ -50,7 +50,7 @@ services:
       - certbot-var:/var/lib/letsencrypt
       - web-root:/${CERTBOT_WEBROOT}
     depends_on:
-      - dashboard
+      - mobileApp
     entrypoint:
       "/bin/sh -c 'certbot certonly --webroot --webroot-path=/${CERTBOT_WEBROOT} --email ${CERT_MAIL} --agree-tos --no-eff-email --force-renewal \
       -d smartgarden.timweise.com  -d www.smartgarden.timweise.com -d broker.smartgarden.timweise.com \

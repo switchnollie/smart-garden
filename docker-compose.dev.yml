@@ -26,13 +26,13 @@ services:
     networks:
       - smart-garden-net
     depends_on:
-      - dashboard
+      - mobileApp
       - broker
-  dashboard:
-    container_name: dashboard
-    build: ./dashboard
+  mobileApp:
+    container_name: mobileApp
+    build: ./mobileApp
     volumes:
-      - "web-root:/usr/src/dashboard/packages/server/public"
+      - "web-root:/usr/src/mobileApp/packages/server/public"
     environment:
       - MONGO_URI=${MONGO_URI}
       - MONGO_DATABASE=${MONGO_DATABASE}
