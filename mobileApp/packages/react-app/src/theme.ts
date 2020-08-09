@@ -4,11 +4,13 @@ const fontPrimary = "#fff";
 const fontSecondary = "rgba(255,255,255,0.5)";
 
 const gradientDark = "linear-gradient(255deg, #13171F 0%, #202635 100%);";
+const backgroundDark = "#10141C";
 
 const theme = {
   colors: {
     accentBlue: "#0087FF",
     accentRed: "#FF0063",
+    backgroundDark,
     font: {
       fontPrimary,
       fontSecondary,
@@ -43,6 +45,20 @@ export const AppStyles = createGlobalStyle`
   ion-header {
     padding: 1rem 1rem 0 1rem;
     box-sizing: border-box;
+  }
+
+  ion-tab-bar {
+    --background: ${backgroundDark};
+    --border: none;
+    margin: 1rem;
+    border-radius: 2rem;
+    padding: 0.3rem;
+    box-shadow: 0px 1px 4px 0px rgba(0,0,0,0.08), 0px 3px 16px 0px rgba(0,0,0,0.06);
+  }
+
+  ion-label {
+    --color: ${fontSecondary};
+    font-size: 0.75rem;
   }
 
   h1 {

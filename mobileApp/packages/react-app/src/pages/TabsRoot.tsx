@@ -1,5 +1,5 @@
 import React from "react";
-import { PlantsPage, InsightsPage, ProfilePage, PlantDetailsPage } from "./";
+import { Route, Redirect } from "react-router-dom";
 import {
   IonPage,
   IonTabs,
@@ -9,7 +9,8 @@ import {
   IonIcon,
   IonLabel,
 } from "@ionic/react";
-import { Route, Redirect } from "react-router-dom";
+import { PlantsPage, InsightsPage, ProfilePage, PlantDetailsPage } from "./";
+import Icon from "../components/Icon";
 
 export default function TabsRoot() {
   return (
@@ -22,17 +23,17 @@ export default function TabsRoot() {
           <Route path="/:tab(insights)" exact component={InsightsPage} />
           <Route path="/:tab(profile)" exact component={ProfilePage} />
         </IonRouterOutlet>
-        <IonTabBar slot="bottom">
+        <IonTabBar slot="bottom" mode="ios">
           <IonTabButton tab="plants" href="/plants">
-            <IonIcon name="flash" />
+            <Icon height={20} icon="seed" />
             <IonLabel>Plants</IonLabel>
           </IonTabButton>
           <IonTabButton tab="insights" href="/insights">
-            <IonIcon name="apps" />
+            <Icon height={20} icon="insights" />
             <IonLabel>Insights</IonLabel>
           </IonTabButton>
           <IonTabButton tab="profile" href="/profile">
-            <IonIcon name="apps" />
+            <Icon height={20} icon="profile" />
             <IonLabel>Profile</IonLabel>
           </IonTabButton>
         </IonTabBar>

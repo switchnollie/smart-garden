@@ -13,7 +13,7 @@ export default function Header({
   children,
 }: HeaderProps) {
   return (
-    <IonHeader>
+    <IonHeader mode="ios">
       <h1>{children}</h1>
     </IonHeader>
   );
