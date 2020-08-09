@@ -11,7 +11,8 @@ services:
     networks:
       - smart-garden-net
     environment:
-      MONGO_URI: "mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}/${MONGO_DATABASE}?authSource=admin"
+      - MONGO_URI=${MONGO_URI}
+      - MONGO_DATABASE=${MONGO_DATABASE}
   haproxy:
     container_name: haproxy
     image: mminks/haproxy-docker-logging:latest
@@ -38,6 +39,9 @@ services:
       - "web-root:/usr/src/dashboard/packages/server/public"
     networks:
       - smart-garden-net
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - MONGO_DATABASE=${MONGO_DATABASE}
   certbot:
     image: certbot/certbot
     container_name: certbot
