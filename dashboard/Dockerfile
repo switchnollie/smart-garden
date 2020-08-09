@@ -1,6 +1,7 @@
-FROM node:latest
+FROM node:14
 WORKDIR /usr/src/dashboard
-COPY package*.json ./
+COPY package.json ./
+COPY yarn.lock .
 COPY lerna.json .
 COPY packages/react-app ./packages/react-app
 COPY packages/server ./packages/server

@@ -44,7 +44,7 @@ const UserController = {
 
   async remove(req: Request, res: Response): Promise<void> {
     try {
-      const user: IUserModel = await UserModel.findOneAndRemove({
+      const user = await UserModel.findOneAndRemove({
         _id: Types.ObjectId(req.params.id),
       }).exec();
       res.status(204).json(user);

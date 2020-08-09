@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start:dev": "ts-node-dev -r dotenv/config --no-notify --respawn src/server dotenv_config_path=../../../.env",
-    "start:prod": "ts-node -r dotenv/config src/server dotenv_config_path=../../../.env",
+    "start:prod": "ts-node src/server",
+    "dev": "yarn start:dev",
+    "prod": "yarn start:prod",
     "clean": "rm -rf dist",
     "build": "yarn -s clean && tsc"
   },
