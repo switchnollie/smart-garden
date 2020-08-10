@@ -1,7 +1,7 @@
 import React from "react";
 import { IonContent } from "@ionic/react";
 import Header from "../components/Header";
-import WateringGroupCard from "../components/organisms/WateringGroupCard";
+import WateringGroupCard from "../components/WateringGroupCard";
 
 export default function InsightsPage() {
   return (
