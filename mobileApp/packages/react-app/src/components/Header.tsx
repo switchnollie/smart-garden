@@ -1,5 +1,10 @@
 import React, { ReactNode } from "react";
+import styled, { css } from "styled-components";
 import { IonHeader } from "@ionic/react";
+
+const Title = styled.h1`
+  min-height: 3.125rem;
+`;
 
 interface HeaderProps {
   backwardsLink?: string;
@@ -14,7 +19,7 @@ export default function Header({
 }: HeaderProps) {
   return (
     <IonHeader mode="ios">
-      <h1>{children}</h1>
+      <Title>{children}</Title>
     </IonHeader>
   );
 }

@@ -1,47 +1,40 @@
 import React from "react";
-import styled, { css } from "styled-components";
-import {
-  IonContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonThumbnail,
-} from "@ionic/react";
+import { RouteComponentProps, Link } from "react-router-dom";
+import { IonContent, IonLabel, IonThumbnail } from "@ionic/react";
 import Header from "../components/Header";
 import IconButton from "../components/IconButton";
+import List, { ListItem } from "../components/List";
 
-const ListItem = styled(IonItem)`
-  ${({ theme }) => css`
-    h2 {
-      font-size: 1.5rem;
-      color: ${theme.fontPrimary};
-      font-weight: bold;
-      letter-spacing: 0.01916em;
-    }
-    h4 {
-      font-size: 0.875rem;
-      color: ${theme.colors.font.fontSecondary};
-      font-weight: bold;
-    }
-  `}
-`;
+const wateringGroups = [
+  {
+    id: "5f2d2bfe7824f2b9fd33cb66",
+    displayName: "Orchid",
+    lastPumped: "yesterday, 5:12am",
+  },
+];
 
-export default function PlantsPage() {
+interface PlantsPageProps extends RouteComponentProps {}
+
+export default function PlantsPage({ match }: PlantsPageProps) {
   return (
     <>
       <Header>Watering Groups</Header>
       <IonContent>
-        <IonList>
-          <ListItem lines="none">
-            <IonLabel>
-              <h2>Orchid</h2>
-              <h4>last watering: yesterday, 5:12am</h4>
-            </IonLabel>
-            <IonThumbnail slot="end">
-              <IconButton icon="water" />
-            </IonThumbnail>
-          </ListItem>
-        </IonList>
+        <List>
+          {wateringGroups.map(({ id, displayName, lastPumped }) => (
+            <Link to={`${match.url}/${id}`} style={{ textDecoration: "none" }}>
+              <ListItem lines="none" key={id}>
+                <IonLabel>
+                  <h2>{displayName}</h2>
+                  <h4>{`last watering: ${lastPumped}`}</h4>
+                </IonLabel>
+                <IonThumbnail slot="end">
+                  <IconButton icon="water" />
+                </IonThumbnail>
+              </ListItem>
+            </Link>
+          ))}
+        </List>
       </IonContent>
     </>
   );

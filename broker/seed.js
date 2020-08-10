@@ -19,7 +19,7 @@ const initialUsers = [
 const initialWateringGroups = [
   {
     _id: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
-    displayName: "orchid",
+    displayName: "Orchid",
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     lastPumped: nowTimestamp,
     moistureThreshold: 55,

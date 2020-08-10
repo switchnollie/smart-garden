@@ -18,7 +18,7 @@ export default function TabsRoot() {
         <IonRouterOutlet>
           <Route exact path="/" render={() => <Redirect to="/plants" />} />
           <Route path="/:tab(plants)" exact component={PlantsPage} />
-          <Route path="/:tab(plants)/:groupName" component={PlantDetailsPage} />
+          <Route path="/:tab(plants)/:groupId" component={PlantDetailsPage} />
           <Route path="/:tab(insights)" exact component={InsightsPage} />
           <Route path="/:tab(profile)" exact component={ProfilePage} />
         </IonRouterOutlet>
