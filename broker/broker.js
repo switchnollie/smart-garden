@@ -3,13 +3,17 @@ const Aedes = require("aedes");
 const logging = require("aedes-logging");
 const mongoPersistence = require("aedes-persistence-mongodb");
 const mqemitter = require("mqemitter-mongodb");
-const { writeLogToDb } = require("./dbController");
+const {
+  writeLogToDb,
+  checkMoistureThreshold,
+  getLastPumped,
+  updateLastPumped
+} = require("./dbController");
 const { parseTopic } = require("./helpers/topicSchema");
 
 const MQTT_PORT = process.env.MQTT_PORT || 1883;
 
-function initBroker(mongoConnection) {
-  const db = mongoConnection.useDb("logPersistence").db;
+function initBroker(db) {
   const aedes = Aedes({
     persistence: mongoPersistence({ db }),
     mq: mqemitter({ db })
@@ -45,11 +49,41 @@ function initBroker(mongoConnection) {
     return callback(null);
   };
 
-  // react to moisture messages
-  aedes.mq.on("+/+/+/moisture", pkg => {
+  aedes.mq.on("+/+/+/waterlevel", async (pkg, cb) => {
     const { deviceId } = parseTopic(pkg.topic);
     writeLogToDb(deviceId, pkg);
-    // TODO: Check Threshold, if necessary emit pumped on the deviceGroup
+    cb();
+  });
+
+  aedes.mq.on("+/+/+/pump", async (pkg, cb) => {
+    const { deviceId, groupId } = parseTopic(pkg.topic);
+    writeLogToDb(deviceId, pkg);
+    updateLastPumped(groupId);
+    cb();
+  });
+
+  // react to moisture messages
+  aedes.mq.on("+/+/+/moisture", async (pkg, cb) => {
+    const { userId, groupId, deviceId } = parseTopic(pkg.topic);
+    writeLogToDb(deviceId, pkg);
+    const lastPumped = +(await getLastPumped(groupId));
+    const isMoistureThresholdReached = await checkMoistureThreshold(
+      groupId,
+      pkg.payload.toString()
+    );
+    // Only pump if the threshold is exceeded and the last pump is more than 2 minutes ago.
+    if (isMoistureThresholdReached && Date.now() - lastPumped > 5000) {
+      console.log(
+        `moisture threshold reached, last pump ${
+          Date.now() - lastPumped
+        } ms ago`
+      );
+      aedes.mq.emit({
+        topic: `${userId}/${groupId}/${deviceId}/pump`,
+        payload: 1
+      });
+    }
+    cb();
   });
 }
 

@@ -6,14 +6,17 @@ mongoose.Promise = global.Promise;
 
 async function main() {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    const db = await mongoose.connect(
+      `${process.env.MONGO_URI}/${process.env.MONGO_DATABASE}`,
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      }
+    );
+    initBroker(db.connection);
   } catch (err) {
     console.error(err);
   }
-  initBroker(mongoose.connection);
 }
 
 main();

@@ -1,0 +1,15 @@
+{
+  "name": "smartgarden-app",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "lerna run build && rm -rf ./packages/server/public && mkdir -p ./packages/server/public && mv ./packages/react-app/build/* ./packages/server/public && rm -rf ./packages/react-app/build",
+    "dev": "lerna run start",
+    "prod": "lerna run prod --stream --no-prefix --scope=@smartgarden-app/server"
+  },
+  "devDependencies": {
+    "lerna": "^3.22.1"
+  }
+}

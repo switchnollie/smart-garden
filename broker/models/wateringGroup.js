@@ -11,7 +11,9 @@ const WateringGroupSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: "Device"
     }
-  ]
+  ],
+  moistureThreshold: Number,
+  lastPumped: Schema.Types.Date
 });
 
 module.exports = model("WateringGroup", WateringGroupSchema);

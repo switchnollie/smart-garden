@@ -1,13 +1,23 @@
 // The "Mongo-way" of designing time series data schemas
 // called "Size-based bucketing" is applied here
 // https://www.mongodb.com/blog/post/time-series-data-and-mongodb-part-2-schema-design-best-practices
-const { Schema, model } = require("mongoose");
+import { Schema, model, Document } from "mongoose";
+import { IDeviceModel } from "./device";
+
+export interface IDeviceLogBucketModel extends Document {
+  deviceId: IDeviceModel["_id"];
+  nsamples: number;
+  day: Date;
+  first: number;
+  last: number;
+  samples: Object[];
+}
 
 const DeviceLogBucketSchema = new Schema(
   {
     deviceId: {
       type: Schema.Types.ObjectId,
-      ref: "Device"
+      ref: "Device",
     },
     nsamples: Number,
     day: Schema.Types.Date,
@@ -15,11 +25,14 @@ const DeviceLogBucketSchema = new Schema(
     last: Number, // Unix Timestamp
     samples: [
       {
-        time: Number
-      }
-    ]
+        time: Number,
+      },
+    ],
   },
   { strict: false }
 );
 
-module.exports = model("DeviceLogBucket", DeviceLogBucketSchema);
+export default model<IDeviceLogBucketModel>(
+  "DeviceLogBucket",
+  DeviceLogBucketSchema
+);
