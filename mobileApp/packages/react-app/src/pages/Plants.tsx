@@ -22,8 +22,12 @@ export default function PlantsPage({ match }: PlantsPageProps) {
       <IonContent>
         <List>
           {wateringGroups.map(({ id, displayName, lastPumped }) => (
-            <Link to={`${match.url}/${id}`} style={{ textDecoration: "none" }}>
-              <ListItem lines="none" key={id}>
+            <Link
+              key={id}
+              to={`${match.url}/${id}`}
+              style={{ textDecoration: "none" }}
+            >
+              <ListItem lines="none">
                 <IonLabel>
                   <h2>{displayName}</h2>
                   <h4>{`last watering: ${lastPumped}`}</h4>

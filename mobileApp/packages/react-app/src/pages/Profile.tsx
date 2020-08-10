@@ -1,5 +1,5 @@
 import React from "react";
-import { IonContent, IonThumbnail, IonLabel } from "@ionic/react";
+import { IonContent, IonThumbnail } from "@ionic/react";
 import Header from "../components/Header";
 import List, { ListItem } from "../components/List";
 import ThumbnailImg from "../icons/thumbnail.svg";

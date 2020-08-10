@@ -29,6 +29,8 @@ const PercentageText = styled.h2<{ primary?: boolean; secondary?: boolean }>`
     font-weight: bold !important;
     color: ${getColor({ primary, secondary })};
     line-height: 1;
+    margin-top: 2px;
+    margin-bottom: 2px;
   `}
 `;
 
@@ -37,6 +39,8 @@ const CountLabel = styled.h4`
     font-size: 0.875rem !important;
     color: ${theme.colors.font.fontPrimary};
     font-weight: bold !important;
+    margin-top: 2px;
+    margin-bottom: 2px;
   `}
 `;
 
