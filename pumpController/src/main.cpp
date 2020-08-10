@@ -1,13 +1,9 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <WiFiClient.h>
 #include <Ticker.h>
 #include <PubSubClient.h>
 #include <EEPROM.h>
 #include <string>
-#include <ESP8266HTTPUpdateServer.h>
-#include <ESP8266mDNS.h>
 #include <FS.h>
 #include <wifi.h>
 
@@ -53,7 +49,6 @@ char messageBuffer[MSG_BUFFER_SIZE];
 
 void pump();
 void publishWaterLevel();
-void set_pump_duration();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 void read_mqtt_parameters();
 
