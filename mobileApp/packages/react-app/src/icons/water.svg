@@ -1,1 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M24 0H0v24h24V0zm0 0H0v24h24V0zM0 24h24V0H0v24z" fill="none"/><path d="M17.66 8L12 2.35 6.34 8C4.78 9.56 4 11.64 4 13.64s.78 4.11 2.34 5.67 3.61 2.35 5.66 2.35 4.1-.79 5.66-2.35S20 15.64 20 13.64 19.22 9.56 17.66 8zM6 14c.01-2 .62-3.27 1.76-4.4L12 5.27l4.24 4.38C17.38 10.77 17.99 12 18 14H6z"/></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="20px" viewBox="0 0 16 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Path</title>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Mobile-Copy" transform="translate(-320.000000, -167.000000)" fill="#FFFFFF" fill-rule="nonzero">
+            <g id="Group-2" transform="translate(299.000000, 148.000000)">
+                <g id="opacity-24px" transform="translate(21.000000, 19.000000)">
+                    <path d="M13.66,6 L8,0.35 L2.34,6 C0.78,7.56 0,9.64 0,11.64 C0,13.64 0.78,15.75 2.34,17.31 C3.9,18.87 5.95,19.66 8,19.66 C10.05,19.66 12.1,18.87 13.66,17.31 C15.22,15.75 16,13.64 16,11.64 C16,9.64 15.22,7.56 13.66,6 Z" id="Path"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

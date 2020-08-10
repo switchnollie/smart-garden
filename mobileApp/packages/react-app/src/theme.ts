@@ -1,5 +1,8 @@
 import { createGlobalStyle } from "styled-components";
 
+const accentBlue = "#0087FF";
+const accentRed = "#FF0063";
+
 const fontPrimary = "#fff";
 const fontSecondary = "rgba(255,255,255,0.5)";
 
@@ -8,8 +11,8 @@ const backgroundDark = "#10141C";
 
 const theme = {
   colors: {
-    accentBlue: "#0087FF",
-    accentRed: "#FF0063",
+    accentBlue,
+    accentRed,
     backgroundDark,
     font: {
       fontPrimary,
@@ -40,6 +43,15 @@ export const AppStyles = createGlobalStyle`
     --ion-background-color: transparent;
     --ion-font-family: -apple-system, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     --ion-text-color: ${fontPrimary};
+    --ion-color-primary: ${accentBlue};
+    --ion-color-primary-rgb: 0,135,255;
+    --ion-color-primary-shade: #0077e0;
+    --ion-color-primary-tint: #1a93ff;
+
+    --ion-color-danger: ${accentRed};
+    --ion-color-danger-rgb: 255,0,99;
+    --ion-color-danger-shade: #e00057;
+    --ion-color-danger-tint: #ff1a73;
   }
 
   ion-header {
@@ -55,10 +67,14 @@ export const AppStyles = createGlobalStyle`
     padding: 0.3rem;
     box-shadow: 0px 1px 4px 0px rgba(0,0,0,0.08), 0px 3px 16px 0px rgba(0,0,0,0.06);
   }
-
   ion-label {
     --color: ${fontSecondary};
     font-size: 0.75rem;
+  }
+
+  ion-grid {
+    --ion-grid-padding: 0px;
+    margin: 0 -5px;
   }
 
   h1 {
@@ -73,6 +89,17 @@ export const AppStyles = createGlobalStyle`
     color: ${fontPrimary};
     font-weight: bold;
     letter-spacing: -0.0255em;
+  }
+  h3 {
+    font-size: 1.5rem;
+    color: ${fontPrimary};
+    font-weight: bold;
+    letter-spacing: 0.01916em;
+  }
+  h4 {
+    font-size: 0.875rem;
+    color: ${theme.colors.font.fontSecondary};
+    font-weight: bold;
   }
 `;
 

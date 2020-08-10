@@ -6,7 +6,6 @@ import {
   IonRouterOutlet,
   IonTabBar,
   IonTabButton,
-  IonIcon,
   IonLabel,
 } from "@ionic/react";
 import { PlantsPage, InsightsPage, ProfilePage, PlantDetailsPage } from "./";
