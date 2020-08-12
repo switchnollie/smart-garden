@@ -43,6 +43,9 @@ const Container = styled.div<any>`
       outline: none;
       padding: 0;
     }
+    input {
+      margin: 0;
+    }
   `}
 `;
 const CountLabel = styled.h4`

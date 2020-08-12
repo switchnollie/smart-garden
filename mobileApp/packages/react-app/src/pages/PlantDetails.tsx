@@ -1,14 +1,19 @@
 import React, { ReactElement, useState } from "react";
 import produce from "immer";
+import { mutate } from "swr";
+import { RouteComponentProps } from "react-router-dom";
 import { IonContent, IonGrid, IonRow, IonCol } from "@ionic/react";
 import Header from "../components/Header";
-import { RouteComponentProps } from "react-router-dom";
 import List, { ListItem, ListHeader } from "../components/List";
 import MiniCard from "../components/MiniCard";
+import ListItemInputField from "../components/ListItemInputField";
 import { Device } from "../types/Device";
 import useWateringGroups from "../hooks/useWateringGroups";
-import ListItemInputField from "../components/ListItemInputField";
-import { mutate } from "swr";
+import {
+  getTenBitPercentage,
+  getTenBitAnalog,
+} from "../utils/relativeAnalogValues";
+import { WateringGroup } from "../types/WateringGroup";
 
 interface PlantsPageProps extends RouteComponentProps<{ groupId: string }> {}
 
@@ -18,42 +23,39 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
     null
   );
 
-  let wateringGroup;
+  let wateringGroup: WateringGroup | undefined;
   // Initialize wateringGroup and moistureThreshold
   if (groups) {
     wateringGroup = groups.find((group) => group._id === match.params.groupId);
     if (moistureThreshold === null && wateringGroup?.moistureThreshold) {
       setMoistureThreshold(
-        Math.round((wateringGroup.moistureThreshold / 1023) * 100)
+        getTenBitPercentage(wateringGroup.moistureThreshold)
       );
     }
   }
 
   const handleMoistureSubmit = async () => {
-    if (groups && moistureThreshold) {
+    if (groups && wateringGroup && moistureThreshold) {
       const uri = "/api/wateringgroup";
+      const tenBitMoistureThreshold = getTenBitAnalog(moistureThreshold);
       const selectedGroupIndex = groups.findIndex(
         (group) => group._id === match.params.groupId
       );
       // Only update if changed
-      if (moistureThreshold !== groups[selectedGroupIndex].moistureThreshold) {
+      if (tenBitMoistureThreshold !== wateringGroup.moistureThreshold) {
         const updatedData = produce(groups, (draft) => {
-          if (selectedGroupIndex) {
-            draft[selectedGroupIndex].moistureThreshold = moistureThreshold;
-          }
+          draft[selectedGroupIndex].moistureThreshold = tenBitMoistureThreshold;
         });
         // Update local cache immediately
         mutate(uri, updatedData, false);
         // Send update API Request
-        const res = await fetch(uri, {
+        const res = await fetch(`${uri}/${wateringGroup._id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            // 'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: JSON.stringify(updatedData),
+          body: JSON.stringify({ moistureThreshold: tenBitMoistureThreshold }),
         });
-        console.log({ res });
       }
     }
   };
