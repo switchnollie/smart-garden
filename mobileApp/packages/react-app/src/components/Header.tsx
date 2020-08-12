@@ -6,6 +6,7 @@ import { chevronBack } from "ionicons/icons";
 
 const Title = styled.h1`
   min-height: 3.125rem;
+  margin: 0.5em 0;
 `;
 
 const Buttons = styled(IonButtons)`

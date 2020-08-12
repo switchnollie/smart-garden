@@ -12,12 +12,12 @@ const StyledButton = styled.button`
     background-color: ${theme.colors.accentBlue};
     border-radius: 50%;
     color: ${theme.colors.font.fontPrimary};
-    width: 3.625rem;
-    height: 3.625rem;
+    width: 3rem;
+    height: 3rem;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.1875rem;
+    font-size: 1rem;
     box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.08),
       0px 3px 16px 0px rgba(0, 0, 0, 0.06);
   `}

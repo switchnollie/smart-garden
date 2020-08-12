@@ -1,66 +1,31 @@
-import React, { useEffect, useState, ReactElement } from "react";
-import theme from "../theme";
-import {
-  IonContent,
-  IonButton,
-  IonButtons,
-  IonGrid,
-  IonRow,
-  IonCol,
-} from "@ionic/react";
+import React, { ReactElement, useState } from "react";
+import { IonContent, IonGrid, IonRow, IonCol } from "@ionic/react";
 import Header from "../components/Header";
 import { RouteComponentProps } from "react-router-dom";
-import { WateringGroupDetails } from "../types/WateringGroupDetails";
 import List, { ListItem, ListHeader } from "../components/List";
-import LabeledStat from "../components/LabeledStat";
-import Icon from "../components/Icon";
 import MiniCard from "../components/MiniCard";
 import { Device } from "../types/Device";
+import useWateringGroups from "../hooks/useWateringGroups";
+import ListItemInputField from "../components/ListItemInputField";
 
 interface PlantsPageProps extends RouteComponentProps<{ groupId: string }> {}
 
-const mockData: WateringGroupDetails = {
-  devices: [
-    {
-      logBuckets: ["5f2d6fb18fd7805f913cc40a"],
-      _id: "5f2d2f46c254098c1222a484",
-      displayName: "Moisture Sensor 1",
-      ownedBy: "5f2d2b58d65dd0c3e0ac05e7",
-      type: "moisture",
-    },
-    {
-      logBuckets: ["5f2d728d1407c5e120a3980e"],
-      _id: "5f2d2f515e9536fb08962ba5",
-      displayName: "Pump 1",
-      ownedBy: "5f2d2b58d65dd0c3e0ac05e7",
-      type: "pump",
-    },
-    {
-      logBuckets: ["5f2d72f56a21f09e868acf71"],
-      _id: "5f2d30f7c22d4d3103a19b22",
-      displayName: "Waterlevel Sensor 1",
-      ownedBy: "5f2d2b58d65dd0c3e0ac05e7",
-      type: "waterlevel",
-    },
-  ],
-  _id: "5f2d2bfe7824f2b9fd33cb66",
-  displayName: "Orchid",
-  ownedBy: "5f2d2b58d65dd0c3e0ac05e7",
-  lastPumped: "2020-08-08T15:29:06.494Z",
-  moistureThreshold: 55,
-};
-
 export default function PlantDetailsPage({ match }: PlantsPageProps) {
-  const [
-    wateringGroup,
-    setWateringGroup,
-  ] = useState<WateringGroupDetails | null>(null);
-  useEffect(() => {
-    // Simulate network call
-    setTimeout(() => {
-      setWateringGroup(mockData);
-    }, 300);
-  }, [match.params.groupId]);
+  const { groups } = useWateringGroups();
+  const [moistureThreshold, setMoistureThreshold] = useState<number | null>(
+    null
+  );
+
+  let wateringGroup;
+  // Initialize wateringGroup and moistureThreshold
+  if (groups) {
+    wateringGroup = groups.find((group) => group._id === match.params.groupId);
+    if (moistureThreshold === null && wateringGroup?.moistureThreshold) {
+      setMoistureThreshold(
+        Math.round((wateringGroup.moistureThreshold / 1023) * 100)
+      );
+    }
+  }
 
   const groupDevices = (devices: Device[]) => {
     const columns = devices.map((device) => (
@@ -95,32 +60,20 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
               <ListHeader>
                 <h3>Configuration</h3>
               </ListHeader>
-              <ListItem lines="none">
-                <LabeledStat
-                  primary
-                  value={`${Math.round(
-                    (wateringGroup.moistureThreshold / 1023) * 100
-                  )}%`}
-                  label="Watering Threshold"
-                />
-                <IonButtons slot="end">
-                  <IonButton>
-                    <Icon color={theme.colors.font.fontPrimary} icon="edit" />
-                  </IonButton>
-                </IonButtons>
-              </ListItem>
-              <ListItem lines="none">
-                <LabeledStat
-                  primary
-                  value="once a week"
-                  label="Pump at least"
-                />
-                <IonButtons slot="end">
-                  <IonButton>
-                    <Icon color={theme.colors.font.fontPrimary} icon="edit" />
-                  </IonButton>
-                </IonButtons>
-              </ListItem>
+              <ListItemInputField
+                label="Watering Threshold"
+                statColor="primary"
+                value={moistureThreshold ? moistureThreshold.toString() : ""}
+                valueSuffix="%"
+                onChange={(e) =>
+                  setMoistureThreshold(parseInt(e.target.value, 10))
+                }
+              />
+              <ListItemInputField
+                label="Pump at least"
+                statColor="primary"
+                value="once a week"
+              />
             </List>
             <List>
               <ListHeader>
