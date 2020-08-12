@@ -1,4 +1,5 @@
 import React, { ReactElement, useState } from "react";
+import produce from "immer";
 import { IonContent, IonGrid, IonRow, IonCol } from "@ionic/react";
 import Header from "../components/Header";
 import { RouteComponentProps } from "react-router-dom";
@@ -7,6 +8,7 @@ import MiniCard from "../components/MiniCard";
 import { Device } from "../types/Device";
 import useWateringGroups from "../hooks/useWateringGroups";
 import ListItemInputField from "../components/ListItemInputField";
+import { mutate } from "swr";
 
 interface PlantsPageProps extends RouteComponentProps<{ groupId: string }> {}
 
@@ -26,6 +28,35 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
       );
     }
   }
+
+  const handleMoistureSubmit = async () => {
+    if (groups && moistureThreshold) {
+      const uri = "/api/wateringgroup";
+      const selectedGroupIndex = groups.findIndex(
+        (group) => group._id === match.params.groupId
+      );
+      // Only update if changed
+      if (moistureThreshold !== groups[selectedGroupIndex].moistureThreshold) {
+        const updatedData = produce(groups, (draft) => {
+          if (selectedGroupIndex) {
+            draft[selectedGroupIndex].moistureThreshold = moistureThreshold;
+          }
+        });
+        // Update local cache immediately
+        mutate(uri, updatedData, false);
+        // Send update API Request
+        const res = await fetch(uri, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: JSON.stringify(updatedData),
+        });
+        console.log({ res });
+      }
+    }
+  };
 
   const groupDevices = (devices: Device[]) => {
     const columns = devices.map((device) => (
@@ -68,6 +99,7 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
                 onChange={(e) =>
                   setMoistureThreshold(parseInt(e.target.value, 10))
                 }
+                onSubmit={handleMoistureSubmit}
               />
               <ListItemInputField
                 label="Pump at least"

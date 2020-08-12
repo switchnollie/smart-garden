@@ -80,15 +80,17 @@ function CountUpStat({ value, valueSuffix, ...props }: LabeledStatProps) {
     duration: 0.7,
     decimals: 0,
     delay: 0.5,
-    suffix: valueSuffix,
+    suffix: valueSuffix || "",
     end: value as number,
   });
   return <LabeledStat {...props} value={counterValue} />;
 }
 
-export default ({ countUp, value, ...props }: LabeledStatHocProps) =>
-  countUp && !isNaN(value as any) ? (
-    <CountUpStat value={value} {...props} />
-  ) : (
-    <LabeledStat value={value} {...props} />
-  );
+export default forwardRef(
+  ({ countUp, value, ...props }: LabeledStatHocProps, ref) =>
+    countUp && !isNaN(value as any) ? (
+      <CountUpStat value={value} {...props} />
+    ) : (
+      <LabeledStat ref={ref as any} value={value} {...props} />
+    )
+);

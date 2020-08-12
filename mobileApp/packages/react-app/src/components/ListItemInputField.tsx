@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from "react";
+import React, { useState, ChangeEvent, useRef } from "react";
 import LabeledStat from "./LabeledStat";
 import { ListItem } from "./List";
 import { IonButtons, IonButton, IonIcon } from "@ionic/react";
@@ -12,6 +12,7 @@ interface ListItemInputFieldProps {
   statColor: "primary" | "secondary";
   label: string;
   valueSuffix?: string;
+  onSubmit?: () => any;
 }
 
 export default function ListItemInputField({
@@ -20,8 +21,22 @@ export default function ListItemInputField({
   statColor,
   label,
   valueSuffix,
+  onSubmit,
 }: ListItemInputFieldProps) {
+  const inputRef = useRef<HTMLInputElement>();
   const [editing, setEditing] = useState(false);
+
+  const changeEditingMode = () => {
+    const newIsEditing = !editing;
+    setEditing(newIsEditing);
+    if (newIsEditing) {
+      setTimeout(() => {
+        inputRef?.current?.focus();
+      }, 5);
+    } else {
+      onSubmit && onSubmit();
+    }
+  };
   return (
     <ListItem lines="none">
       <LabeledStat
@@ -32,9 +47,10 @@ export default function ListItemInputField({
         isTextInput={editing}
         onChange={onChange}
         valueSuffix={valueSuffix}
+        ref={inputRef as any}
       />
       <IonButtons slot="end">
-        <IonButton onClick={() => setEditing(!editing)}>
+        <IonButton onClick={changeEditingMode}>
           {editing ? (
             <IonIcon color={theme.colors.font.fontPrimary} icon={checkmark} />
           ) : (

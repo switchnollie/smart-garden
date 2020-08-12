@@ -23,10 +23,22 @@ export default function WateringGroupCard({
         <IonGrid>
           <IonRow>
             <IonCol size="4">
-              <LabeledStat countUp value={32} primary label="Moisture" />
+              <LabeledStat
+                countUp
+                value={32}
+                primary
+                valueSuffix="%"
+                label="Moisture"
+              />
             </IonCol>
             <IonCol size="4">
-              <LabeledStat countUp value={5} secondary label="Water Level" />
+              <LabeledStat
+                countUp
+                value={5}
+                secondary
+                label="Water Level"
+                valueSuffix="%"
+              />
             </IonCol>
           </IonRow>
           <IonRow>
