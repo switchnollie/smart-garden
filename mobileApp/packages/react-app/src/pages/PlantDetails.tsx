@@ -7,6 +7,7 @@ import Header from "../components/Header";
 import List, { ListItem, ListHeader } from "../components/List";
 import MiniCard from "../components/MiniCard";
 import ListItemInputField from "../components/ListItemInputField";
+import ListItemSelectField from "../components/ListItemSelectField";
 import { Device } from "../types/Device";
 import useWateringGroups from "../hooks/useWateringGroups";
 import {
@@ -22,6 +23,7 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
   const [moistureThreshold, setMoistureThreshold] = useState<number | null>(
     null
   );
+  const [minimalInterval, setMinimalInterval] = useState<number | null>(null);
 
   let wateringGroup: WateringGroup | undefined;
   // Initialize wateringGroup and moistureThreshold
@@ -31,6 +33,10 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
       setMoistureThreshold(
         getTenBitPercentage(wateringGroup.moistureThreshold)
       );
+    }
+    // TODO: Use persistent values from extended data model
+    if (minimalInterval === null) {
+      setMinimalInterval(604800000);
     }
   }
 
@@ -103,10 +109,13 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
                 }
                 onSubmit={handleMoistureSubmit}
               />
-              <ListItemInputField
+              <ListItemSelectField
                 label="Pump at least"
                 statColor="primary"
-                value="once a week"
+                value={minimalInterval?.toString() || ""}
+                onChange={(e) =>
+                  setMinimalInterval(parseInt(e.detail.value, 10))
+                }
               />
             </List>
             <List>

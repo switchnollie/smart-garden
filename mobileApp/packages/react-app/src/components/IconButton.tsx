@@ -20,6 +20,7 @@ const StyledButton = styled.button`
     font-size: 1rem;
     box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.08),
       0px 3px 16px 0px rgba(0, 0, 0, 0.06);
+    outline: none;
   `}
 `;
 

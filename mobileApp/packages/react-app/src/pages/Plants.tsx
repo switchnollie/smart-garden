@@ -27,7 +27,13 @@ export default function PlantsPage({ match }: PlantsPageProps) {
                     <h4>{`last watering: ${lastPumped}`}</h4>
                   </IonLabel>
                   <IonThumbnail slot="end">
-                    <IconButton icon="water" />
+                    <IconButton
+                      icon="water"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    />
                   </IonThumbnail>
                 </ListItem>
               ))
