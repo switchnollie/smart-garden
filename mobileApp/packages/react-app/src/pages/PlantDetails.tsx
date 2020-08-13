@@ -1,8 +1,6 @@
 import React, { ReactElement, useState } from "react";
-import produce from "immer";
-import { mutate } from "swr";
 import { RouteComponentProps } from "react-router-dom";
-import { IonContent, IonGrid, IonRow, IonCol } from "@ionic/react";
+import { IonRow, IonCol, IonContent, IonGrid } from "@ionic/react";
 import Header from "../components/Header";
 import List, { ListItem, ListHeader } from "../components/List";
 import MiniCard from "../components/MiniCard";
@@ -10,16 +8,17 @@ import ListItemInputField from "../components/ListItemInputField";
 import ListItemSelectField from "../components/ListItemSelectField";
 import { Device } from "../types/Device";
 import useWateringGroups from "../hooks/useWateringGroups";
-import {
-  getTenBitPercentage,
-  getTenBitAnalog,
-} from "../utils/relativeAnalogValues";
+import { getTenBitPercentage } from "../utils/relativeAnalogValues";
 import { WateringGroup } from "../types/WateringGroup";
 
 interface PlantsPageProps extends RouteComponentProps<{ groupId: string }> {}
 
 export default function PlantDetailsPage({ match }: PlantsPageProps) {
-  const { groups } = useWateringGroups();
+  const {
+    groups,
+    updateMoistureThreshold,
+    updateMinimalInterval,
+  } = useWateringGroups();
   const [moistureThreshold, setMoistureThreshold] = useState<number | null>(
     null
   );
@@ -34,36 +33,17 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
         getTenBitPercentage(wateringGroup.moistureThreshold)
       );
     }
-    // TODO: Use persistent values from extended data model
-    if (minimalInterval === null) {
-      setMinimalInterval(604800000);
+    if (minimalInterval === null && wateringGroup?.minimalPumpInterval) {
+      setMinimalInterval(wateringGroup.minimalPumpInterval);
     }
   }
 
-  const handleMoistureSubmit = async () => {
-    if (groups && wateringGroup && moistureThreshold) {
-      const uri = "/api/wateringgroup";
-      const tenBitMoistureThreshold = getTenBitAnalog(moistureThreshold);
-      const selectedGroupIndex = groups.findIndex(
-        (group) => group._id === match.params.groupId
-      );
-      // Only update if changed
-      if (tenBitMoistureThreshold !== wateringGroup.moistureThreshold) {
-        const updatedData = produce(groups, (draft) => {
-          draft[selectedGroupIndex].moistureThreshold = tenBitMoistureThreshold;
-        });
-        // Update local cache immediately
-        mutate(uri, updatedData, false);
-        // Send update API Request
-        const res = await fetch(`${uri}/${wateringGroup._id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ moistureThreshold: tenBitMoistureThreshold }),
-        });
-      }
-    }
+  const handleMoistureSubmit = async () =>
+    await updateMoistureThreshold(moistureThreshold, wateringGroup);
+
+  const handleMinimalIntervalSubmit = async (e: CustomEvent<any>) => {
+    setMinimalInterval(parseInt(e.detail.value, 10));
+    await updateMinimalInterval(minimalInterval, wateringGroup);
   };
 
   const groupDevices = (devices: Device[]) => {
@@ -113,9 +93,7 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
                 label="Pump at least"
                 statColor="primary"
                 value={minimalInterval?.toString() || ""}
-                onChange={(e) =>
-                  setMinimalInterval(parseInt(e.detail.value, 10))
-                }
+                onChange={handleMinimalIntervalSubmit}
               />
             </List>
             <List>

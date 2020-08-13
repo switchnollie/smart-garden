@@ -1,5 +1,6 @@
 import React from "react";
 import { RouteComponentProps } from "react-router-dom";
+import moment from "moment";
 import useWateringGroups from "../hooks/useWateringGroups";
 import { IonContent, IonLabel, IonThumbnail } from "@ionic/react";
 import Header from "../components/Header";
@@ -24,7 +25,7 @@ export default function PlantsPage({ match }: PlantsPageProps) {
                 >
                   <IonLabel>
                     <h2>{displayName}</h2>
-                    <h4>{`last watering: ${lastPumped}`}</h4>
+                    <h4>{`last watering: ${moment(lastPumped).fromNow()}`}</h4>
                   </IonLabel>
                   <IonThumbnail slot="end">
                     <IconButton

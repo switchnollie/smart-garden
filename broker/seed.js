@@ -23,6 +23,7 @@ const initialWateringGroups = [
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     lastPumped: nowTimestamp,
     moistureThreshold: 55,
+    minimalPumpInterval: 604800000,
     devices: [
       mongoose.Types.ObjectId("5f2d2f46c254098c1222a484"),
       mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),

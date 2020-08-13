@@ -6,5 +6,6 @@ export interface WateringGroup {
   ownedBy: string;
   lastPumped: string;
   moistureThreshold: number;
+  minimalPumpInterval: number;
   devices: Device[];
 }
