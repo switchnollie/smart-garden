@@ -4,6 +4,7 @@ import cors from "cors";
 import path from "path";
 import initRoutes from "./routes";
 import connectToMongo from "./dbConnection";
+import connectToBroker from "./mqttConnection";
 
 const app = express();
 const PORT = 4000;
@@ -12,7 +13,8 @@ app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 
-connectToMongo();
+app.locals.db = connectToMongo();
+app.locals.mqttClient = connectToBroker();
 
 app.use(express.static(path.join(__dirname, "public")));
 
