@@ -3,6 +3,7 @@ const { Schema, model } = require("mongoose");
 const DeviceSchema = new Schema({
   type: String,
   displayName: String,
+  lastValue: Schema.Types.Mixed,
   logBuckets: [
     {
       type: Schema.Types.ObjectId,

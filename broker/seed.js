@@ -36,6 +36,7 @@ const initialDevices = [
   {
     _id: mongoose.Types.ObjectId("5f2d2f46c254098c1222a484"),
     displayName: "Moisture Sensor 1",
+    lastValue: 42,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "moisture",
@@ -44,6 +45,7 @@ const initialDevices = [
   {
     _id: mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
     displayName: "Pump 1",
+    lastValue: 1,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "pump",
@@ -52,6 +54,7 @@ const initialDevices = [
   {
     _id: mongoose.Types.ObjectId("5f2d30f7c22d4d3103a19b22"),
     displayName: "Waterlevel Sensor 1",
+    lastValue: 42,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "waterlevel",
@@ -80,8 +83,8 @@ const initialDeviceLogBuckets = [
     first: nowTimestamp,
     last: lastTimestamp,
     samples: [
-      { val: 42, time: lastTimestamp },
-      { val: 42, time: nowTimestamp }
+      { val: 1, time: lastTimestamp },
+      { val: 1, time: nowTimestamp }
     ]
   },
   {

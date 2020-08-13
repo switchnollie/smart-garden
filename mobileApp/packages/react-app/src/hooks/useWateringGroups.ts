@@ -17,6 +17,7 @@ export default function useWateringGroups() {
         (group) => group._id === wateringGroup._id
       );
       // Only update if changed
+      console.log({ updatedValue, currentValue: wateringGroup[updatedKey] });
       if (updatedValue !== wateringGroup[updatedKey]) {
         const updatedData = produce(data, (draft) => {
           (draft[selectedGroupIndex] as { [key: string]: any })[

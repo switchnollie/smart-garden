@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import WateringGroupModel, {
   IWateringGroupModel,
 } from "../models/wateringGroup";
-import Device from "../models/device";
+import DeviceModel from "../models/device";
 
 const WateringGroupController = {
   async findAll(_: Request, res: Response): Promise<void> {
@@ -12,7 +12,7 @@ const WateringGroupController = {
         .populate({
           path: "devices",
           select: "-__v -groupedBy",
-          model: Device,
+          model: DeviceModel,
         })
         .exec();
       res.status(200).json(wateringGroups);
@@ -33,7 +33,7 @@ const WateringGroupController = {
         .populate({
           path: "devices",
           select: "-__v -groupedBy",
-          model: Device,
+          model: DeviceModel,
         })
         .exec();
       if (wateringGroup) {

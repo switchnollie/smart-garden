@@ -42,8 +42,9 @@ export default function PlantDetailsPage({ match }: PlantsPageProps) {
     await updateMoistureThreshold(moistureThreshold, wateringGroup);
 
   const handleMinimalIntervalSubmit = async (e: CustomEvent<any>) => {
-    setMinimalInterval(parseInt(e.detail.value, 10));
-    await updateMinimalInterval(minimalInterval, wateringGroup);
+    const newVal = parseInt(e.detail.value, 10);
+    setMinimalInterval(newVal);
+    await updateMinimalInterval(newVal, wateringGroup);
   };
 
   const groupDevices = (devices: Device[]) => {
