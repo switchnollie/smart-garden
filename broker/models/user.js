@@ -3,7 +3,7 @@ const { Schema, model } = require("mongoose");
 const UserSchema = new Schema({
   hash: String,
   salt: String,
-  displayName: String,
+  userName: String,
   wateringGroups: [
     {
       type: Schema.Types.ObjectId,

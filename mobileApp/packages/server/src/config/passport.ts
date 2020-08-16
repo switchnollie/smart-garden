@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs";
-import User from "../models/user";
 import { PassportStatic } from "passport";
 import {
   ExtractJwt,
@@ -8,8 +7,9 @@ import {
   StrategyOptions,
   VerifyCallback,
 } from "passport-jwt";
+import User from "../models/user";
 
-const pathToKey = path.join(__dirname, "..", "id_rsa_pub.pem");
+const pathToKey = path.join(__dirname, "..", "..", "id_rsa_pub.pem");
 const PUB_KEY = fs.readFileSync(pathToKey, "utf8");
 
 const passportOptions: StrategyOptions = {

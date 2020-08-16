@@ -4,14 +4,14 @@ import { IWateringGroupModel } from "./wateringGroup";
 export interface IUserModel extends Document {
   hash: string;
   salt: string;
-  displayName: string;
+  userName: string;
   wateringGroups: IWateringGroupModel[];
 }
 
 const UserSchema = new Schema({
   hash: String,
   salt: String,
-  displayName: String,
+  userName: String,
   wateringGroups: [
     {
       type: Schema.Types.ObjectId,
