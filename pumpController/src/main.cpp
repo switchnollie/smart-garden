@@ -18,7 +18,6 @@ WiFiClient client;
 const char* API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
 
 Ticker pump_tic;
-Ticker pump_tic_intervall;
 Ticker water_level_tic;
 
 //WIFI
@@ -183,6 +182,9 @@ void setup()
     pinMode(MOTOR_PIN, OUTPUT);
     pinMode(WATERLEVEL_PIN, INPUT);
 
+    //TODO remove -> is used to see logging in serial monitor
+    delay(3000);
+
     load_root_ca();
     //clear_eeprom();
 
@@ -199,7 +201,7 @@ void setup()
 void loop()
 {
     wifi_controller.handle_client();
-
+    
     if (wifi_controller.status() != WL_CONNECTED)
     {
         wifi_controller.connect_to_wlan();
@@ -283,7 +285,7 @@ void pumpStop()
     digitalWrite(MOTOR_PIN, LOW);
 }
 
-//Creates to function calls; one for immediatly starting the pump
+//Creates two function calls; one for immediatly starting the pump
 //Other for stopping the pump after certain duration from user
 void pump()
 {

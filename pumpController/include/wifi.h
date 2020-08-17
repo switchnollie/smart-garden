@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
+#include <ESP8266mDNS.h>
 #include <FS.h>
 #include <EEPROM.h>
 #include <WiFiClient.h>
@@ -18,7 +19,6 @@ public:
     void connect_to_wlan();
 
 private:
-    void load_html_files();
     void start_web_server();
     String read_wlan_ssid();
     String read_wlan_pass();
@@ -31,9 +31,8 @@ private:
     void change_user();
 
     ESP8266WebServer web_server;
-    File wlan_html_file;
-    File user_html_file;
-    File groups_html_file;
+    ESP8266HTTPUpdateServer http_updater;
+    const char* host = "esp8266-webupdate";
     String user = "";
     WiFiClient client;
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
@@ -46,8 +45,6 @@ WIFI::WIFI(std::function<void(String, String)> callback) {
 }
 
 void WIFI::begin() {
-    web_server.begin(80);
-    load_html_files();
     WiFi.mode(WIFI_AP_STA);
     start_web_server();
     connect_to_wlan();
@@ -59,40 +56,7 @@ int WIFI::status() {
 
 void WIFI::handle_client() {
     web_server.handleClient();
-}
-
-void WIFI::load_html_files()
-{
-    if (SPIFFS.begin()) {
-        Serial.println("Flash storage succesfully started!");
-    }
-    else {
-        Serial.println("Error starting up flash storage");
-    }
-
-    Dir dir = SPIFFS.openDir("/");
-    String output = "[";
-    while (dir.next()) {
-        File entry = dir.openFile("r");
-        output += String(entry.name()).substring(1);
-        entry.close();
-    }
-    output +="]";
-    Serial.println(output);
-
-    wlan_html_file = SPIFFS.open("/wlan.html", "r");
-    user_html_file = SPIFFS.open("/user.html", "r");
-    groups_html_file = SPIFFS.open("/groups.html", "r");
-
-    if (!wlan_html_file) {
-        Serial.println("Error reading wlan.html file");
-    }
-    if (!user_html_file) {
-        Serial.println("Error reading user.html file");
-    }
-    if (!groups_html_file) {
-        Serial.println("Error reading group.html file");
-    }
+    MDNS.update();
 }
 
 void WIFI::start_web_server()
@@ -106,25 +70,19 @@ void WIFI::start_web_server()
     WiFi.softAP("ESP Pump", ap_pass.c_str());
 
     //WLAN and AP
-    web_server.on("/wlan", [this]() {
-        web_server.streamFile(wlan_html_file, "text/html");
-        });
+    web_server.serveStatic("/wlan", SPIFFS, "/wlan.html");
     web_server.on("/change_wlan", [this]() {
         change_wlan();
         });
 
     //User credentials
-    web_server.on("/user", [this]() {
-        web_server.streamFile(user_html_file, "text/html");
-        });
+    web_server.serveStatic("/user", SPIFFS, "/user.html");
     web_server.on("/change_user", [this]() {
         change_user();
         });
 
     //Groups
-    web_server.on("/groups", [this]() {
-        web_server.streamFile(groups_html_file, "text/html");
-        });
+    web_server.serveStatic("/groups", SPIFFS, "/groups.html");
     web_server.on("/init_mqtt_topics", [this]() {
         init_mqtt_topics_callback_implementation(user, web_server.arg("groupid"));
         web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
@@ -136,15 +94,14 @@ void WIFI::start_web_server()
         web_server.send(302, "text/plain", "Path not available!");
         });
 
-    //MDNS.begin(host);
+    MDNS.begin(host);
+    http_updater.setup(&web_server);
 
-    //http_updater.setup(&web_server);
-
-    web_server.begin();
+    web_server.begin(80);
     Serial.println("Webserver started.");
 
-    //MDNS.addService("http", "tcp", 80);
-    //Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
+    MDNS.addService("http", "tcp", 80);
+    Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
 }
 
 String  WIFI::read_wlan_ssid() {
