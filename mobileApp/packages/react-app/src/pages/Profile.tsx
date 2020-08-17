@@ -7,7 +7,7 @@ import { useSessionContext } from "../contexts/SessionContext";
 
 export default function ProfilePage() {
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  const [_, __, removeSession] = useSessionContext();
+  const [sessionState, __, removeSession] = useSessionContext();
 
   return (
     <>
@@ -18,7 +18,7 @@ export default function ProfilePage() {
             <IonThumbnail slot="start">
               <img src={ThumbnailImg} alt="thumbnail" />
             </IonThumbnail>
-            <h3>Tim Weise</h3>
+            <h3>{sessionState.user?.userName}</h3>
           </ListItem>
         </List>
         <div className="ion-padding">

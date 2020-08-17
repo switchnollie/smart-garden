@@ -1,11 +1,13 @@
 import useSWR, { mutate } from "swr";
+import produce from "immer";
 import { WateringGroup } from "../types/WateringGroup";
 import { getTenBitAnalog } from "../utils/relativeAnalogValues";
-import produce from "immer";
+import { useSessionContext } from "../contexts/SessionContext";
 
 export default function useWateringGroups() {
   const uri = `/api/wateringgroup`;
   const { data, error } = useSWR<WateringGroup[]>(uri);
+  const [sessionContext] = useSessionContext();
 
   const updateGroupParam = async (
     wateringGroup?: WateringGroup,
@@ -31,6 +33,7 @@ export default function useWateringGroups() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: sessionContext.jwt || "",
           },
           body: JSON.stringify({ [updatedKey]: updatedValue }),
         });

@@ -5,12 +5,13 @@ import React, {
   useState,
   useEffect,
 } from "react";
+import { User } from "../types/User";
 
 export interface Session {
   isAuthenticated?: boolean;
   redirectPathOnAuthentication?: string;
   jwt?: string;
-  uid?: string;
+  user?: User;
 }
 
 type SessionMutation = (session?: Session) => void;
@@ -31,7 +32,7 @@ export const SessionContextProvider: FC = ({ children }) => {
       const savedSessionString = localStorage.getItem("session");
       if (savedSessionString) {
         const savedSession = JSON.parse(savedSessionString);
-        if (savedSession.jwt && savedSession.uid) {
+        if (savedSession.jwt && savedSession.user) {
           setSessionState(savedSession);
         }
       }

@@ -33,11 +33,11 @@ export default function Login() {
           usernameText,
           passwordText
         );
-        if (success) {
+        if (success && user) {
           setSession({
             isAuthenticated: true,
             jwt: token,
-            uid: user!._id,
+            user,
             ...sessionContext,
           });
         }
