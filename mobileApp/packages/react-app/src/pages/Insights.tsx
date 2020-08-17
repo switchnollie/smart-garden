@@ -27,6 +27,7 @@ export default function InsightsPage() {
 
           return (
             <WateringGroupCard
+              key={group._id}
               moisture={avrgLastMoistureValue}
               waterLevel={avrgLastWaterLevelValue}
               lastPumped={group.lastPumped}

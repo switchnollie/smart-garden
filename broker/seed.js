@@ -20,7 +20,7 @@ const initialUsers = [
   {
     _id: mongoose.Types.ObjectId("5f39934ab02e6b565372e49d"),
     wateringGroups: [mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66")],
-    userName: "Hendrik",
+    userName: "Tim",
     hash:
       "49081691ecfa4e9162ab411bc887f44288f19e864ae5e271d83a0e5bfce371f41b02b60ecfb115e09da39bedead39aa030945c15bdfc1bc0cfde7cbc2fb8651b",
     salt: "a5f20df5df16afe24124b9b01fb3aa74c08e6862ea098d65f5db87f74ac2798b"
