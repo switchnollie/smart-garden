@@ -212,7 +212,6 @@ void loop()
     // }
 
     // mqtt_client.loop();
-    //MDNS.update();
 }
 void write_mqtt_parameters()
 {

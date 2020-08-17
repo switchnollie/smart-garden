@@ -32,7 +32,7 @@ private:
 
     ESP8266WebServer web_server;
     ESP8266HTTPUpdateServer http_updater;
-    const char* host = "esp8266-webupdate";
+    const char* host = "esp8266";
     String user = "";
     WiFiClient client;
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
@@ -98,10 +98,9 @@ void WIFI::start_web_server()
     http_updater.setup(&web_server);
 
     web_server.begin(80);
-    Serial.println("Webserver started.");
 
     MDNS.addService("http", "tcp", 80);
-    Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
+    Serial.printf("Webserver gestarted! Öffne http://%s.local/<Pfad> zur Bedienung!\n", host);
 }
 
 String  WIFI::read_wlan_ssid() {
@@ -143,7 +142,7 @@ void WIFI::connect_to_wlan() {
     while (WiFi.status() != WL_CONNECTED)
     {
         //Wait till connected
-        web_server.handleClient();
+        handle_client();
     }
 
     Serial.println("Succesfully Connected!!!");
