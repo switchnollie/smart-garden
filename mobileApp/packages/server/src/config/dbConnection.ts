@@ -1,5 +1,4 @@
 import { disconnect, connect } from "mongoose";
-import * as models from "./models";
 
 export default async function connectToMongo() {
   const db = await connect(

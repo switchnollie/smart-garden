@@ -6,12 +6,14 @@ export interface IDeviceModel extends Document {
   displayName: string;
   logBuckets: string[];
   groupedBy: IWateringGroupModel["_id"];
+  lastValue: any;
   ownedBy: string;
 }
 
 const DeviceSchema = new Schema({
   type: String,
   displayName: String,
+  lastValue: Schema.Types.Mixed,
   logBuckets: [
     {
       type: Schema.Types.ObjectId,

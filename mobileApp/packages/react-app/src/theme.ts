@@ -76,6 +76,9 @@ export const AppStyles = createGlobalStyle`
     --ion-grid-padding: 0px;
     margin: 0 -5px;
   }
+  .alert-radio-label.sc-ion-alert-ios {
+    color: #000;
+  }
 
   h1 {
     font-size: 2.625rem;

@@ -11,18 +11,30 @@ const lastTimestamp = nowTimestamp - 5000;
 const initialUsers = [
   {
     _id: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
-    displayName: "Tim",
-    wateringGroups: [mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66")]
+    wateringGroups: [],
+    userName: "Hendrik",
+    hash:
+      "000eb644e0b1e196638933cb6f7121dc92cc146aa9c5f8cb9cbc0359a09988106110c088f8da5a6d91741970837754d95ad119fdc2b28699fddfcec07e4da974",
+    salt: "9a24d092a5ca433c52e8979409fb637962d7cb0a611c695aa0748b7d1adfdacd"
+  },
+  {
+    _id: mongoose.Types.ObjectId("5f39934ab02e6b565372e49d"),
+    wateringGroups: [mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66")],
+    userName: "Tim",
+    hash:
+      "49081691ecfa4e9162ab411bc887f44288f19e864ae5e271d83a0e5bfce371f41b02b60ecfb115e09da39bedead39aa030945c15bdfc1bc0cfde7cbc2fb8651b",
+    salt: "a5f20df5df16afe24124b9b01fb3aa74c08e6862ea098d65f5db87f74ac2798b"
   }
 ];
 
 const initialWateringGroups = [
   {
     _id: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
-    displayName: "orchid",
+    displayName: "Orchid",
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     lastPumped: nowTimestamp,
     moistureThreshold: 55,
+    minimalPumpInterval: 604800000,
     devices: [
       mongoose.Types.ObjectId("5f2d2f46c254098c1222a484"),
       mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
@@ -35,6 +47,7 @@ const initialDevices = [
   {
     _id: mongoose.Types.ObjectId("5f2d2f46c254098c1222a484"),
     displayName: "Moisture Sensor 1",
+    lastValue: 42,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "moisture",
@@ -43,6 +56,7 @@ const initialDevices = [
   {
     _id: mongoose.Types.ObjectId("5f2d2f515e9536fb08962ba5"),
     displayName: "Pump 1",
+    lastValue: 1,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "pump",
@@ -51,6 +65,7 @@ const initialDevices = [
   {
     _id: mongoose.Types.ObjectId("5f2d30f7c22d4d3103a19b22"),
     displayName: "Waterlevel Sensor 1",
+    lastValue: 42,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
     type: "waterlevel",
@@ -79,8 +94,8 @@ const initialDeviceLogBuckets = [
     first: nowTimestamp,
     last: lastTimestamp,
     samples: [
-      { val: 42, time: lastTimestamp },
-      { val: 42, time: nowTimestamp }
+      { val: 1, time: lastTimestamp },
+      { val: 1, time: nowTimestamp }
     ]
   },
   {
@@ -131,7 +146,7 @@ async function applySeeding() {
     await clearCollections();
 
     const insertUsersBatch = initialUsers.map(user => {
-      console.log(`inserting new User, ${user.displayName}`);
+      console.log(`inserting new User, ${user.userName}`);
       return new User(user).save();
     });
     await Promise.all(insertUsersBatch);

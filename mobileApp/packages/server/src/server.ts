@@ -2,8 +2,11 @@ import express from "express";
 import logger from "morgan";
 import cors from "cors";
 import path from "path";
+import passport from "passport";
 import initRoutes from "./routes";
-import connectToMongo from "./dbConnection";
+import connectToMongo from "./config/dbConnection";
+import connectToBroker from "./config/mqttConnection";
+import configurePassport from "./config/passport";
 
 const app = express();
 const PORT = 4000;
@@ -12,7 +15,12 @@ app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 
-connectToMongo();
+// Setup Authentication with JWT
+configurePassport(passport);
+app.use(passport.initialize());
+
+app.locals.db = connectToMongo();
+app.locals.mqttClient = connectToBroker();
 
 app.use(express.static(path.join(__dirname, "public")));
 

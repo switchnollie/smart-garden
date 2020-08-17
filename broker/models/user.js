@@ -1,7 +1,9 @@
 const { Schema, model } = require("mongoose");
 
 const UserSchema = new Schema({
-  displayName: String,
+  hash: String,
+  salt: String,
+  userName: String,
   wateringGroups: [
     {
       type: Schema.Types.ObjectId,

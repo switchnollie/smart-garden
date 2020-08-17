@@ -1,29 +1,26 @@
 import { Request, Response } from "express";
 import { Types } from "mongoose";
-import UserModel, { IUserModel } from "../models/user";
+import User, { IUserModel } from "../models/user";
+import { genPassword, validPassword, issueJWT } from "../utils/passwordUtils";
 
 const UserController = {
-  async findAll(_: Request, res: Response): Promise<void> {
+  async login(req: Request, res: Response): Promise<void> {
     try {
-      const users = await UserModel.find({}).exec();
-      console.log({ users });
-      res.status(200).json(users);
-    } catch (error) {
-      console.error(error);
-      res.status(400).send();
-    }
-  },
+      const user = await User.findOne({ userName: req.body.username });
+      if (!user) {
+        res.status(401).json({ success: false, msg: "could not find user" });
+      }
+      const isValid = validPassword(req.body.password, user!.hash, user!.salt);
 
-  async findOne(req: Request, res: Response): Promise<void> {
-    try {
-      const user = await UserModel.findOne({
-        _id: Types.ObjectId(req.params.id),
-      }).exec();
-
-      if (user) {
-        res.status(200).json(user);
+      if (isValid) {
+        const { token, expires } = issueJWT(user!);
+        res
+          .status(200)
+          .json({ success: true, user, token, expiresIn: expires });
       } else {
-        res.status(404).send();
+        res
+          .status(401)
+          .json({ success: false, msg: "you entered an incorrect pasword" });
       }
     } catch (error) {
       console.error(error);
@@ -31,37 +28,18 @@ const UserController = {
     }
   },
 
-  async create(req: Request, res: Response): Promise<void> {
+  async register(req: Request, res: Response): Promise<void> {
+    const { salt, hash } = genPassword(req.body.password);
+
+    const newUser = new User({
+      userName: req.body.username,
+      hash,
+      salt,
+    });
     try {
-      const user: IUserModel = await UserModel.create(req.body);
-
-      res.status(201).json(user);
-    } catch (error) {
-      console.error(error);
-      res.status(400).send();
-    }
-  },
-
-  async updateOne(req: Request, res: Response): Promise<void> {
-    try {
-      const user: IUserModel = await UserModel.updateOne(
-        { _id: req.params.id },
-        req.body
-      );
-
-      res.status(200).json(user);
-    } catch (error) {
-      console.error(error);
-      res.status(400).send();
-    }
-  },
-
-  async remove(req: Request, res: Response): Promise<void> {
-    try {
-      const user = await UserModel.findOneAndRemove({
-        _id: Types.ObjectId(req.params.id),
-      }).exec();
-      res.status(204).json(user);
+      const user = await newUser.save();
+      const { token, expires } = issueJWT(user);
+      res.json({ success: true, user, token, expiresIn: expires });
     } catch (error) {
       console.error(error);
       res.status(400).send();

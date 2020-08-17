@@ -16,22 +16,29 @@ export default function TabsRoot() {
     <IonPage>
       <IonTabs>
         <IonRouterOutlet>
-          <Route exact path="/" render={() => <Redirect to="/plants" />} />
-          <Route path="/:tab(plants)" exact component={PlantsPage} />
-          <Route path="/:tab(plants)/:groupName" component={PlantDetailsPage} />
-          <Route path="/:tab(insights)" exact component={InsightsPage} />
-          <Route path="/:tab(profile)" exact component={ProfilePage} />
+          <Route
+            exact
+            path="/app"
+            render={() => <Redirect to="/app/plants" />}
+          />
+          <Route path="/app/:tab(plants)" exact component={PlantsPage} />
+          <Route
+            path="/app/:tab(plants)/:groupId"
+            component={PlantDetailsPage}
+          />
+          <Route path="/app/:tab(insights)" exact component={InsightsPage} />
+          <Route path="/app/:tab(profile)" exact component={ProfilePage} />
         </IonRouterOutlet>
         <IonTabBar slot="bottom" mode="ios">
-          <IonTabButton tab="plants" href="/plants">
+          <IonTabButton tab="plants" href="/app/plants">
             <Icon height={20} icon="seed" />
             <IonLabel>Plants</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="insights" href="/insights">
+          <IonTabButton tab="insights" href="/app/insights">
             <Icon height={20} icon="insights" />
             <IonLabel>Insights</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="profile" href="/profile">
+          <IonTabButton tab="profile" href="/app/profile">
             <Icon height={20} icon="profile" />
             <IonLabel>Profile</IonLabel>
           </IonTabButton>

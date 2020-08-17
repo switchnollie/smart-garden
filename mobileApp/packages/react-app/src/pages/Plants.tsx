@@ -1,47 +1,45 @@
 import React from "react";
-import styled, { css } from "styled-components";
-import {
-  IonContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonThumbnail,
-} from "@ionic/react";
+import { RouteComponentProps } from "react-router-dom";
+import moment from "moment";
+import useWateringGroups from "../hooks/useWateringGroups";
+import { IonContent, IonLabel, IonThumbnail } from "@ionic/react";
 import Header from "../components/Header";
 import IconButton from "../components/IconButton";
+import List, { ListItem } from "../components/List";
 
-const ListItem = styled(IonItem)`
-  ${({ theme }) => css`
-    h2 {
-      font-size: 1.5rem;
-      color: ${theme.fontPrimary};
-      font-weight: bold;
-      letter-spacing: 0.01916em;
-    }
-    h4 {
-      font-size: 0.875rem;
-      color: ${theme.colors.font.fontSecondary};
-      font-weight: bold;
-    }
-  `}
-`;
+interface PlantsPageProps extends RouteComponentProps {}
 
-export default function PlantsPage() {
+export default function PlantsPage({ match }: PlantsPageProps) {
+  const { groups } = useWateringGroups();
   return (
     <>
       <Header>Watering Groups</Header>
       <IonContent>
-        <IonList>
-          <ListItem lines="none">
-            <IonLabel>
-              <h2>Orchid</h2>
-              <h4>last watering: yesterday, 5:12am</h4>
-            </IonLabel>
-            <IonThumbnail slot="end">
-              <IconButton icon="water" />
-            </IonThumbnail>
-          </ListItem>
-        </IonList>
+        <List>
+          {groups
+            ? groups.map(({ _id, displayName, lastPumped }) => (
+                <ListItem
+                  key={_id}
+                  lines="none"
+                  routerLink={`${match.url}/${_id}`}
+                >
+                  <IonLabel>
+                    <h2>{displayName}</h2>
+                    <h4>{`last watering: ${moment(lastPumped).fromNow()}`}</h4>
+                  </IonLabel>
+                  <IonThumbnail slot="end">
+                    <IconButton
+                      icon="water"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    />
+                  </IonThumbnail>
+                </ListItem>
+              ))
+            : "Loading"}
+        </List>
       </IonContent>
     </>
   );

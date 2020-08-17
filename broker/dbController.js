@@ -1,5 +1,6 @@
 const DeviceLogBucket = require("./models/deviceLogBucket");
 const WateringGroup = require("./models/wateringGroup");
+const Device = require("./models/device");
 const getDayString = require("./helpers/getDayString");
 
 async function writeLogToDb(deviceId, pckg) {
@@ -28,6 +29,11 @@ async function writeLogToDb(deviceId, pckg) {
     },
     { upsert: true }
   );
+
+  await Device.updateOne({
+    _id: deviceId,
+    lastValue: newLog.val
+  });
 }
 
 /**

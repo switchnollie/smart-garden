@@ -2,12 +2,16 @@ import { Schema, model, Document } from "mongoose";
 import { IWateringGroupModel } from "./wateringGroup";
 
 export interface IUserModel extends Document {
-  displayName: string;
+  hash: string;
+  salt: string;
+  userName: string;
   wateringGroups: IWateringGroupModel[];
 }
 
 const UserSchema = new Schema({
-  displayName: String,
+  hash: String,
+  salt: String,
+  userName: String,
   wateringGroups: [
     {
       type: Schema.Types.ObjectId,

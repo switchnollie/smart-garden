@@ -5,12 +5,16 @@
   "dependencies": {
     "@ionic/react": "^5.3.1",
     "@ionic/react-router": "^5.3.1",
+    "immer": "^7.0.7",
+    "moment": "^2.27.0",
     "react": "^16.13.1",
     "react-countup": "^4.3.3",
     "react-dom": "^16.13.1",
+    "react-input-autosize": "^2.2.2",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
     "styled-components": "^5.1.1",
+    "swr": "^0.3.0",
     "typescript": "~3.7.2"
   },
   "scripts": {
@@ -39,8 +43,10 @@
     "@types/node": "^12.0.0",
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
+    "@types/react-input-autosize": "^2.2.0",
     "@types/react-router-dom": "^5.1.5",
     "@types/styled-components": "^5.1.2",
     "raw-loader": "^4.0.1"
-  }
+  },
+  "proxy": "http://localhost:4000"
 }
