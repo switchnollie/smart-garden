@@ -13,7 +13,7 @@ export interface Session {
   uid?: string;
 }
 
-type SessionMutation = (session: Session) => void;
+type SessionMutation = (session?: Session) => void;
 
 export const initialSession: Session = {};
 
@@ -40,13 +40,14 @@ export const SessionContextProvider: FC = ({ children }) => {
     }
   }, []);
 
-  const setSession = (session: Session) => {
-    console.log({ session });
-    setSessionState(session);
-    try {
-      localStorage.setItem("session", JSON.stringify(session));
-    } catch (err) {
-      console.error("Writing to LocalStorage failed", err);
+  const setSession = (session?: Session) => {
+    if (session) {
+      setSessionState(session);
+      try {
+        localStorage.setItem("session", JSON.stringify(session));
+      } catch (err) {
+        console.error("Writing to LocalStorage failed", err);
+      }
     }
   };
 
