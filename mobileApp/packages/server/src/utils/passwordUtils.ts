@@ -3,7 +3,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import jsonwebtoken from "jsonwebtoken";
-import { IUserModel } from "~/models/user";
+import { IUserModel } from "../models/user";
 
 const pathToKey = path.join(__dirname, "..", "..", "id_rsa_priv.pem");
 const PRIV_KEY = fs.readFileSync(pathToKey, "utf8");

@@ -63,9 +63,16 @@ async function updateLastPumped(groupId) {
   ).exec();
 }
 
+async function getPumpsForGroup(groupId) {
+  return (
+    await Device.find({ type: "pump", groupedBy: groupId }, "_id").exec()
+  ).map(doc => doc._id);
+}
+
 module.exports = {
   writeLogToDb,
   checkMoistureThreshold,
   getLastPumped,
-  updateLastPumped
+  updateLastPumped,
+  getPumpsForGroup
 };

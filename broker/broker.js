@@ -7,7 +7,8 @@ const {
   writeLogToDb,
   checkMoistureThreshold,
   getLastPumped,
-  updateLastPumped
+  updateLastPumped,
+  getPumpsForGroup
 } = require("./dbController");
 const { parseTopic } = require("./helpers/topicSchema");
 
@@ -78,9 +79,13 @@ function initBroker(db) {
           Date.now() - lastPumped
         } ms ago`
       );
-      aedes.mq.emit({
-        topic: `${userId}/${groupId}/${deviceId}/pump`,
-        payload: 1
+      // Find corresponding pumps
+      const pumpIds = await getPumpsForGroup(groupId);
+      pumpIds.forEach(pumpId => {
+        aedes.mq.emit({
+          topic: `${userId}/${groupId}/${pumpId}/pump`,
+          payload: 1
+        });
       });
     }
     cb();
