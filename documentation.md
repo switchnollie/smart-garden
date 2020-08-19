@@ -19,6 +19,10 @@ Darüberhinaus lassen sich Systemkonfigurationen über eine mobile Webanwendung 
 
 Konkret sind die über die Webanwendung konfigurierbaren Parameter die Feuchtigkeitsschwelle, ab der spätestens bewässert wird und das minimale Pumpintervall, d.h. wann spätestens nach einer Bewässerung erneut bewässert wird, auch wenn die Feuchtigkeitssensoren keine Messwerte unter der konfigurierten Schwelle melden.
 
+Die Authorisierung erfolgt durch das Matching mit einem definierten Topicformat, welches die Form `<userId>/<groupId>/<deviceId>/<actionType/telemetryType>` hat. 
+Die über `groupId` identifizierten Gruppen sind dabei Zusammenstellungen mehrerer Controller, welche ein separates Bewässerungssystem bilden (ein Bewässerungssystem kann aus mehreren Pflanzen- und Pumpencontrollern bestehen).
+Die implementierten `telemetryTypes` sind `pump` (Pumpe aktivieren), `moisture` (neuer Feuchtigkeitsmesswert) und `waterLevel` (neuer Wasserstands-Messwert).
+
 Sowohl die Messdaten, als auch die Konfigurationen der Systemnutzer und deren Bewässerungsgruppen und Geräte (Pflanzencontroller, Pumpencontroller und Wasserstandssensor werden als Einzelgeräte konfiguriert) werden in einer zentralen Datenbank erfasst. 
 Es handelt sich dabei um eine extern gehostete MongoDB-Instanz, die nach dem Prinzip _Database as a Service_ bereitgestellt und genutzt wird.
 
@@ -30,7 +34,7 @@ Das System ist auf einem Digital Ocean Droplet (einem sog. _Virtual Private Serv
 
 ## Ablauf
 
-**TODO**: Sequenzdiagramme: Lebenslinien sind (Pflanzencontroller, Pumpencontroller, HAProxy, Anwendungsserver, Web Client, Mongo-Datenbank)
+**TODO**: Sequenzdiagramme: Lebenslinien sind (Pflanzencontroller, Pumpencontroller, HAProxy, Anwendungsserver, Web Client, MQTT-Broker, Mongo-Datenbank)
 
 - **TODO**: Sequenzdiagramm Parametrisierung/ Ersteinrichtung
 - **TODO**: Video/GIF Parametrisierung/ Ersteinrichtung
@@ -55,9 +59,29 @@ Das System ist auf einem Digital Ocean Droplet (einem sog. _Virtual Private Serv
 
 - **TODO**: _Tim_
 
-### Web-Frontend
+### Web-Anwendung
 
-- **TODO**: _Tim_
+Das Webfrontend ist mit den Frameworks React.js und Ionic realisiert.
+Wie auch der Anwendungsserver ist das Frontend in Typescript realisiert, um über statische Typisierung möglichst viele potentielle Fehler zur Compilezeit abzufangen.
+Als Single Page Webanwendung lässt sich das kompilierte App-Bundle in ein Verzeichnis des Webservers kopieren und über einen Handler für statische Dateien ausliefern.
+
+```ts
+/* 
+Für alle Routen, die nicht mit /api beginnen liefert der 
+Anwendungsserver die index.html aus, welche den Einstiegspunkt in die Webanwendung darstellt.
+*/
+app.use(express.static(path.join(__dirname, "..", "public")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
+```
+
+Über ein Formular in der Webanwendung authentifiziert sich der Nutzer außerdem über eine Login-Route gegenüber dem Server, der im Falle korrekt übermittelter Nutzer-Credentials einen JSON-Webtoken ausstellt.
+
+Die clientseitigen Routen sind geschützt und können nur aufgerufen werden, falls ein valides Token im Browserspeicher (localStorage) zur Verfügung steht, die API-Routen sind darüberhinaus durch die Passport-Middleware geschützt, welche das Token auf Validität überprüft.
+
+Für das Auslösen einer Bewässerung wird im Anwendungsserver ein Endpunkt unter `/api/action/pump` bereitgestellt. 
+Bei eingehenden, authentifizierten Anfragen löst der Callback ein MQTT-Publish auf dem Topic aller der Gruppe zugeordneten Pumpen aus.
 
 
 
