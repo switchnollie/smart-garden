@@ -58,5 +58,11 @@ mosquitto_sub -h smartgarden.timweise.com -p 8883 -t test -d --cafile letsencryp
   (DeviceId 5f2d2f46c254098c1222a484, WateringGroupId: 5f2d2bfe7824f2b9fd33cb66, UserId: 5f2d2b58d65dd0c3e0ac05e7)
 
 ```sh
-mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture -m 42 --cafile letsencryptRootCa.pem
+mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture -m 42 --cafile letsencryptRootCa.pem -i 5f2d2f46c254098c1222a484
+```
+
+- Publish on Pump Topic `5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f515e9536fb08962ba5/pump` (DeviceId 5f2d2f515e9536fb08962ba5, WateringGroupId: 5f2d2bfe7824f2b9fd33cb66, UserId: 5f2d2b58d65dd0c3e0ac05e7)
+
+```sh
+mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f515e9536fb08962ba5/pump -m 1 --cafile letsencryptRootCa.pem -i admin-app
 ```

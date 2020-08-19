@@ -36,6 +36,7 @@ services:
     environment:
       - MONGO_URI=${MONGO_URI}
       - MONGO_DATABASE=${MONGO_DATABASE}
+      - MQTT_HOST=${MQTT_HOST}
     networks:
       - smart-garden-net
 
