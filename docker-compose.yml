@@ -28,7 +28,6 @@ services:
       - "./haproxy:/usr/local/etc/haproxy"
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
-      - "web-root:/var/www/next"
     networks:
       - smart-garden-net
   mobileapp:
