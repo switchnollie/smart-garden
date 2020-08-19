@@ -10,63 +10,91 @@ async function writeLogToDb(deviceId, pckg) {
   };
 
   const day = getDayString();
-
-  await DeviceLogBucket.updateOne(
-    {
-      deviceId,
-      nsamples: {
-        $lt: 200
+  try {
+    await DeviceLogBucket.updateOne(
+      {
+        deviceId,
+        nsamples: {
+          $lt: 200
+        },
+        day
       },
-      day
-    },
-    {
-      $push: { samples: newLog },
-      $min: { first: newLog.time },
-      $max: { last: newLog.time },
-      $inc: { nsamples: 1 },
-      deviceId,
-      day
-    },
-    { upsert: true }
-  );
-
-  await Device.updateOne({
-    _id: deviceId,
-    lastValue: newLog.val
-  });
+      {
+        $push: { samples: newLog },
+        $min: { first: newLog.time },
+        $max: { last: newLog.time },
+        $inc: { nsamples: 1 },
+        deviceId,
+        day
+      },
+      { upsert: true }
+    );
+  } catch (error) {
+    console.error(`Error updating DeviceLogs for device ${deviceId}`, error);
+  }
+  try {
+    await Device.updateOne(
+      { _id: deviceId },
+      {
+        lastValue: newLog.val
+      }
+    );
+  } catch (error) {
+    console.error(`Error updating lastValue for device ${deviceId}`, error);
+  }
 }
 
 /**
  * Check if the measured moisture value has fallen below the threshold
  */
 async function checkMoistureThreshold(groupId, moistureVal) {
-  const group = await WateringGroup.findOne(
-    { _id: groupId },
-    "moistureThreshold"
-  ).exec();
-  return group.moistureThreshold > parseInt(moistureVal, 10);
+  try {
+    const group = await WateringGroup.findOne(
+      { _id: groupId },
+      "moistureThreshold"
+    ).exec();
+    return group.moistureThreshold > parseInt(moistureVal, 10);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 }
 
 async function getLastPumped(groupId) {
-  const group = await WateringGroup.findOne(
-    { _id: groupId },
-    "lastPumped"
-  ).exec();
-  return group.lastPumped;
+  try {
+    const group = await WateringGroup.findOne(
+      { _id: groupId },
+      "lastPumped"
+    ).exec();
+    return group.lastPumped;
+  } catch (error) {
+    console.error(`Error getting lastPumped of group ${groupId}`, error);
+    return null;
+  }
 }
 
 async function updateLastPumped(groupId) {
   console.log(`updating last pumped of group ${groupId} to ${Date.now()}`);
-  await WateringGroup.updateOne(
-    { _id: groupId },
-    { lastPumped: new Date() }
-  ).exec();
+  try {
+    await WateringGroup.updateOne(
+      { _id: groupId },
+      { lastPumped: new Date() }
+    ).exec();
+    console.log(`updated last pumped of group ${groupId}`);
+  } catch (error) {
+    console.error(`Error updating lastPumped for group ${groupId}`, error);
+  }
 }
 
 async function getPumpsForGroup(groupId) {
-  return (
-    await Device.find({ type: "pump", groupedBy: groupId }, "_id").exec()
-  ).map(doc => doc._id);
+  try {
+    return (
+      await Device.find({ type: "pump", groupedBy: groupId }, "_id").exec()
+    ).map(doc => doc._id);
+  } catch (error) {
+    console.error(`Error getting pumps for group ${groupId}`, error);
+    return null;
+  }
 }
 
 module.exports = {
