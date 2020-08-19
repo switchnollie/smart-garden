@@ -110,14 +110,15 @@
       const username = userField.value;
       const password = passwordField.value;
 
-      // axios.get(`/change_user?username=${username}&pass=${password}`)
-      fakeAPICall()
+      fetch(`/changeuser?username=${username}&pass=${password}`)
         .then(() => {
-          window.location.pathname = "/groups.html";
+          if (res.status === 200) {
+            window.location.pathname = "/groups.html";
+          } else {
+            alert("Wrong username or password. Please try again.");
+          }
         }).catch(() => {
-          alert(
-            "Wrong username or password. Please try again."
-          );
+          alert("Error sending data. Please try again.");
         });
     }
   </script>

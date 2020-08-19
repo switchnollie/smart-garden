@@ -76,19 +76,19 @@ void WIFI::start_web_server()
 
     //WLAN and AP
     web_server.serveStatic("/wlan", SPIFFS, "/wlan.html");
-    web_server.on("/change_wlan", [this]() {
+    web_server.on("/changewlan", [this]() {
         change_wlan();
     });
 
     //User credentials
     web_server.serveStatic("/user", SPIFFS, "/user.html");
-    web_server.on("/change_user", [this]() {
+    web_server.on("/changeuser", [this]() {
         change_user();
     });
 
     //Groups
     web_server.serveStatic("/groups", SPIFFS, "/groups.html");
-    web_server.on("/init_mqtt_topics", [this]() {
+    web_server.on("/initmqtttopics", [this]() {
         init_mqtt_topics_callback_implementation(user, web_server.arg("groupid"));
         web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
     });

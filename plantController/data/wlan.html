@@ -106,13 +106,6 @@
     const apPasswordField = document.querySelector("#ap-pass-field");
     const wifiForm = document.querySelector(".wifi-form");
 
-    function fakeAPICall() {
-      return new Promise(function(resolve, reject) {
-        setTimeout(function () {resolve();}, 500);
-      })
-    }
-
-
     wifiForm.onsubmit = function (e) {
       e.preventDefault();
       const ssid = ssidField.value;
@@ -121,15 +114,16 @@
       const wifiForm = document.querySelector(".wifi-form");
       console.log(document.getElementById("ssid-field"));
 
-      //axios.get(`/change_wlan?ssid=${ssid}&pass=${password}&ap-pass=${apPassword}`)
-      fakeAPICall()
+      fetch(`/changewlan?ssid=${ssid}&pass=${password}&ap-pass=${apPassword}`)
         .then(() => {
-          window.location.pathname = "/user.html";
+          if (res.status === 200) {
+            window.location.pathname = "/user.html";
+          } else {
+            alert("Could not connect. Please try again.");
+          }
         })
         .catch(() => {
-          alert(
-            "The WLAN could not be connected. Please try again."
-          );
+          alert("Could not connect. Please try again.");
         });
     }
   </script>
