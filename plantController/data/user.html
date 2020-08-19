@@ -4,36 +4,121 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Garden</title>
+  <style>
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      height: 100%;
+      margin: 0;
+      padding: 3rem;
+      box-sizing: border-box;
+      background: linear-gradient(255deg, rgb(19, 23, 31) 0%, rgb(32, 38, 53) 100%);
+      color: #fff;
+    }
+    body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      font-size: 2.625rem;
+      font-weight: bold;
+      letter-spacing: 0.021em;
+    }
+
+    h2 {
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 500;
+      line-height: 1.2;
+      margin: 0.5rem 0 1rem 0;
+    }
+
+    button {
+      box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+      background: #0087FF;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      padding: 0 1rem;
+      height: 2.5714em;
+      font-size: 0.875rem;
+      border-radius: 4px;
+      letter-spacing: 0.06em;
+      margin: 1rem 0 0.5rem 0;
+    }
+
+    .card {
+      padding: 2rem;
+      border-radius: 4px;
+      box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
+      background: linear-gradient(255deg,#2D3750 0%,#3D4760 100%);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    input[type=text], input[type=password], input[type=email] {
+      padding: 0.5rem 0;
+      color: #fff;
+      font-size: 1rem;
+      background: transparent;
+      border: none;
+      margin: 0.5rem 0;
+      outline: none;
+      border-bottom: 1px solid rgba(255,255,255,0.5);
+    }
+    input::placeholder {
+      color: rgba(255,255,255,0.5);
+    }
+  </style>
 </head>
 
 <body>
   <h1>User credentials</h1>
-  <h2>Please enter your User Credentials</h2>
-  <form class="wifi-form">
-    <input id="user-field" type="text" placeholder="USERNAME">
-    <input id="password-field" type="password" placeholder="Password">
-    <button type="submit">Submit</button>
-  </form>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>
+  <div class="card">
+    <h2>Please enter your User Credentials</h2>
+    <form class="wifi-form">
+      <input id="user-field" type="text" placeholder="Enter your Username">
+      <input id="password-field" type="password" placeholder="Enter your Password">
+      <button type="submit">Submit</button>
+    </form>
+  </div>
   <script type="text/javascript">
     const userField = document.querySelector("#user-field");
     const passwordField = document.querySelector("#password-field");
     const wifiForm = document.querySelector(".wifi-form");
     console.log(document.getElementById("user-field"));
 
+    function fakeAPICall() {
+      return new Promise(function(resolve, reject) {
+        setTimeout(function () {resolve();}, 500);
+      })
+    }
+
     wifiForm.onsubmit = function (e) {
       e.preventDefault();
       const username = userField.value;
       const password = passwordField.value;
 
-      axios.get(`/change_user?username=${username}&pass=${password}`)
-      .then(() => window.location.replace("192.168.4.1/groups"))
-        .catch(() => {
+      // axios.get(`/change_user?username=${username}&pass=${password}`)
+      fakeAPICall()
+        .then(() => {
+          window.location.pathname = "/groups.html";
+        }).catch(() => {
           alert(
             "Wrong username or password. Please try again."
           );
         });
-
     }
   </script>
 </body>

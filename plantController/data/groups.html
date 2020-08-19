@@ -3,25 +3,115 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Garden</title>
+    <style>
+      html {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        height: 100%;
+        margin: 0;
+        padding: 3rem;
+        box-sizing: border-box;
+        background: linear-gradient(
+          255deg,
+          rgb(19, 23, 31) 0%,
+          rgb(32, 38, 53) 100%
+        );
+        color: #fff;
+      }
+      body {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      h1 {
+        font-size: 2.625rem;
+        font-weight: bold;
+        letter-spacing: 0.021em;
+      }
+
+      h2 {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.25rem;
+        font-weight: 500;
+        line-height: 1.2;
+        margin: 0.5rem 0 1rem 0;
+      }
+
+      button {
+        box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2),
+          0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+        background: #0087ff;
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-transform: uppercase;
+        cursor: pointer;
+        border: none;
+        padding: 0 1rem;
+        height: 2.5714em;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        letter-spacing: 0.06em;
+        margin: 1rem 0 0.5rem 0;
+      }
+
+      .card {
+        padding: 2rem;
+        border-radius: 4px;
+        box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px,
+          rgba(0, 0, 0, 0.14) 0px 2px 2px 0px,
+          rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
+        background: linear-gradient(255deg, #2d3750 0%, #3d4760 100%);
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="email"] {
+        padding: 0.5rem 0;
+        color: #fff;
+        font-size: 1rem;
+        background: transparent;
+        border: none;
+        margin: 0.5rem 0;
+        outline: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      input::placeholder {
+        color: rgba(255,255,255,0.5);
+      }
+    </style>
   </head>
   <body>
     <h1>Watering Groups</h1>
-    <form class="groups-form">
-      <p>
-        Do you already have watering groups to which you want to add this
-        plant controller?
-      </p>
-      <div>
-        <input type="checkbox" id="checkbox" /><label id="checkbox-label"
-          >No</label
-        >
-      </div>
-      <input
-        id="group-field"
-        type="text"
-        placeholder="Your new plant group name"
-      />
-    </form>
+    <div class="card">
+      <form class="groups-form">
+        <p>
+          Do you already have watering groups to which you want to add this
+          plant controller?
+        </p>
+        <div>
+          <input type="checkbox" id="checkbox" /><label id="checkbox-label"
+            >No</label
+          >
+        </div>
+        <input
+          id="group-field"
+          type="text"
+          placeholder="Your new plant group name"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>
     <script>
       const checkbox = document.getElementById("checkbox");
@@ -46,12 +136,12 @@
         axios
           .get(`/init_mqtt_topics?groupid=${groupId}`)
           .then(() => {
-            alert("Your plant controller was successfully added to the system.");
+            alert(
+              "Your plant controller was successfully added to the system."
+            );
           })
           .catch(() => {
-            alert(
-              "The system could not be initialized. Please try again."
-            );
+            alert("The system could not be initialized. Please try again.");
           });
       };
     </script>

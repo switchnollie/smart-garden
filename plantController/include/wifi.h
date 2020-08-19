@@ -72,7 +72,7 @@ void WIFI::start_web_server()
                       IPAddress(255, 255, 255, 0)); //Subnetz-Maske
 
     String ap_pass = read_ap_password();
-    WiFi.softAP("ESP Pump", ap_pass.c_str());
+    WiFi.softAP("ESP Plant", ap_pass.c_str());
 
     //WLAN and AP
     web_server.serveStatic("/wlan", SPIFFS, "/wlan.html");
