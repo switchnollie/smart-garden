@@ -9,6 +9,8 @@
 | `MONGO_DATABASE` | Database Name of Mongo Atlas Instance |
 | `MONGO_PORT`     | Port of Mongo Atlas Instance          |
 | `MONGO_HOST`     | Hostname/ URI of Mongo Atlas Instance |
+| `MQTT_HOST` (only prod) | Hostname of the MQTT Broker. In the Docker Compose Environment, this ist the service DNS name (broker) |
+| `CERT_MAIL` (only prod) | Mail Address to be used with Certbot for Certificate issuance |
 
 ## Development setup
 

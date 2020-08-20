@@ -32,6 +32,10 @@ Dieses System aus MQTT-Broker, Anwendungsserver und Reverse-Proxy ist mithilfe v
 
 Das System ist auf einem Digital Ocean Droplet (einem sog. _Virtual Private Server_) öffentlich deployt und unter `smartgarden.timweise.com` erreichbar. Es lässt sich aber auch über die Kubernetes Konfigurationen in einem Kubernetes Cluster deployen, um Hochverfügbarkeit zu garantieren.
 
+Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm:
+
+![Systemarchitektur Smart Garden](./documentationAssets/Architecture.png)
+
 ## Ablauf
 
 **TODO**: Sequenzdiagramme: Lebenslinien sind (Pflanzencontroller, Pumpencontroller, HAProxy, Anwendungsserver, Web Client, MQTT-Broker, Mongo-Datenbank)
@@ -40,10 +44,9 @@ Das System ist auf einem Digital Ocean Droplet (einem sog. _Virtual Private Serv
 - **TODO**: Video/GIF Parametrisierung/ Ersteinrichtung
 
 - **TODO**: Sequenzdiagramm Feuchtigkeitsschwelle überschritten
-- **TODO**: Video/GIF Feuchtigkeitsschwelle überschritten
+- **TODO**: Video/GIF Manuelles Ansteuern der Pumpe über die App
 
 - **TODO**: Sequenzdiagramm Firmwareupdate
-- **TODO**: Video/GIF Firmwareupdate
 
 ## Komponenten
 
