@@ -3,15 +3,14 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <ESP8266mDNS.h>
-#include <FS.h>
-#include <EEPROM.h>
-#include <WiFiClient.h>
 #include <functional>
+#include <ArduinoJson.h>
+#include <WiFiClientSecure.h>
 
 class WIFI {
 public:
     WIFI(std::function<void(String, String)> callback);
-    void begin();
+    void begin(WiFiClientSecure esp_client);
     int status();
     void handle_client();
     void connect_to_wlan();
@@ -30,19 +29,21 @@ private:
 
     ESP8266WebServer web_server;
     ESP8266HTTPUpdateServer http_updater;
-    const char* host = "esp8266";
+    const char* dns_host = "esp8266";
     String user = "";
-    WiFiClient client;
+    WiFiClientSecure client;
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
 
-    const char* API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
+    const char *host = "smartgarden.timweise.com";
 };
 
 WIFI::WIFI(std::function<void(String, String)> callback) {
     init_mqtt_topics_callback_implementation = callback;
 }
 
-void WIFI::begin() {
+void WIFI::begin(WiFiClientSecure esp_client)
+{
+    client = esp_client;
     WiFi.mode(WIFI_AP_STA);
     start_web_server();
     connect_to_wlan();
@@ -92,13 +93,13 @@ void WIFI::start_web_server()
         web_server.send(302, "text/plain", "Path not available!");
         });
 
-    MDNS.begin(host);
+    MDNS.begin(dns_host);
     http_updater.setup(&web_server);
 
     web_server.begin(80);
 
     MDNS.addService("http", "tcp", 80);
-    Serial.printf("Webserver gestarted! Öffne http://%s.local/<Pfad> zur Bedienung!\n", host);
+    Serial.printf("Webserver gestarted! Öffne http://%s.local/<Pfad> zur Bedienung!\n", dns_host);
 }
 
 String  WIFI::read_wlan_ssid() {
@@ -249,35 +250,78 @@ bool WIFI::test_wifi()
     return false;
 }
 
-void WIFI::send_user_data_to_backend(String username, String pass) {
+void WIFI::send_user_data_to_backend(String username, String pass)
+{
 
-    if (client.connect(API_USER_ENDPOINT, 80))
+    StaticJsonDocument<300> JSONbuffer;
+    JsonObject JSONencoder = JSONbuffer.to<JsonObject>();
+
+    JSONencoder["username"] = username;
+    JSONencoder["password"] = pass;
+
+    //Print json object to string
+    char JSONmessageBuffer[300];
+    serializeJsonPretty(JSONencoder, JSONmessageBuffer);
+    Serial.println(JSONmessageBuffer);
+
+    client.setTimeout(5000);
+
+    Serial.print("connecting to ");
+    Serial.println(host);
+
+    if (client.connect(host, 443))
     {
-        Serial.println("Successfully connected to API Endpoint!");
-        client.print(String("GET /") + " HTTP/1.1\r\n" +
-            "Host: " + API_USER_ENDPOINT +"?username=" + username + "&pass=" + pass
-            + "\r\n" +
-            "Connection: close\r\n" +
-            "\r\n"
-        );
-        //Check if data transmitted
-        while (client.connected() || client.available())
+        Serial.println("Sending Data...");
+
+        client.println("POST /api/user HTTPS/1.3");
+        client.println(String("Host: ") + host);
+        client.println("Content-Type: application/json");
+        client.println("Content-Length: " + measureJsonPretty(JSONbuffer));
+        client.println();
+        client.println(JSONmessageBuffer);
+
+        //https://arduinojson.org/v6/example/http-client/
+        // Check HTTP status
+        char status[32] = {0};
+        client.readBytesUntil('\r', status, sizeof(status));
+        if (strcmp(status, "HTTP/1.1 200 OK") != 0)
         {
-            if (client.available())
-            {
-                String line = client.readStringUntil('\n');
-                if (!line) {
-                    client.stop();
-                    Serial.println("\n[Disconnected]");
-                    web_server.send(400, "text/plain", "Failed to send user credentials to API Endpoint!");
-                }
-                else {
-                    client.stop();
-                    Serial.println("\n[Disconnected]");
-                    web_server.send(200, "text/plain", "Successfully send user credentials to API Endpoint!");
-                }
-            }
+            Serial.print(F("Unexpected response: "));
+            Serial.println(status);
+            client.stop();
+            return;
         }
+
+        // Skip HTTP headers
+        char endOfHeaders[] = "\r\n\r\n";
+        if (!client.find(endOfHeaders))
+        {
+            Serial.println(F("Invalid response"));
+            client.stop();
+            return;
+        }
+
+        // Allocate the JSON document
+        // Use arduinojson.org/v6/assistant to compute the capacity.
+        const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+        DynamicJsonDocument doc(capacity);
+
+        // Parse JSON object
+        DeserializationError error = deserializeJson(doc, client);
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.c_str());
+            return;
+        }
+
+        // Extract values
+        Serial.println(F("Response:"));
+        String username = doc["username"].as<char *>();
+        Serial.println(username);
+
+        // Disconnect
+        client.stop();
     }
     else
     {
@@ -286,7 +330,6 @@ void WIFI::send_user_data_to_backend(String username, String pass) {
         Serial.println("\n[Disconnected]");
         web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
     }
-
 }
 
 void WIFI::change_user() {

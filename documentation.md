@@ -46,17 +46,35 @@ Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm
 - **TODO**: Sequenzdiagramm Feuchtigkeitsschwelle überschritten
 - **TODO**: Video/GIF Manuelles Ansteuern der Pumpe über die App
 
-- **TODO**: Sequenzdiagramm Firmwareupdate
-
 ## Komponenten
 
-### Pflanzencontroller
+### Pflanzen-/Pumpencontroller
 
-- **TODO**: _Hendrik_
+Der Pflanzencontroller veröffentlicht mit einem Feuchtigkeitssensor Daten über `MQTT`. Der Pumpencontroller veröffentlich einerseits den Wasserstand des Wasserbehälters über `MQTT` und besitzt zusätzlich eine peristaltischen Pumpe, die über ein `MQTT-Topic` ausgelöst werden kann, welches der Pumpencontroller abonniert hat.
+Die weiteren Funktionalitäten, die in diesem Kapitel beschrieben werden gehören jeweils zu beiden Controllern.
 
-### Pumpencontroller
+#### Initialisierung
+Zur Einrichtung der Controller ist ein lokaler Webserver mit DNS implementiert. Die Controller laufen im Access-Point und Station Modus, wodurch der ESP in der Lage ist einen Access-Point anzubieten und gleichzeitig Daten über WLAN an den Server zu senden. 
+Über die Internetadresse `esp8266.local/wlan` kann der Kunde nach dem Einwählen in das ESP-WiFi die Initialisierungsroutine starten.
+Die relevanten Webseiten werden mit dem SPIFFS-Speicher ausgeliefert, einem internen Speicher auf den Microcontrollern.
+Im ersten Schritt wird das Passwort des Access-Points verändert, da dieses bei der Erstauslieferung immer gleich ist und somit Sicherheitsrisiken aufwirft.
+Zusätzlich werden die WLAN-Verbindungsdaten eingetragen, sodass der ESP in der Lage ist, relevante Daten (bspw. Nutzerdaten) an den Server zu senden.
+Die entsprechenden Daten werden intern auf dem EEPROM-Speicher des ESP gespeichert, sodass bei einem Neustart des Geräts alle relevanten Daten zur Verfügung stehen.
+Bei erfolgreichem Verbinden mit dem WLAN wird der Nutzer auf eine Seite weitergeleitet, in der er sich einloggen soll. Die Nutzerdaten werden an den Server mit einem POST HTTPS Request gesendet und die erhaltene Nutzer ID vom Server intern gespeichert. 
+Im nächsten Schritt kann der Nutzer eine Pflanzengruppe angeben. Um das System skalierbar zu halten, wird diese Möglichkeit geboten, damit der Nutzer verschiedene Pflanzengruppen unabhängig voneinander nutzen kann. Dies kann beispielsweise für verschiedene Pflanzen oder verschiedene Gärten genutzt werden.
+Durch die Nutzer ID, die Pflanzengruppe und die `ESP Flash Chip ID` wird das MQTT-Topic gebaut und intern im EEPORM gespeichert.
 
-- **TODO**: _Hendrik_
+#### Update
+Um den Kunden neue Versionen bieten zu können, läuft ein `Update-Server` auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
+
+#### WiFi Management
+Zur Kapselung und Verbesserung der Code Qualität ist eine Headerdatei implementiert, die das komplette WiFi Management übernimmt.
+Diese beinhaltet den Webserver, DNS, Verbindungsmanagement mit dem WLAN und das Senden von Daten per `HTTPS Client` an den Server.
+Über den Webserver kann die Initialisierung erfolgen. Zusätzlich wird dieser dauerhaft betrieben, um Änderungen am WLAN oder an den `MQTT-Topics` und das Firmware-Update zu erlauben.
+
+#### MQTT Management
+Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` verwendet. Um eine sichere Verbindung zu gewährleisten wird `WifiClientSecure` benutzt, ein Client, der eine Authorisierung anbietet. Zur Authorisierung wird ein Zertifikat, welches im SPIFFS speicher hinterlegt ist und ein zugehöriger `Fingerprint` genutzt. Nach erfolgreicher Authorisierung und Verbindung mit dem Server, wird eine Nutzer ID für den `PubSubClient` generiert. Hierfür wird die `ESP Flash Chip ID` genutzt. Mit der Nutzer ID wird eine Verbindung zum `MQTT-Broker` (TODO referenz?) aufgebaut und die entsprechenden `MQTT-Topics` abonniert.
+
 
 ### MQTT-Broker
 

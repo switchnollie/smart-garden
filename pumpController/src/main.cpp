@@ -14,7 +14,7 @@ const char *passphrase;
 //https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
 
 WiFiClient client;
-const char* API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
+const char *API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
 
 Ticker pump_tic_start;
 Ticker pump_tic_stop;
@@ -56,7 +56,7 @@ void read_mqtt_parameters()
 {
     Serial.println("Reading water level topic...");
     String water_level = "";
-    for (int i = 100; i < 140; ++i)
+    for (int i = 100; i < 160; ++i)
     {
         water_level += char(EEPROM.read(i));
     }
@@ -65,7 +65,7 @@ void read_mqtt_parameters()
 
     Serial.println("Reading pump topic...");
     String pump = "";
-    for (int i = 140; i < 180; ++i)
+    for (int i = 160; i < 220; ++i)
     {
         pump += char(EEPROM.read(i));
     }
@@ -74,11 +74,9 @@ void read_mqtt_parameters()
     PUMP_TOPIC = "5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f515e9536fb08962ba5/pump";
     Serial.printf("Pump topic: %s\n", PUMP_TOPIC);
 
-
-
     Serial.println("Reading pump duration topic...");
     String pump_duration = "";
-    for (int i = 220; i < 260; ++i)
+    for (int i = 220; i < 280; ++i)
     {
         pump_duration += char(EEPROM.read(i));
     }
@@ -165,22 +163,25 @@ void clear_eeprom()
 
 void load_root_ca()
 {
-    if (SPIFFS.begin()) {
+    if (SPIFFS.begin())
+    {
         Serial.println("Flash storage succesfully started!");
     }
-    else {
+    else
+    {
         Serial.println("Error starting up flash storage");
     }
 
     root_ca_file = SPIFFS.open("/letsencryptRootCA.pem", "r");
 
-    if (!root_ca_file) {
+    if (!root_ca_file)
+    {
         Serial.println("Error reading RootCA file");
     }
 }
-void init_mqtt(){
-    read_mqtt_topics();
 
+void init_esp_client()
+{
     if (esp_client.loadCACert(root_ca_file))
     {
         Serial.println("cert loaded");
@@ -190,9 +191,12 @@ void init_mqtt(){
         Serial.println("cert not loaded");
     }
 
-    esp_client.allowSelfSignedCerts();       /* Enable self-signed cert support */
+    esp_client.allowSelfSignedCerts(); /* Enable self-signed cert support */
     esp_client.setFingerprint(fingerprint);
-    // Use WiFiClientSecure class to create TLS connection
+}
+
+void connect_mqtt_client()
+{
     Serial.print("connecting to ");
     Serial.println(BROKER_ADDRESS);
     if (!esp_client.connect(BROKER_ADDRESS, 8883))
@@ -209,26 +213,31 @@ void init_mqtt(){
     {
         Serial.println("certificate doesn't match");
     }
+}
+
+void init_mqtt()
+{
+    read_mqtt_topics();
+    connect_mqtt_client();
     mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
     mqtt_client.setCallback(mqtt_callback);
 }
+
+
 void setup()
 {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-    //clear_eeprom();
+    clear_eeprom(); //TODO REMOVE
 
     pinMode(MOTOR_PIN, OUTPUT);
     pinMode(WATERLEVEL_PIN, INPUT);
 
-    //TODO remove -> is used to see logging in serial monitor
-    delay(3000);
-
     load_root_ca();
-    //clear_eeprom();
+    init_esp_client();
 
-    wifi_controller.begin();
+    wifi_controller.begin(esp_client);
     read_mqtt_topics();
 
     init_mqtt();
@@ -237,7 +246,7 @@ void setup()
 void loop()
 {
     wifi_controller.handle_client();
-    
+
     if (wifi_controller.status() != WL_CONNECTED)
     {
         wifi_controller.connect_to_wlan();
@@ -268,7 +277,7 @@ void write_mqtt_parameters()
     Serial.println("\nWriting pump topic...");
     for (int i = 0; i < strlen(PUMP_TOPIC); ++i)
     {
-        EEPROM.write(140 + i, PUMP_TOPIC[i]);
+        EEPROM.write(160 + i, PUMP_TOPIC[i]);
         Serial.print(PUMP_TOPIC[i]);
     }
 
@@ -307,7 +316,6 @@ void init_mqtt_topics(String username, String groupid)
     write_mqtt_parameters();
 }
 
-
 void pumpStart()
 {
     Serial.println("Pumping");
@@ -329,14 +337,14 @@ void pump()
     pump_tic_stop.once_ms(pump_duration, pumpStop);
 }
 
-void mqtt_callback(char* topic, byte* payload, unsigned int length)
+void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
     Serial.println("Received MQTT message");
     Serial.printf("Topic: %s", topic);
 
     pump();
 
-//TODO didnt match
+    //TODO didnt match
     // if (topic == PUMP_TOPIC)
     // {
     //     pump();

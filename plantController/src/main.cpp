@@ -12,9 +12,6 @@ const long SENS_INTERVAL = 2000;
 const char *ssid;
 const char *passphrase;
 
-WiFiClient client;
-const char *API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
-
 void init_mqtt_topics(String username, String groupid);
 WIFI wifi_controller(init_mqtt_topics);
 File root_ca_file;
@@ -29,7 +26,6 @@ const uint16_t BROKER_PORT = 8883;
 WiFiClientSecure esp_client;
 PubSubClient mqtt_client(BROKER_ADDRESS, BROKER_PORT, esp_client);
 const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
-
 
 //Publish moisture
 const char *MOISTURE_TOPIC = "";
@@ -58,7 +54,7 @@ void init_mqtt_topics(String username, String groupid)
     EEPROM.begin(512);
 
     //Clear data
-    for (int i = 100; i < 140; i++)
+    for (int i = 100; i < 160; i++)
     {
         EEPROM.write(i, 0);
     }
@@ -81,7 +77,7 @@ void read_mqtt_parameters()
 {
     Serial.println("Reading moisture topic...");
     String moisture = "";
-    for (int i = 100; i < 140; ++i)
+    for (int i = 100; i < 160; ++i)
     {
         moisture += char(EEPROM.read(i));
     }
@@ -136,7 +132,7 @@ void reconnect_MQTT()
         sprintf(mqtt_id, "%d", ESP.getFlashChipId());
         //TODO REMOVE
         Serial.printf("Client ID: %s", mqtt_id);
-        
+
         // Attempt to connect
         if (mqtt_client.connect("5f2d2f46c254098c1222a484")) //TODO mqtt_id
         {
@@ -186,9 +182,8 @@ void load_root_ca()
     }
 }
 
-void init_mqtt(){
-    read_mqtt_topics();
-
+void init_esp_client()
+{
     if (esp_client.loadCACert(root_ca_file))
     {
         Serial.println("cert loaded");
@@ -198,9 +193,12 @@ void init_mqtt(){
         Serial.println("cert not loaded");
     }
 
-    esp_client.allowSelfSignedCerts();       /* Enable self-signed cert support */
+    esp_client.allowSelfSignedCerts(); /* Enable self-signed cert support */
     esp_client.setFingerprint(fingerprint);
-    // Use WiFiClientSecure class to create TLS connection
+}
+
+void connect_mqtt_client()
+{
     Serial.print("connecting to ");
     Serial.println(BROKER_ADDRESS);
     if (!esp_client.connect(BROKER_ADDRESS, 8883))
@@ -217,6 +215,12 @@ void init_mqtt(){
     {
         Serial.println("certificate doesn't match");
     }
+}
+
+void init_mqtt()
+{
+    read_mqtt_topics();
+    connect_mqtt_client();
     mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
     mqtt_client.setCallback(mqtt_callback);
 }
@@ -228,9 +232,12 @@ void setup()
 
     pinMode(MOISTURE_PIN, INPUT);
 
+    //TODO REMOVE
+    delay(5000);
     load_root_ca();
-
-    wifi_controller.begin();
+    init_esp_client();
+    
+    wifi_controller.begin(esp_client);
 
     init_mqtt();
 
@@ -247,6 +254,10 @@ void loop()
     {
         wifi_controller.connect_to_wlan();
     }
+
+    // if(!esp_client.connected()){
+    //     connect_mqtt_client();
+    // }
 
     //TODO incomment -> dont block for 5s to be able to handle web server
     if (!mqtt_client.connected())
