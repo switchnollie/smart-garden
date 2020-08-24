@@ -7,6 +7,8 @@
 #include <EEPROM.h>
 #include <WiFiClient.h>
 #include <functional>
+#include <ArduinoJson.h>
+#include <WiFiClientSecure.h>
 
 //typedef void (*init_mqtt_topics_callback)(String username, String group_id);
 
@@ -35,10 +37,11 @@ private:
     ESP8266HTTPUpdateServer http_updater;
     const char *host = "esp8266";
     String user = "";
-    WiFiClient client;
+    WiFiClientSecure client;
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
 
-    const char *API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
+    const char *API_USER_ENDPOINT = "smartgarden.timweise.com";
+    const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
 };
 
 WIFI::WIFI(std::function<void(String, String)> callback)
@@ -72,7 +75,7 @@ void WIFI::start_web_server()
                       IPAddress(255, 255, 255, 0)); //Subnetz-Maske
 
     String ap_pass = read_ap_password();
-    WiFi.softAP("ESP Pump", ap_pass.c_str());
+    WiFi.softAP("ESP Plant", ap_pass.c_str());
 
     //WLAN and AP
     web_server.serveStatic("/wlan", SPIFFS, "/wlan.html");
@@ -126,14 +129,12 @@ String WIFI::read_wlan_ssid()
 String WIFI::read_wlan_pass()
 {
     //Reading PASS from EEPROM
-    Serial.println("Reading EEPROM pass");
+    Serial.println("Reading WLAN password...");
     String pass = "";
     for (int i = 32; i < 96; ++i)
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("Pass: ");
-    Serial.println(pass);
     return pass;
 }
 
@@ -168,7 +169,6 @@ void WIFI::change_wlan()
     String pass = web_server.arg("pass");
     Serial.println("Changing WLAN parameters");
     Serial.printf("SSID: %s\n", ssid.c_str());
-    Serial.printf("Password: %s\n", pass.c_str());
     if (ssid.length() > 0 && pass.length() > 0)
     {
         write_wlan_parameters(ssid, pass);
@@ -194,9 +194,6 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
         EEPROM.write(i, 0);
     }
     Serial.println(ssid);
-    Serial.println("");
-    Serial.println(pass);
-    Serial.println("");
 
     //TODO encrypt password
     Serial.println("writing eeprom ssid:");
@@ -209,7 +206,7 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
     for (int i = 0; i < pass.length(); ++i)
     {
         EEPROM.write(32 + i, pass[i]);
-        Serial.print(pass[i]);
+        Serial.print("*");
     }
     EEPROM.commit();
 }
@@ -239,8 +236,6 @@ String WIFI::read_ap_password()
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("PASS: ");
-    Serial.println(pass);
     if (!pass)
     {
         return "ESPPASSWORD";
@@ -270,13 +265,55 @@ bool WIFI::test_wifi()
 void WIFI::send_user_data_to_backend(String username, String pass)
 {
 
-    if (client.connect(API_USER_ENDPOINT, 80))
+    StaticJsonDocument<300> JSONbuffer;
+    JsonObject JSONencoder = JSONbuffer.to<JsonObject>();
+
+    JSONencoder["username"] = username;
+    JSONencoder["password"] = pass;
+
+    //Print json object to string
+    char JSONmessageBuffer[300];
+    serializeJsonPretty(JSONencoder, JSONmessageBuffer);
+    Serial.println(JSONmessageBuffer);
+
+    if (SPIFFS.begin())
+    {
+        Serial.println("Flash storage succesfully started!");
+    }
+    else
+    {
+        Serial.println("Error starting up flash storage");
+    }
+
+    File root_ca_file = SPIFFS.open("/rootca.pem", "r");
+
+    if (!root_ca_file)
+    {
+        Serial.println("Error reading RootCA file");
+    }
+    if (client.loadCACert(root_ca_file))
+    {
+        Serial.println("cert loaded");
+    }
+    else
+    {
+        Serial.println("cert not loaded");
+    }
+
+    client.allowSelfSignedCerts(); /* Enable self-signed cert support */
+    // Use WiFiClientSecure class to create TLS connection
+    Serial.print("connecting to ");
+    Serial.println(API_USER_ENDPOINT);
+
+    if (client.connect(API_USER_ENDPOINT, 443))
     {
         Serial.println("Successfully connected to API Endpoint!");
-        client.print(String("GET /") + " HTTP/1.1\r\n" +
-                     "Host: " + API_USER_ENDPOINT + "?username=" + username + "&pass=" + pass + "\r\n" +
-                     "Connection: close\r\n" +
-                     "\r\n");
+        client.println("POST /posts HTTP/1.1");
+        client.println(String("Host: ") + API_USER_ENDPOINT + "/api/user");
+        client.println("Content-Type: application/json");
+        client.println();
+        client.println(JSONmessageBuffer);
+
         //Check if data transmitted
         while (client.connected() || client.available())
         {
@@ -301,6 +338,7 @@ void WIFI::send_user_data_to_backend(String username, String pass)
     else
     {
         Serial.println("Failed to connect to API Endpoint!");
+        Serial.println(client.status());
         client.stop();
         Serial.println("\n[Disconnected]");
         web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");

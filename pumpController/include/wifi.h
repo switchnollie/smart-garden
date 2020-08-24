@@ -8,8 +8,6 @@
 #include <WiFiClient.h>
 #include <functional>
 
-//typedef void (*init_mqtt_topics_callback)(String username, String group_id);
-
 class WIFI {
 public:
     WIFI(std::function<void(String, String)> callback);
@@ -125,8 +123,6 @@ String  WIFI::read_wlan_pass() {
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("Pass: ");
-    Serial.println(pass);
     return pass;
 }
 
@@ -188,10 +184,7 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
     }
     Serial.println(ssid);
     Serial.println("");
-    Serial.println(pass);
-    Serial.println("");
 
-    //TODO encrypt password
     Serial.println("writing eeprom ssid:");
     for (int i = 0; i < ssid.length(); ++i)
     {
@@ -202,7 +195,7 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
     for (int i = 0; i < pass.length(); ++i)
     {
         EEPROM.write(32 + i, pass[i]);
-        Serial.print(pass[i]);
+        Serial.print("*");
     }
     EEPROM.commit();
 }
@@ -215,7 +208,7 @@ void WIFI::change_ap_password() {
     for (int i = 0; i < pass.length(); ++i)
     {
         EEPROM.write(300 + i, pass[i]);
-        Serial.print(pass[i]);
+        Serial.print("*");
     }
 
     EEPROM.commit();
@@ -223,15 +216,13 @@ void WIFI::change_ap_password() {
 
 String WIFI::read_ap_password() {
     //Reading PASS from EEPROM
-    Serial.println("Reading AP password: ");
+    Serial.println("Reading AP password...");
     EEPROM.begin(512);
     String pass = "";
     for (int i = 300; i < 340; ++i)
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("PASS: ");
-    Serial.println(pass);
     if (!pass) {
         return "ESPPASSWORD";
     }
@@ -242,7 +233,7 @@ String WIFI::read_ap_password() {
 bool WIFI::test_wifi()
 {
     int c = 0;
-    Serial.println("Waiting for Wifi to connect");
+    Serial.println("Waiting for Wifi to connect...");
     while (c < 20)
     {
         if (WiFi.status() == WL_CONNECTED)
@@ -254,7 +245,7 @@ bool WIFI::test_wifi()
         c++;
     }
     Serial.println("");
-    Serial.println("Connect timed out");
+    Serial.println("Connect timed out...");
     return false;
 }
 

@@ -4,6 +4,7 @@
 #include <EEPROM.h>
 #include <FS.h>
 #include <wifi.h>
+#include <WiFiClientSecure.h>
 
 const uint8_t MOISTURE_PIN = A0;
 const long SENS_INTERVAL = 2000;
@@ -12,7 +13,7 @@ const char *ssid;
 const char *passphrase;
 
 WiFiClient client;
-const char* API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
+const char *API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
 
 void init_mqtt_topics(String username, String groupid);
 WIFI wifi_controller(init_mqtt_topics);
@@ -23,10 +24,12 @@ void publish_moisture_level();
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
-const IPAddress BROKER_ADDRESS(139, 59, 210, 39);
+const char *BROKER_ADDRESS = "smartgarden.timweise.com";
 const uint16_t BROKER_PORT = 8883;
-WiFiClient esp_client;
-PubSubClient mqtt_client(esp_client);
+WiFiClientSecure esp_client;
+PubSubClient mqtt_client(BROKER_ADDRESS, BROKER_PORT, esp_client);
+const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
+
 
 //Publish moisture
 const char *MOISTURE_TOPIC = "";
@@ -34,7 +37,6 @@ const char *MOISTURE_TOPIC = "";
 bool mqtt_initialized = false;
 const int MQTT_INIT_EEPROM_INDEX = 99;
 
-int moisture_threshhold = 950; // TODO
 // messages are 10 Bit decimals -> max. 4 characters + \0 needed
 #define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
@@ -77,19 +79,21 @@ void init_mqtt_topics(String username, String groupid)
 
 void read_mqtt_parameters()
 {
-    Serial.println("Reading water level topic...");
+    Serial.println("Reading moisture topic...");
     String moisture = "";
     for (int i = 100; i < 140; ++i)
     {
         moisture += char(EEPROM.read(i));
     }
     MOISTURE_TOPIC = moisture.c_str();
+    //TODO REMOVE
+    MOISTURE_TOPIC = "5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture";
     Serial.printf("Water level topic: %s\n", MOISTURE_TOPIC);
 }
 
 void wait_for_MQTT()
 {
-    Serial.printf("Waiting for MQTT configuration...");
+    Serial.println("Waiting for MQTT configuration...");
     while (!mqtt_initialized)
     {
         //Allow user to init/change mqtt topics
@@ -130,15 +134,13 @@ void reconnect_MQTT()
         Serial.print("Attempting MQTT connection...");
         char mqtt_id[10];
         sprintf(mqtt_id, "%d", ESP.getFlashChipId());
+        //TODO REMOVE
         Serial.printf("Client ID: %s", mqtt_id);
+        
         // Attempt to connect
-        if (mqtt_client.connect(mqtt_id))
+        if (mqtt_client.connect("5f2d2f46c254098c1222a484")) //TODO mqtt_id
         {
             Serial.println("connected");
-            // Once connected, publish an announcement...
-            mqtt_client.publish("outTopic", "hello world");
-            // ... and resubscribe
-            mqtt_client.subscribe("inTopic");
         }
         else
         {
@@ -167,18 +169,56 @@ void clear_eeprom()
 
 void load_root_ca()
 {
-    if (SPIFFS.begin()) {
+    if (SPIFFS.begin())
+    {
         Serial.println("Flash storage succesfully started!");
     }
-    else {
+    else
+    {
         Serial.println("Error starting up flash storage");
     }
 
-    root_ca_file = SPIFFS.open("/letsencryptRootCA.pem", "r");
+    root_ca_file = SPIFFS.open("/rootca.pem", "r");
 
-    if (!root_ca_file) {
+    if (!root_ca_file)
+    {
         Serial.println("Error reading RootCA file");
     }
+}
+
+void init_mqtt(){
+    read_mqtt_topics();
+
+    if (esp_client.loadCACert(root_ca_file))
+    {
+        Serial.println("cert loaded");
+    }
+    else
+    {
+        Serial.println("cert not loaded");
+    }
+
+    esp_client.allowSelfSignedCerts();       /* Enable self-signed cert support */
+    esp_client.setFingerprint(fingerprint);
+    // Use WiFiClientSecure class to create TLS connection
+    Serial.print("connecting to ");
+    Serial.println(BROKER_ADDRESS);
+    if (!esp_client.connect(BROKER_ADDRESS, 8883))
+    {
+        Serial.println("connection failed");
+        return;
+    }
+
+    if (esp_client.verify(fingerprint, BROKER_ADDRESS))
+    {
+        Serial.println("certificate matches");
+    }
+    else
+    {
+        Serial.println("certificate doesn't match");
+    }
+    mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
+    mqtt_client.setCallback(mqtt_callback);
 }
 
 void setup()
@@ -191,11 +231,8 @@ void setup()
     load_root_ca();
 
     wifi_controller.begin();
-    read_mqtt_topics();
 
-    //init MQTT
-    mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
-    mqtt_client.setCallback(mqtt_callback);
+    init_mqtt();
 
     randomSeed(micros());
 
@@ -204,7 +241,7 @@ void setup()
 
 void loop()
 {
-   wifi_controller.handle_client();
+    wifi_controller.handle_client();
 
     if (wifi_controller.status() != WL_CONNECTED)
     {
@@ -212,11 +249,10 @@ void loop()
     }
 
     //TODO incomment -> dont block for 5s to be able to handle web server
-        // if (!mqtt_client.connected())
-        // {
-        //     reconnect_MQTT();
-        // }
-
+    if (!mqtt_client.connected())
+    {
+        reconnect_MQTT();
+    }
 
     mqtt_client.loop();
 }
@@ -229,6 +265,7 @@ void publish_moisture_level()
         sprintf(messageBuffer, "%d", moistureLevel);
         Serial.print("Publishing message ");
         Serial.println(messageBuffer);
+        Serial.printf("Moisture topic: %s\n", MOISTURE_TOPIC);
         mqtt_client.publish(MOISTURE_TOPIC, messageBuffer);
     }
 }
