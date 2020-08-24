@@ -26,16 +26,17 @@ services:
     networks:
       - smart-garden-net
     depends_on:
-      - mobileApp
+      - mobileapp
       - broker
-  mobileApp:
-    container_name: mobileApp
+  mobileapp:
+    container_name: mobileapp
     build: ./mobileApp
     volumes:
       - "web-root:/usr/src/mobileApp/packages/server/public"
     environment:
       - MONGO_URI=${MONGO_URI}
       - MONGO_DATABASE=${MONGO_DATABASE}
+      - MQTT_HOST=${MQTT_HOST}
     networks:
       - smart-garden-net
 

@@ -22,12 +22,17 @@ app.use(passport.initialize());
 app.locals.db = connectToMongo();
 app.locals.mqttClient = connectToBroker();
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "..", "public")));
+
+initRoutes(app);
+
+// Handles any requests that don't match the ones above
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`Server started and listening on port ${PORT}`);
 });
-
-initRoutes(app);
 
 export default app;

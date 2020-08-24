@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Redirect } from "react-router-dom";
+import { Route, Redirect, Switch } from "react-router-dom";
 import {
   IonPage,
   IonTabs,
@@ -16,18 +16,20 @@ export default function TabsRoot() {
     <IonPage>
       <IonTabs>
         <IonRouterOutlet>
-          <Route
-            exact
-            path="/app"
-            render={() => <Redirect to="/app/plants" />}
-          />
-          <Route path="/app/:tab(plants)" exact component={PlantsPage} />
-          <Route
-            path="/app/:tab(plants)/:groupId"
-            component={PlantDetailsPage}
-          />
-          <Route path="/app/:tab(insights)" exact component={InsightsPage} />
-          <Route path="/app/:tab(profile)" exact component={ProfilePage} />
+          <Switch>
+            <Route path="/app/:tab(plants)" exact component={PlantsPage} />
+            <Route
+              path="/app/:tab(plants)/:groupId"
+              component={PlantDetailsPage}
+            />
+            <Route path="/app/:tab(insights)" exact component={InsightsPage} />
+            <Route path="/app/:tab(profile)" exact component={ProfilePage} />
+            <Route
+              exact
+              path="/app"
+              render={() => <Redirect to="/app/plants" />}
+            />
+          </Switch>
         </IonRouterOutlet>
         <IonTabBar slot="bottom" mode="ios">
           <IonTabButton tab="plants" href="/app/plants">

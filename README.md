@@ -2,87 +2,51 @@
 
 ## Required Environment Variables
 
-- MONGO_USERNAME
-- MONGO_PASSWORD
-- MONGO_DATABASE
-- MONGO_PORT
-- MONGO_HOST
+| Env Variable     | Description                           |
+| ---------------- | ------------------------------------- |
+| `MONGO_USERNAME` | Username of Mongo Atlas Instance      |
+| `MONGO_PASSWORD` | Password of Mongo Atlas Instance      |
+| `MONGO_DATABASE` | Database Name of Mongo Atlas Instance |
+| `MONGO_PORT`     | Port of Mongo Atlas Instance          |
+| `MONGO_HOST`     | Hostname/ URI of Mongo Atlas Instance |
+| `MQTT_HOST` (only prod) | Hostname of the MQTT Broker. In the Docker Compose Environment, this ist the service DNS name (broker) |
+| `CERT_MAIL` (only prod) | Mail Address to be used with Certbot for Certificate issuance |
 
-## Start all containers locally using Docker Compose, self signed certificates and an externally managed instance of MongoDB
+## Development setup
 
-- Install Docker Community Edition in a up-to-date version.
-- Provide the mongo environment variables (e.g. as a `.env` File)
-- Create the self signed certificates. This will prompt you to:
-  1. enter a passphrase for the CA keys
-  2. Enter Information about your self signed CA cert
-  3. Enter Information about the server cert.
+To start the application locally, you will need a MongoDB Atlas instance as well as a Docker installation on your machine.
 
-```sh
-./createCerts.sh
-```
+### Setup Steps
 
-- Start the Docker Containers using Docker Compose:
+1. Install Docker Community Edition in an up-to-date version.
+2. Provide the mongo environment variables (e.g. as a `.env` File)
+3. Create the self signed certificates for the application gateway (haproxy):
+
+   ```sh
+   ./createCerts.sh
+   ```
+
+   This will prompt you to:
+
+   - Enter a passphrase for the CA keys
+   - Enter Information about your self signed CA cert
+   - Enter Information about the server cert.
+
+4) Generate Keys for the API-Server (used for JWT issuance and validation)
+
+5. Start the Docker Containers using Docker Compose:
 
 ```sh
 docker-compose up -f docker-compose.dev.yml
 ```
 
-## Start a local cluster using Kubernetes minikube, haproxy and an externally managed instance of MongoDB
+## Production Deployment (Digital Ocean)
 
-- Install the Kubernetes Development Environment `minikube` and `kubectl`
+The production deployment is running on a Digital Ocean Droplet (VPS). The machine allows connections on Port 80, 443, 1883 and 8883. All connections are proxied through the HAProxy Application Gateway which redirects unencrypted traffic for MQTT (1883) and HTTP (80) to use the encrypted versions.
 
-- Start minikube with the standard docker driver
+The certificates are issued by Let's Encrypt using the Certbot Client which is deployed as a seperate microservice.
 
-```sh
-minikube start
-```
-
-- Install Voyager in your minikube cluster. If the above is not working follow the [official installation instructions](https://voyagermesh.com/docs/v12.0.0/setup/install/#script)
-
-```sh
-kubectl apply -f k8s/voyager.yaml
-```
-
-- Create a new kubernetes namespace called `smart-garden`:
-
-```sh
-kubectl create namespace smart-garden
-```
-
-- Provide the mongodb environment variables as a `.env` File, create a k8s secret called `mongo-secret` with them and save the secret in a `*.secret.yml`-File
-
-```sh
-mkdir k8s/secrets && kubectl create secret generic dev-secret --from-env-file=.env -o yaml --save-config=true --namespace=smart-garden > k8s/secrets/mongo.secret.yml
-```
-
-- Create a self signed certificate and import it into your minikube cluster as a secret. The voyager ingress node uses it to setup haproxy with tls:
-
-```sh
-./createCerts.sh
-```
-
-- Apply the k8s configurations
-
-```sh
-kubectl apply -f ./k8s/broker -f ./k8s/ingress.yml
-```
-
-### Test a single container locally
-
-```sh
-docker run -it --rm --env-file .env <image-name>
-```
-
-### Get Information about the Voyager Ingress
-
-> voyager ingress shows up under a custom ressource definitions (CRD) and not under
-> the ingress type ressources!
-> this means that neither commands like `kubectl get ingress` nor the minikube dashboard
-> will show the instances. Use type **ingress.voyager.appscode.com** instead!
-
-```sh
-kubectl get ingress.voyager.appscode.com -n smart-garden smart-garden-ingress
-```
+A Hostname of `smartgarden.timweise.com` is associated with the droplet i.e. the mobile web application can be accessed on that domain and the MQTT clients can connect with the broker on `smartgarden.timweise.com:8883`.
 
 ### Test the Production MQTT Connection with the Mosquitto Client
 
@@ -96,5 +60,11 @@ mosquitto_sub -h smartgarden.timweise.com -p 8883 -t test -d --cafile letsencryp
   (DeviceId 5f2d2f46c254098c1222a484, WateringGroupId: 5f2d2bfe7824f2b9fd33cb66, UserId: 5f2d2b58d65dd0c3e0ac05e7)
 
 ```sh
-mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture -m 42 --cafile letsencryptRootCa.pem
+mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture -m 42 --cafile letsencryptRootCa.pem -i 5f2d2f46c254098c1222a484
+```
+
+- Publish on Pump Topic `5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f515e9536fb08962ba5/pump` (DeviceId 5f2d2f515e9536fb08962ba5, WateringGroupId: 5f2d2bfe7824f2b9fd33cb66, UserId: 5f2d2b58d65dd0c3e0ac05e7)
+
+```sh
+mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f515e9536fb08962ba5/pump -m 1 --cafile letsencryptRootCa.pem -i admin-app
 ```

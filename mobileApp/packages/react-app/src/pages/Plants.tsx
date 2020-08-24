@@ -6,22 +6,25 @@ import { IonContent, IonLabel, IonThumbnail } from "@ionic/react";
 import Header from "../components/Header";
 import IconButton from "../components/IconButton";
 import List, { ListItem } from "../components/List";
+import { useSessionContext } from "../contexts/SessionContext";
 
 interface PlantsPageProps extends RouteComponentProps {}
 
 export default function PlantsPage({ match }: PlantsPageProps) {
   const { groups } = useWateringGroups();
+  const [sessionState] = useSessionContext();
+
   return (
     <>
       <Header>Watering Groups</Header>
       <IonContent>
         <List>
           {groups
-            ? groups.map(({ _id, displayName, lastPumped }) => (
+            ? groups.map(({ _id: groupId, displayName, lastPumped }) => (
                 <ListItem
-                  key={_id}
+                  key={groupId}
                   lines="none"
-                  routerLink={`${match.url}/${_id}`}
+                  routerLink={`${match.url}/${groupId}`}
                 >
                   <IonLabel>
                     <h2>{displayName}</h2>
@@ -30,9 +33,20 @@ export default function PlantsPage({ match }: PlantsPageProps) {
                   <IonThumbnail slot="end">
                     <IconButton
                       icon="water"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
                         e.preventDefault();
+                        await fetch("/api/action/pump", {
+                          method: "POST",
+                          body: JSON.stringify({
+                            userId: sessionState.user?._id,
+                            groupId,
+                          }),
+                          headers: {
+                            Authorization: sessionState.jwt || "",
+                            "Content-Type": "application/json",
+                          },
+                        });
                       }}
                     />
                   </IonThumbnail>
