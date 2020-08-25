@@ -13,6 +13,7 @@ const char *ssid;
 const char *passphrase;
 
 void init_mqtt_topics(String username, String groupid);
+
 WIFI wifi_controller(init_mqtt_topics);
 File root_ca_file;
 
@@ -21,10 +22,10 @@ void publish_moisture_level();
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
-const char *BROKER_ADDRESS = "smartgarden.timweise.com";
+const char *host = "smartgarden.timweise.com";
 const uint16_t BROKER_PORT = 8883;
 WiFiClientSecure esp_client;
-PubSubClient mqtt_client(BROKER_ADDRESS, BROKER_PORT, esp_client);
+PubSubClient mqtt_client(host, BROKER_PORT, esp_client);
 const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
 
 //Publish moisture
@@ -182,38 +183,25 @@ void load_root_ca()
     }
 }
 
-void init_esp_client()
-{
-    if (esp_client.loadCACert(root_ca_file))
-    {
-        Serial.println("cert loaded");
-    }
-    else
-    {
-        Serial.println("cert not loaded");
-    }
-
-    esp_client.allowSelfSignedCerts(); /* Enable self-signed cert support */
-    esp_client.setFingerprint(fingerprint);
-}
-
 void connect_mqtt_client()
 {
-    Serial.print("connecting to ");
-    Serial.println(BROKER_ADDRESS);
-    if (!esp_client.connect(BROKER_ADDRESS, 8883))
+    esp_client.setFingerprint(fingerprint);
+
+    Serial.print("MQTT: connecting to ");
+    Serial.println(host);
+    if (!esp_client.connect(host, 8883))
     {
-        Serial.println("connection failed");
+        Serial.println("MQTT TLS connection failed");
         return;
     }
 
-    if (esp_client.verify(fingerprint, BROKER_ADDRESS))
+    if (esp_client.verify(fingerprint, host))
     {
-        Serial.println("certificate matches");
+        Serial.println("MQTT TLS certificate matches");
     }
     else
     {
-        Serial.println("certificate doesn't match");
+        Serial.println("MQTT TLS certificate doesn't match");
     }
 }
 
@@ -221,7 +209,7 @@ void init_mqtt()
 {
     read_mqtt_topics();
     connect_mqtt_client();
-    mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
+    mqtt_client.setServer(host, BROKER_PORT);
     mqtt_client.setCallback(mqtt_callback);
 }
 
@@ -235,10 +223,9 @@ void setup()
     //TODO REMOVE
     delay(5000);
     load_root_ca();
-    init_esp_client();
     
-    wifi_controller.begin(esp_client);
 
+    wifi_controller.begin();
     init_mqtt();
 
     randomSeed(micros());
@@ -259,7 +246,6 @@ void loop()
     //     connect_mqtt_client();
     // }
 
-    //TODO incomment -> dont block for 5s to be able to handle web server
     if (!mqtt_client.connected())
     {
         reconnect_MQTT();

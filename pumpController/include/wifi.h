@@ -10,7 +10,7 @@
 class WIFI {
 public:
     WIFI(std::function<void(String, String)> callback);
-    void begin(WiFiClientSecure esp_client);
+    void begin();
     int status();
     void handle_client();
     void connect_to_wlan();
@@ -24,14 +24,11 @@ private:
     void write_wlan_parameters(String ssid, String pass);
     void change_wlan();
     bool test_wifi();
-    void send_user_data_to_backend(String username, String pass);
-    void change_user();
 
     ESP8266WebServer web_server;
     ESP8266HTTPUpdateServer http_updater;
     const char* dns_host = "esp8266";
-    String user = "";
-    WiFiClientSecure client;
+    String user_id = "";
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
 
     const char *host = "smartgarden.timweise.com";
@@ -41,9 +38,8 @@ WIFI::WIFI(std::function<void(String, String)> callback) {
     init_mqtt_topics_callback_implementation = callback;
 }
 
-void WIFI::begin(WiFiClientSecure esp_client)
+void WIFI::begin()
 {
-    client = esp_client;
     WiFi.mode(WIFI_AP_STA);
     start_web_server();
     connect_to_wlan();
@@ -69,7 +65,7 @@ void WIFI::start_web_server()
     WiFi.softAP("ESP Pump", ap_pass.c_str());
 
     //WLAN and AP
-    web_server.serveStatic("/wlan", SPIFFS, "/wlan.html");
+    web_server.serveStatic("/wlan", SPIFFS, "/init.html");
     web_server.on("/changewlan", [this]() {
         change_wlan();
         });
@@ -77,19 +73,19 @@ void WIFI::start_web_server()
     //User credentials
     web_server.serveStatic("/user", SPIFFS, "/user.html");
     web_server.on("/changeuser", [this]() {
-        change_user();
+        user_id = web_server.arg("user-id");
         });
 
     //Groups
     web_server.serveStatic("/groups", SPIFFS, "/groups.html");
     web_server.on("/initmqtttopics", [this]() {
-        init_mqtt_topics_callback_implementation(user, web_server.arg("groupid"));
+        init_mqtt_topics_callback_implementation(user_id, web_server.arg("groupid"));
         web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
         });
 
     //redirect
     web_server.onNotFound([this]() { //this cant be used in lambda function
-        web_server.sendHeader("Location", "/wlan");
+        web_server.sendHeader("Location", "/init");
         web_server.send(302, "text/plain", "Path not available!");
         });
 
@@ -166,7 +162,7 @@ void WIFI::change_wlan()
 
         if (test_wifi())
         {
-            Serial.println("Succesfully Connected!!!");
+            Serial.println("Succesfully Connected! Sending response...");
             web_server.send(200, "text/plane", "Succesfully Connected");
         }
         else {
@@ -248,93 +244,4 @@ bool WIFI::test_wifi()
     Serial.println("");
     Serial.println("Connect timed out...");
     return false;
-}
-
-void WIFI::send_user_data_to_backend(String username, String pass)
-{
-
-    StaticJsonDocument<300> JSONbuffer;
-    JsonObject JSONencoder = JSONbuffer.to<JsonObject>();
-
-    JSONencoder["username"] = username;
-    JSONencoder["password"] = pass;
-
-    //Print json object to string
-    char JSONmessageBuffer[300];
-    serializeJsonPretty(JSONencoder, JSONmessageBuffer);
-    Serial.println(JSONmessageBuffer);
-
-    client.setTimeout(5000);
-
-    Serial.print("connecting to ");
-    Serial.println(host);
-
-    if (client.connect(host, 443))
-    {
-        Serial.println("Sending Data...");
-
-        client.println("POST /api/user HTTPS/1.3");
-        client.println(String("Host: ") + host);
-        client.println("Content-Type: application/json");
-        client.println("Content-Length: " + measureJsonPretty(JSONbuffer));
-        client.println();
-        client.println(JSONmessageBuffer);
-
-        //https://arduinojson.org/v6/example/http-client/
-        // Check HTTP status
-        char status[32] = {0};
-        client.readBytesUntil('\r', status, sizeof(status));
-        if (strcmp(status, "HTTP/1.1 200 OK") != 0)
-        {
-            Serial.print(F("Unexpected response: "));
-            Serial.println(status);
-            client.stop();
-            return;
-        }
-
-        // Skip HTTP headers
-        char endOfHeaders[] = "\r\n\r\n";
-        if (!client.find(endOfHeaders))
-        {
-            Serial.println(F("Invalid response"));
-            client.stop();
-            return;
-        }
-
-        // Allocate the JSON document
-        // Use arduinojson.org/v6/assistant to compute the capacity.
-        const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
-        DynamicJsonDocument doc(capacity);
-
-        // Parse JSON object
-        DeserializationError error = deserializeJson(doc, client);
-        if (error)
-        {
-            Serial.print(F("deserializeJson() failed: "));
-            Serial.println(error.c_str());
-            return;
-        }
-
-        // Extract values
-        Serial.println(F("Response:"));
-        String username = doc["username"].as<char *>();
-        Serial.println(username);
-
-        // Disconnect
-        client.stop();
-    }
-    else
-    {
-        Serial.println("Failed to connect to API Endpoint!");
-        client.stop();
-        Serial.println("\n[Disconnected]");
-        web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
-    }
-}
-
-void WIFI::change_user() {
-    String username = web_server.arg("username");
-    String pass = web_server.arg("pass");
-    send_user_data_to_backend(username, pass);
-    user = username;
 }

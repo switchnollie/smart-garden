@@ -115,7 +115,7 @@
           if (res.status === 200) {
             window.location.pathname = "/groups.html";
           } else {
-            alert("Wrong username or password. Please try again.");
+            alert(res.data);
           }
         }).catch(() => {
           alert("Error sending data. Please try again.");

@@ -138,7 +138,7 @@
             if (res.status === 200) {
               alert("Your plant controller was successfully added to the system.");
             } else {
-              alert("The system could not be initialized. Please try again.");
+              alert(res.data);
             }
           })
           .catch(() => {

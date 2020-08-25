@@ -26,10 +26,10 @@ WIFI wifi_controller(init_mqtt_topics);
 File root_ca_file;
 
 //MQTT
-const char *BROKER_ADDRESS = "smartgarden.timweise.com";
-const uint16_t BROKER_PORT = 8883;
+const char *host = "smartgarden.timweise.com";
+const uint16_t port = 8883;
 WiFiClientSecure esp_client;
-PubSubClient mqtt_client(BROKER_ADDRESS, BROKER_PORT, esp_client);
+PubSubClient mqtt_client(host, port, esp_client);
 const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
 
 //Water level of pump controller
@@ -180,32 +180,19 @@ void load_root_ca()
     }
 }
 
-void init_esp_client()
-{
-    if (esp_client.loadCACert(root_ca_file))
-    {
-        Serial.println("cert loaded");
-    }
-    else
-    {
-        Serial.println("cert not loaded");
-    }
-
-    esp_client.allowSelfSignedCerts(); /* Enable self-signed cert support */
-    esp_client.setFingerprint(fingerprint);
-}
-
 void connect_mqtt_client()
 {
+    esp_client.setFingerprint(fingerprint);
+
     Serial.print("connecting to ");
-    Serial.println(BROKER_ADDRESS);
-    if (!esp_client.connect(BROKER_ADDRESS, 8883))
+    Serial.println(host);
+    if (!esp_client.connect(host, 8883))
     {
         Serial.println("connection failed");
         return;
     }
 
-    if (esp_client.verify(fingerprint, BROKER_ADDRESS))
+    if (esp_client.verify(fingerprint, host))
     {
         Serial.println("certificate matches");
     }
@@ -219,7 +206,7 @@ void init_mqtt()
 {
     read_mqtt_topics();
     connect_mqtt_client();
-    mqtt_client.setServer(BROKER_ADDRESS, BROKER_PORT);
+    mqtt_client.setServer(host, port);
     mqtt_client.setCallback(mqtt_callback);
 }
 
@@ -235,9 +222,8 @@ void setup()
     pinMode(WATERLEVEL_PIN, INPUT);
 
     load_root_ca();
-    init_esp_client();
 
-    wifi_controller.begin(esp_client);
+    wifi_controller.begin();
     read_mqtt_topics();
 
     init_mqtt();
