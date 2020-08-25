@@ -40,10 +40,10 @@ Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm
 
 **TODO**: Sequenzdiagramme: Lebenslinien sind (Pflanzencontroller, Pumpencontroller, HAProxy, Anwendungsserver, Web Client, MQTT-Broker, Mongo-Datenbank)
 
-- **TODO**: Sequenzdiagramm Parametrisierung/ Ersteinrichtung
+- **TODO**: Sequenzdiagramm Komponentenkommunikation (Diagramm bereits erstellt)
+- **TODO**: Sequenzdiagramm Parametrisierung/ Ersteinrichtung (Diagramm bereits erstellt)
+- 
 - **TODO**: Video/GIF Parametrisierung/ Ersteinrichtung
-
-- **TODO**: Sequenzdiagramm Feuchtigkeitsschwelle überschritten
 - **TODO**: Video/GIF Manuelles Ansteuern der Pumpe über die App
 
 ## Komponenten
