@@ -110,12 +110,35 @@
       const username = userField.value;
       const password = passwordField.value;
 
-      fetch(`/changeuser?username=${username}&pass=${password}`)
+      const Url = 'https://smartgarden.timweise.com/api/user';
+      const data =
+        JSON.stringify({
+          username: username,
+          password: password
+        });
+
+      const userId = username;
+
+      fetch(Url, { method: 'POST', body: data })
+        .then(data => {
+          if (data.status === 200) {
+            userId = data.body;
+            console.log(userId);
+          } else {
+            alert('Error sending data to the server!');
+          }
+        })
+        .catch(() => {
+          alert("Error sending data to the server!");
+        });
+
+
+      fetch(`/changeuser?username=${userId}&pass=${password}`)
         .then(() => {
           if (res.status === 200) {
-            window.location.pathname = "/groups.html";
+            //window.location.pathname = "/groups.html"; //TODO
           } else {
-            alert(res.data);
+            alert("Wrong username or password. Please try again.");
           }
         }).catch(() => {
           alert("Error sending data. Please try again.");
