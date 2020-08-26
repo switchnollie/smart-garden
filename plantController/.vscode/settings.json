@@ -1,7 +1,6 @@
 {
     "files.associations": {
         "functional": "cpp",
-        "sstream": "cpp",
         "array": "cpp",
         "atomic": "cpp",
         "*.tcc": "cpp",
@@ -27,13 +26,13 @@
         "new": "cpp",
         "ostream": "cpp",
         "numeric": "cpp",
+        "sstream": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
         "tuple": "cpp",
         "type_traits": "cpp",
         "utility": "cpp",
-        "typeinfo": "cpp",
-        "memory": "cpp"
+        "typeinfo": "cpp"
     }
 }

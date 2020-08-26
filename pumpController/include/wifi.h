@@ -3,12 +3,9 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <ESP8266mDNS.h>
-#include <FS.h>
-#include <EEPROM.h>
-#include <WiFiClient.h>
 #include <functional>
-
-//typedef void (*init_mqtt_topics_callback)(String username, String group_id);
+#include <ArduinoJson.h>
+#include <WiFiClientSecure.h>
 
 class WIFI {
 public:
@@ -27,25 +24,24 @@ private:
     void write_wlan_parameters(String ssid, String pass);
     void change_wlan();
     bool test_wifi();
-    void send_user_data_to_backend(String username, String pass);
-    void change_user();
 
     ESP8266WebServer web_server;
     ESP8266HTTPUpdateServer http_updater;
-    const char* host = "esp8266";
-    String user = "";
-    WiFiClient client;
+    const char* dns_host = "esp8266";
+    String user_id = "";
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
 
-    const char* API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
+    const char *host = "smartgarden.timweise.com";
 };
 
 WIFI::WIFI(std::function<void(String, String)> callback) {
     init_mqtt_topics_callback_implementation = callback;
 }
 
-void WIFI::begin() {
+void WIFI::begin()
+{
     WiFi.mode(WIFI_AP_STA);
+    WiFi.setAutoConnect(false);
     start_web_server();
     connect_to_wlan();
 }
@@ -70,7 +66,7 @@ void WIFI::start_web_server()
     WiFi.softAP("ESP Pump", ap_pass.c_str());
 
     //WLAN and AP
-    web_server.serveStatic("/wlan", SPIFFS, "/wlan.html");
+    web_server.serveStatic("/init", SPIFFS, "/wlan.html");
     web_server.on("/changewlan", [this]() {
         change_wlan();
         });
@@ -78,29 +74,29 @@ void WIFI::start_web_server()
     //User credentials
     web_server.serveStatic("/user", SPIFFS, "/user.html");
     web_server.on("/changeuser", [this]() {
-        change_user();
+        user_id = web_server.arg("user-id");
         });
 
     //Groups
     web_server.serveStatic("/groups", SPIFFS, "/groups.html");
     web_server.on("/initmqtttopics", [this]() {
-        init_mqtt_topics_callback_implementation(user, web_server.arg("groupid"));
+        init_mqtt_topics_callback_implementation(user_id, web_server.arg("groupid"));
         web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
         });
 
     //redirect
     web_server.onNotFound([this]() { //this cant be used in lambda function
-        web_server.sendHeader("Location", "/wlan");
+        web_server.sendHeader("Location", "/init");
         web_server.send(302, "text/plain", "Path not available!");
         });
 
-    MDNS.begin(host);
+    MDNS.begin(dns_host);
     http_updater.setup(&web_server);
 
     web_server.begin(80);
 
     MDNS.addService("http", "tcp", 80);
-    Serial.printf("Webserver gestarted! Öffne http://%s.local/<Pfad> zur Bedienung!\n", host);
+    Serial.printf("Webserver gestarted! Öffne http://%s.local/<Pfad> zur Bedienung!\n", dns_host);
 }
 
 String  WIFI::read_wlan_ssid() {
@@ -125,8 +121,6 @@ String  WIFI::read_wlan_pass() {
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("Pass: ");
-    Serial.println(pass);
     return pass;
 }
 
@@ -143,6 +137,7 @@ void WIFI::connect_to_wlan() {
     {
         //Wait till connected
         handle_client();
+        web_server.handleClient();
     }
 
     Serial.println("Succesfully Connected!!!");
@@ -169,7 +164,7 @@ void WIFI::change_wlan()
 
         if (test_wifi())
         {
-            Serial.println("Succesfully Connected!!!");
+            Serial.println("Succesfully Connected! Sending response...");
             web_server.send(200, "text/plane", "Succesfully Connected");
         }
         else {
@@ -188,10 +183,7 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
     }
     Serial.println(ssid);
     Serial.println("");
-    Serial.println(pass);
-    Serial.println("");
 
-    //TODO encrypt password
     Serial.println("writing eeprom ssid:");
     for (int i = 0; i < ssid.length(); ++i)
     {
@@ -202,7 +194,7 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
     for (int i = 0; i < pass.length(); ++i)
     {
         EEPROM.write(32 + i, pass[i]);
-        Serial.print(pass[i]);
+        Serial.print("*");
     }
     EEPROM.commit();
 }
@@ -215,7 +207,7 @@ void WIFI::change_ap_password() {
     for (int i = 0; i < pass.length(); ++i)
     {
         EEPROM.write(300 + i, pass[i]);
-        Serial.print(pass[i]);
+        Serial.print("*");
     }
 
     EEPROM.commit();
@@ -223,15 +215,13 @@ void WIFI::change_ap_password() {
 
 String WIFI::read_ap_password() {
     //Reading PASS from EEPROM
-    Serial.println("Reading AP password: ");
+    Serial.println("Reading AP password...");
     EEPROM.begin(512);
     String pass = "";
     for (int i = 300; i < 340; ++i)
     {
         pass += char(EEPROM.read(i));
     }
-    Serial.print("PASS: ");
-    Serial.println(pass);
     if (!pass) {
         return "ESPPASSWORD";
     }
@@ -242,7 +232,7 @@ String WIFI::read_ap_password() {
 bool WIFI::test_wifi()
 {
     int c = 0;
-    Serial.println("Waiting for Wifi to connect");
+    Serial.println("Waiting for Wifi to connect...");
     while (c < 20)
     {
         if (WiFi.status() == WL_CONNECTED)
@@ -254,53 +244,6 @@ bool WIFI::test_wifi()
         c++;
     }
     Serial.println("");
-    Serial.println("Connect timed out");
+    Serial.println("Connect timed out...");
     return false;
-}
-
-void WIFI::send_user_data_to_backend(String username, String pass) {
-
-    if (client.connect(API_USER_ENDPOINT, 80))
-    {
-        Serial.println("Successfully connected to API Endpoint!");
-        client.print(String("GET /") + " HTTP/1.1\r\n" +
-            "Host: " + API_USER_ENDPOINT +"?username=" + username + "&pass=" + pass
-            + "\r\n" +
-            "Connection: close\r\n" +
-            "\r\n"
-        );
-        //Check if data transmitted
-        while (client.connected() || client.available())
-        {
-            if (client.available())
-            {
-                String line = client.readStringUntil('\n');
-                if (!line) {
-                    client.stop();
-                    Serial.println("\n[Disconnected]");
-                    web_server.send(400, "text/plain", "Failed to send user credentials to API Endpoint!");
-                }
-                else {
-                    client.stop();
-                    Serial.println("\n[Disconnected]");
-                    web_server.send(200, "text/plain", "Successfully send user credentials to API Endpoint!");
-                }
-            }
-        }
-    }
-    else
-    {
-        Serial.println("Failed to connect to API Endpoint!");
-        client.stop();
-        Serial.println("\n[Disconnected]");
-        web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
-    }
-
-}
-
-void WIFI::change_user() {
-    String username = web_server.arg("username");
-    String pass = web_server.arg("pass");
-    send_user_data_to_backend(username, pass);
-    user = username;
 }

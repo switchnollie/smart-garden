@@ -119,7 +119,7 @@
           if (res.status === 200) {
             window.location.pathname = "/user.html";
           } else {
-            alert("Could not connect. Please try again.");
+            alert(res.data);
           }
         })
         .catch(() => {
