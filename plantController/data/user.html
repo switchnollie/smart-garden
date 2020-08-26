@@ -124,7 +124,7 @@
 
       const userId = username;
 
-      fetch(Url, { method: 'POST', body: data })
+      fetch(Url, { method: 'GET' }) //, body: data
         .then(data => {
           if (data.status === 200) {
             userId = data.body;

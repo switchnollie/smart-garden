@@ -9,6 +9,23 @@ Dies soll durch eine Überwachung des Feuchtigkeitsgehalts der Pflanzenerde mith
 
 Zusätzlich soll der Wasserstand im Tank über einen Wasserstandsensor gemessen werden und übliche Parameter und Metriken über eine mobile Webanwendung einsehbar und steuerbar sein.
 
+## Hardware
+
+**TODO** Schaltplan
+
+In der unteren Abbildung ist der Aufbau der Hardware abgebildet. Die Stromversorgung des Pflanzencontrollers ist per USB sichergestellt und dessen Feuchtigkeitssensor ist in der Pflanze. 
+
+Zusätzlich befindet sich ein Wasserschlauch in der Pflanze, der direkt zur peristaltischen Pumpe führt. Der andere Schlauch der Pumpe ist in einem Wasserbehälter, aus dem später beim Pumpen das Wasser herkommt. 
+
+Außerdem befindet sich der Wasserstandssensor in dem Wasserbehälter, der wie die Pumpe mit dem Pumpencontroller verbunden ist. Dieser wird mit 12V Spannung versorgt, damit nach dem Schalten über einen Pin vom Pumpencontroller mit einem Relais der Motor der Pumpe angesteuert werden kann.
+
+Zum Management der vielen Verbindungen wird ein Steckboard benutzt.
+
+<img src="./documentationAssets/hardware_setup.png" alt="Hardware Aufbau" style="max-height:75%;" />
+
+
+
+
 ## Systemarchitektur
 
 Auf der Hardwareseite besteht das System aus Pumpencontrollern mit jeweils einer Pumpe und einem Wasserstandsensor und aus Pflanzencontrollern mit jeweils einem Feuchtigkeitssensor.
@@ -83,7 +100,9 @@ Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Be
 
 ### Update
 Um den Kunden neue Versionen bieten zu können, läuft ein `Update-Server` auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
-**TODO** GIF vom Update
+
+![](https://imgur.com/aE9hgzg.gif)
+
 
 ### WiFi Management
 Zur Kapselung und Verbesserung der Code Qualität ist eine Headerdatei implementiert, die das komplette WiFi Management übernimmt.
@@ -102,6 +121,8 @@ Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` 
 
 **TODO** Schaltplan, technische beschreibung
 Der Pflanzencontroller veröffentlicht mit einem Feuchtigkeitssensor Daten über `MQTT`. Der Pumpencontroller veröffentlich einerseits den Wasserstand des Wasserbehälters über `MQTT` und besitzt zusätzlich eine peristaltischen Pumpe, die über ein `MQTT-Topic` ausgelöst werden kann, welches der Pumpencontroller abonniert hat.
+
+
 
 ### MQTT-Broker
 
@@ -152,5 +173,3 @@ Die clientseitigen Routen sind geschützt und können nur aufgerufen werden, fal
 
 Für das Auslösen einer Bewässerung wird im Anwendungsserver ein Endpunkt unter `/api/action/pump` bereitgestellt. 
 Bei eingehenden, authentifizierten Anfragen löst der Callback ein MQTT-Publish auf dem Topic aller der Gruppe zugeordneten Pumpen aus.
-
-**TODO** Screenshots app?
