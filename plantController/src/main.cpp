@@ -6,21 +6,22 @@
 #include <wifi.h>
 #include <WiFiClientSecure.h>
 
+void init_mqtt_topics(String username, String groupid);
+void connect_mqtt_client();
+void intialize_mqtt();
+void publish_moisture_level();
+void mqtt_callback(char *topic, byte *payload, unsigned int length);
+
 const uint8_t MOISTURE_PIN = A0;
+const uint8_t MOTOR_PIN = D8;
+int motorState = LOW;
 const long SENS_INTERVAL = 2000;
 
 const char *ssid;
 const char *passphrase;
-
-void init_mqtt_topics(String username, String groupid);
-
 WIFI wifi_controller(init_mqtt_topics);
+
 File root_ca_file;
-
-void intialize_mqtt();
-void publish_moisture_level();
-
-void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
 const char *host = "smartgarden.timweise.com";
 const uint16_t BROKER_PORT = 8883;
@@ -40,8 +41,7 @@ char messageBuffer[MSG_BUFFER_SIZE];
 
 Ticker moisture_level_tic;
 
-const uint8_t MOTOR_PIN = D8;
-int motorState = LOW;
+
 
 void init_mqtt_topics(String username, String groupid)
 {
@@ -125,6 +125,12 @@ void read_mqtt_topics()
 
 void reconnect_MQTT()
 {
+    //TLS Connection with wifi client
+    if (!esp_client.connected())
+    {
+        connect_mqtt_client();
+    }
+
     // Loop until we're reconnected
     while (!mqtt_client.connected())
     {
@@ -222,8 +228,8 @@ void setup()
 
     //TODO REMOVE
     delay(5000);
-    load_root_ca();
     
+    load_root_ca();
 
     wifi_controller.begin();
     init_mqtt();
@@ -235,16 +241,12 @@ void setup()
 
 void loop()
 {
-    wifi_controller.handle_client();
-
     if (wifi_controller.status() != WL_CONNECTED)
     {
         wifi_controller.connect_to_wlan();
     }
 
-    // if(!esp_client.connected()){
-    //     connect_mqtt_client();
-    // }
+    wifi_controller.handle_client();
 
     if (!mqtt_client.connected())
     {

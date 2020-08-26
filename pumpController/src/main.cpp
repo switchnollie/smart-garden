@@ -7,21 +7,23 @@
 #include <FS.h>
 #include <wifi.h>
 
+void pump();
+void publishWaterLevel();
+void mqtt_callback(char *topic, byte *payload, unsigned int length);
+void read_mqtt_parameters();
+void init_mqtt_topics(String username, String group_id);
+
 const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
 const char *ssid;
 const char *passphrase;
 //https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
 
-WiFiClient client;
-const char *API_USER_ENDPOINT = "https://smartgarden.timweise.com/api/user";
-
 Ticker pump_tic_start;
 Ticker pump_tic_stop;
 Ticker water_level_tic;
 
 //WIFI
-void init_mqtt_topics(String username, String group_id);
 WIFI wifi_controller(init_mqtt_topics);
 File root_ca_file;
 
@@ -46,11 +48,6 @@ int pump_duration = 10000;
 // messages are 10 Bit decimals -> max. 4 characters + \0 needed
 #define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
-
-void pump();
-void publishWaterLevel();
-void mqtt_callback(char *topic, byte *payload, unsigned int length);
-void read_mqtt_parameters();
 
 void read_mqtt_parameters()
 {
@@ -122,6 +119,12 @@ void read_mqtt_topics()
 
 void reconnect_MQTT()
 {
+    //TLS Connection with wifi client
+    if (!esp_client.connected())
+    {
+        connect_mqtt_client();
+    }
+
     // Loop until we're reconnected
     while (!mqtt_client.connected())
     {
@@ -210,7 +213,6 @@ void init_mqtt()
     mqtt_client.setCallback(mqtt_callback);
 }
 
-
 void setup()
 {
     Serial.begin(115200);
@@ -231,12 +233,13 @@ void setup()
 
 void loop()
 {
-    wifi_controller.handle_client();
-
     if (wifi_controller.status() != WL_CONNECTED)
     {
         wifi_controller.connect_to_wlan();
     }
+
+    wifi_controller.handle_client();
+    
     if (!mqtt_client.connected())
     {
         reconnect_MQTT();

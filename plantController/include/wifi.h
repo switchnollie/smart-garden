@@ -94,7 +94,9 @@ void WIFI::start_web_server()
         web_server.send(302, "text/plain", "Path not available!");
     });
 
-    MDNS.begin(dns_host);
+    if(!MDNS.begin(dns_host)){
+        Serial.println("Fehler beim Aufsetzen des DNS!");
+    }
     http_updater.setup(&web_server);
 
     web_server.begin(80);
@@ -187,7 +189,6 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
     }
     Serial.println(ssid);
 
-    //TODO encrypt password
     Serial.println("writing eeprom ssid:");
     for (int i = 0; i < ssid.length(); ++i)
     {
