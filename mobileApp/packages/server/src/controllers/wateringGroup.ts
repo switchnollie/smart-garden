@@ -3,7 +3,8 @@ import { Types } from "mongoose";
 import WateringGroupModel, {
   IWateringGroupModel,
 } from "../models/wateringGroup";
-import DeviceModel from "../models/device";
+import DeviceModel, { IDeviceModel } from "../models/device";
+import UserModel from "../models/user";
 
 const WateringGroupController = {
   async findAll(_: Request, res: Response): Promise<void> {
@@ -63,11 +64,35 @@ const WateringGroupController = {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const wateringGroup: IWateringGroupModel = await WateringGroupModel.create(
-        req.body
-      );
-
-      res.status(201).json(wateringGroup);
+      const { device: devicesInfo, ...rest } = req.body;
+      if (Array.isArray(devicesInfo) && devicesInfo.length > 0) {
+        // Add Devices
+        const deviceIds: string[] = [];
+        devicesInfo.forEach((device) => {
+          DeviceModel.create(device)
+            .then((data) => deviceIds.push(data._id))
+            .catch((error) => {
+              console.error(error);
+              res.status(400).send();
+            });
+        });
+        // Add Watering Group
+        const wateringGroup: IWateringGroupModel = await WateringGroupModel.create(
+          { devices: deviceIds, ...rest }
+        );
+        // Add Wateringgroup to user.
+        UserModel.updateOne(
+          { _id: wateringGroup.ownedBy },
+          { $push: wateringGroup._id }
+        )
+          .then(() => {
+            res.status(201).json(wateringGroup);
+          })
+          .catch((error) => {
+            console.error(error);
+            res.status(400).send();
+          });
+      }
     } catch (error) {
       console.error(error);
       res.status(400).send();
