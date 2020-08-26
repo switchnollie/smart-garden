@@ -1,6 +1,7 @@
 const { Schema, model } = require("mongoose");
 
 const DeviceSchema = new Schema({
+  _id: String,
   type: String,
   displayName: String,
   lastValue: Schema.Types.Mixed,

@@ -112,8 +112,6 @@ Diese beinhaltet den Webserver, DNS, Verbindungsmanagement mit dem WLAN und das 
 
 Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` verwendet. Um eine sichere Verbindung zu gewährleisten wird `WifiClientSecure` benutzt, ein Client, der eine Authorisierung anbietet. Zur Authorisierung wird ein Zertifikat, welches im SPIFFS speicher hinterlegt ist und ein zugehöriger `Fingerprint` genutzt. Nach erfolgreicher Authorisierung und Verbindung mit dem Server, wird eine Nutzer ID für den `PubSubClient` generiert. Hierfür wird die `ESP Flash Chip ID` genutzt. Mit der Nutzer ID wird eine Verbindung zum `MQTT-Broker` (TODO referenz?) aufgebaut und die entsprechenden `MQTT-Topics` abonniert.
 
-- **TODO**: Video/GIF Manuelles Ansteuern der Pumpe über die App
-
 ## Komponenten
 
 ### Pflanzen-/Pumpencontroller

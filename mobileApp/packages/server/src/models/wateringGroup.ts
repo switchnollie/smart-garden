@@ -17,7 +17,7 @@ const WateringGroupSchema = new Schema({
   },
   devices: [
     {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "device",
     },
   ],

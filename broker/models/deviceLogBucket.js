@@ -6,7 +6,7 @@ const { Schema, model } = require("mongoose");
 const DeviceLogBucketSchema = new Schema(
   {
     deviceId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "Device"
     },
     nsamples: Number,
