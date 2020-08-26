@@ -43,6 +43,7 @@ WIFI::WIFI(std::function<void(String, String)> callback)
 
 void WIFI::begin()
 {
+    WiFi.setAutoConnect(false);
     WiFi.mode(WIFI_AP_STA);
     start_web_server();
     connect_to_wlan();

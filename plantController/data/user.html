@@ -138,7 +138,7 @@
         });
 
 
-      fetch(`/changeuser?username=${userId}&pass=${password}`)
+      fetch(`/changeuser?user-id=${userId}&pass=${password}`)
         .then(() => {
           if (res.status === 200) {
             //window.location.pathname = "/groups.html"; //TODO

@@ -153,4 +153,4 @@ Die clientseitigen Routen sind geschützt und können nur aufgerufen werden, fal
 Für das Auslösen einer Bewässerung wird im Anwendungsserver ein Endpunkt unter `/api/action/pump` bereitgestellt. 
 Bei eingehenden, authentifizierten Anfragen löst der Callback ein MQTT-Publish auf dem Topic aller der Gruppe zugeordneten Pumpen aus.
 
-
+**TODO** Screenshots app?

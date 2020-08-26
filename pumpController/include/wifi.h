@@ -41,6 +41,7 @@ WIFI::WIFI(std::function<void(String, String)> callback) {
 void WIFI::begin()
 {
     WiFi.mode(WIFI_AP_STA);
+    WiFi.setAutoConnect(false);
     start_web_server();
     connect_to_wlan();
 }
@@ -65,7 +66,7 @@ void WIFI::start_web_server()
     WiFi.softAP("ESP Pump", ap_pass.c_str());
 
     //WLAN and AP
-    web_server.serveStatic("/wlan", SPIFFS, "/init.html");
+    web_server.serveStatic("/init", SPIFFS, "/wlan.html");
     web_server.on("/changewlan", [this]() {
         change_wlan();
         });
@@ -136,6 +137,7 @@ void WIFI::connect_to_wlan() {
     {
         //Wait till connected
         handle_client();
+        web_server.handleClient();
     }
 
     Serial.println("Succesfully Connected!!!");

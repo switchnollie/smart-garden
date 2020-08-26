@@ -9,6 +9,7 @@
 
 void pump();
 void publishWaterLevel();
+void connect_mqtt_client();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 void read_mqtt_parameters();
 void init_mqtt_topics(String username, String group_id);
@@ -218,8 +219,6 @@ void setup()
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-    clear_eeprom(); //TODO REMOVE
-
     pinMode(MOTOR_PIN, OUTPUT);
     pinMode(WATERLEVEL_PIN, INPUT);
 
@@ -239,7 +238,7 @@ void loop()
     }
 
     wifi_controller.handle_client();
-    
+
     if (!mqtt_client.connected())
     {
         reconnect_MQTT();
