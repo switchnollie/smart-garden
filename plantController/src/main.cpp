@@ -7,6 +7,7 @@
 #include <WiFiClientSecure.h>
 
 void init_mqtt_topics(String username, String groupid);
+String send_user_data(char[]);
 void connect_mqtt_client();
 void intialize_mqtt();
 void publish_moisture_level();
@@ -19,7 +20,7 @@ const long SENS_INTERVAL = 2000;
 
 const char *ssid;
 const char *passphrase;
-WIFI wifi_controller(init_mqtt_topics);
+WIFI wifi_controller(init_mqtt_topics, send_user_data);
 
 File root_ca_file;
 
@@ -41,7 +42,80 @@ char messageBuffer[MSG_BUFFER_SIZE];
 
 Ticker moisture_level_tic;
 
+String send_user_data(char JSONmessageBuffer[])
+{
+    if (esp_client.connected())
+    {
+        Serial.println("Stopping current connection");
+        esp_client.stop();
+    }
 
+    Serial.print("connecting to ");
+    Serial.println(host);
+
+    if (esp_client.connect(host, 443)) //Soft WDT Reset with >5s
+     {
+        Serial.println("Sending Data...");
+
+        esp_client.println("POST /api/user HTTPS/1.1");
+        esp_client.println(String("Host: ") + host);
+        esp_client.println("Content-Type: application/json");
+        esp_client.println("Content-Length: " + strlen(JSONmessageBuffer));
+        esp_client.println();
+        esp_client.println(JSONmessageBuffer);
+
+        //https://arduinojson.org/v6/example/http-client/
+        // Check HTTP status
+        char status[32] = {0};
+        esp_client.readBytesUntil('\r', status, sizeof(status));
+        if (strcmp(status, "HTTP/1.1 200 OK") != 0)
+        {
+            Serial.print(F("Unexpected response: "));
+            Serial.println(status);
+            esp_client.stop();
+            return "";
+        }
+
+        // Skip HTTP headers
+        char endOfHeaders[] = "\r\n\r\n";
+        if (!esp_client.find(endOfHeaders))
+        {
+            Serial.println(F("Invalid response"));
+            esp_client.stop();
+            return "";
+        }
+
+        // Allocate the JSON document
+        // Use arduinojson.org/v6/assistant to compute the capacity.
+        const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+        DynamicJsonDocument doc(capacity);
+
+        // Parse JSON object
+        DeserializationError error = deserializeJson(doc, esp_client);
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.c_str());
+            return "";
+        }
+
+        // Extract values
+        Serial.println(F("Response:"));
+        String username = doc["username"].as<char *>();
+        Serial.println(username);
+
+        // Disconnect
+        esp_client.stop();
+        return username;
+    }
+    else
+    {
+        Serial.println("Failed to connect to API Endpoint!");
+        esp_client.stop();
+        Serial.println("\n[Disconnected]");
+        return "";
+    }
+}
 
 void init_mqtt_topics(String username, String groupid)
 {
@@ -228,7 +302,7 @@ void setup()
 
     //TODO REMOVE
     delay(5000);
-    
+
     load_root_ca();
 
     wifi_controller.begin();

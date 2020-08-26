@@ -19,9 +19,9 @@ Zusätzlich befindet sich ein Wasserschlauch in der Pflanze, der direkt zur peri
 
 Außerdem befindet sich der Wasserstandssensor in dem Wasserbehälter, der wie die Pumpe mit dem Pumpencontroller verbunden ist. Dieser wird mit 12V Spannung versorgt, damit nach dem Schalten über einen Pin vom Pumpencontroller mit einem Relais der Motor der Pumpe angesteuert werden kann.
 
-Zum Management der vielen Verbindungen wird ein Steckboard benutzt.
+Zum Management der vielen Verbindungen wird ein Steckbrett benutzt.
 
-<img src="./documentationAssets/hardware_setup.png" alt="Hardware Aufbau" style="max-height:75%;" />
+<img src="./documentationAssets/hardware_setup.jpg" alt="Hardware Aufbau" style="max-height:75%;" />
 
 
 
@@ -55,7 +55,7 @@ Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm
 
 ## Ablauf
 
-#### Initialisierung
+### Initialisierung
 In der unteren Abbildung ist ein Sequenzdiagramm der Initialisierung zu sehen.
 
 Zur Einrichtung der Controller ist ein lokaler Webserver mit DNS implementiert. Die Controller laufen im Access-Point und Station Modus, wodurch der ESP in der Lage ist einen Access-Point anzubieten und gleichzeitig Daten über WLAN an den Server zu senden. 

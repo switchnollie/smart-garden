@@ -10,7 +10,7 @@
 class WIFI
 {
 public:
-    WIFI(std::function<void(String, String)> callback);
+    WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(char[])> callback_send_user_data);
     void begin();
     int status();
     void handle_client();
@@ -32,13 +32,16 @@ private:
     String user_id = "";
 
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
+    std::function<String(char[])> send_user_data_callback_implementation;
+    void send_user_data_to_backend();
 
     const char *host = "smartgarden.timweise.com";
 };
 
-WIFI::WIFI(std::function<void(String, String)> callback)
+WIFI::WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(char[])> callback_send_user_data)
 {
-    init_mqtt_topics_callback_implementation = callback;
+    init_mqtt_topics_callback_implementation = callback_mqtt;
+    send_user_data_callback_implementation = callback_send_user_data;
 }
 
 void WIFI::begin()
@@ -79,7 +82,7 @@ void WIFI::start_web_server()
     //User credentials
     web_server.serveStatic("/user", SPIFFS, "/user.html");
     web_server.on("/changeuser", [this]() {
-        user_id = web_server.arg("user-id");
+        send_user_data_to_backend();
     });
 
     //Groups
@@ -95,7 +98,8 @@ void WIFI::start_web_server()
         web_server.send(302, "text/plain", "Path not available!");
     });
 
-    if(!MDNS.begin(dns_host)){
+    if (!MDNS.begin(dns_host))
+    {
         Serial.println("Fehler beim Aufsetzen des DNS!");
     }
     http_updater.setup(&web_server);
@@ -256,3 +260,27 @@ bool WIFI::test_wifi()
     return false;
 }
 
+void WIFI::send_user_data_to_backend()
+{
+    Serial.println("Sending user data to backend");
+    StaticJsonDocument<300> JSONbuffer;
+    JsonObject JSONencoder = JSONbuffer.to<JsonObject>();
+
+    JSONencoder["username"] = web_server.arg("user-id");
+    JSONencoder["password"] = web_server.arg("pass");
+
+    //Print json object to string
+    char JSONmessageBuffer[300];
+    serializeJsonPretty(JSONencoder, JSONmessageBuffer);
+    Serial.println(JSONmessageBuffer);
+
+    user_id = send_user_data_callback_implementation(JSONmessageBuffer);
+    if (user_id)
+    {
+        web_server.send(200, "text/plain", "Successfully sent user data!");
+    }
+    else
+    {
+        web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
+    }
+}
