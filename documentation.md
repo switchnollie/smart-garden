@@ -98,8 +98,8 @@ Der `Web-Client` kann über den Proxy die Web-Applikation anfragen, sich einlogg
 
 Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Befehl ist eine Nachricht an den `MQTT-Broker` auf dem `PUMP_TOPIC`.
 
-### Update
-Um den Kunden neue Versionen bieten zu können, läuft ein `Update-Server` auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
+### Firmware-Update "Over the Air"
+Um den Kunden neue Versionen ausliefern zu können, läuft ein `Update-Server` auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
 
 ![](https://imgur.com/aE9hgzg.gif)
 
