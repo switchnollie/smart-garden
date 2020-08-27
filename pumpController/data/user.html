@@ -110,16 +110,7 @@
       const username = userField.value;
       const password = passwordField.value;
 
-      const Url = 'https://smartgarden.timweise.com/api/user';
-      const data =
-        JSON.stringify({
-          username: username,
-          password: password
-        });
-
-      const userId = username;
-
-      fetch(`/changeuser?user-id=${userId}&pass=${password}`)
+      fetch(`/changeuser?user-id=${username}&pass=${password}`)
         .then(() => {
           if (res.status === 200) {
             //window.location.pathname = "/groups.html"; //TODO

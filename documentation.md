@@ -11,7 +11,7 @@ Zusätzlich soll der Wasserstand im Tank über einen Wasserstandsensor gemessen 
 
 ## Hardware
 
-**TODO** Schaltplan
+<img src="./documentationAssets/schaltplan.jpeg" alt="Schaltplan" style="max-height:75%;" />
 
 In der unteren Abbildung ist der Aufbau der Hardware abgebildet. Die Stromversorgung des Pflanzencontrollers ist per USB sichergestellt und dessen Feuchtigkeitssensor ist in der Pflanze. 
 
@@ -19,7 +19,7 @@ Zusätzlich befindet sich ein Wasserschlauch in der Pflanze, der direkt zur peri
 
 Außerdem befindet sich der Wasserstandssensor in dem Wasserbehälter, der wie die Pumpe mit dem Pumpencontroller verbunden ist. Dieser wird mit 12V Spannung versorgt, damit nach dem Schalten über einen Pin vom Pumpencontroller mit einem Relais der Motor der Pumpe angesteuert werden kann.
 
-Zum Management der vielen Verbindungen wird ein Steckbrett benutzt.
+Zum Management der Verbindungen wird ein Steckbrett benutzt.
 
 <img src="./documentationAssets/hardware_setup.jpg" alt="Hardware Aufbau" style="max-height:75%;" />
 
@@ -76,7 +76,10 @@ Im nächsten Schritt kann der Nutzer eine Pflanzengruppe angeben. Um das System 
 
 Durch die Nutzer ID, die Pflanzengruppe und die `ESP Flash Chip ID` wird das MQTT-Topic gebaut und intern im EEPORM gespeichert.
 
-- **TODO**: Video/GIF Parametrisierung/ Ersteinrichtung
+![](https://imgur.com/CtXrkMH.gif)
+
+### Startup
+![](https://imgur.com/QuZfXrD.gif)
   
 ### Funktionsweise
 
