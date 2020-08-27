@@ -16,7 +16,7 @@ export interface IDeviceLogBucketModel extends Document {
 const DeviceLogBucketSchema = new Schema(
   {
     deviceId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "Device",
     },
     nsamples: Number,

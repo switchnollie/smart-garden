@@ -3,7 +3,8 @@ import { Types } from "mongoose";
 import WateringGroupModel, {
   IWateringGroupModel,
 } from "../models/wateringGroup";
-import DeviceModel from "../models/device";
+import DeviceModel, { IDeviceModel } from "../models/device";
+import UserModel from "../models/user";
 
 const WateringGroupController = {
   async findAll(_: Request, res: Response): Promise<void> {
@@ -63,11 +64,27 @@ const WateringGroupController = {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const wateringGroup: IWateringGroupModel = await WateringGroupModel.create(
-        req.body
-      );
+      const { devices: devicesInfo, ...rest } = req.body;
+      console.log({ devicesInfo, rest });
+      if (Array.isArray(devicesInfo) && devicesInfo.length > 0) {
+        // Add Devices
+        await Promise.all(
+          devicesInfo.map((device) => DeviceModel.create(device))
+        );
+        const deviceIds = devicesInfo.map((device) => device._id);
+        // Add Watering Group
+        const wateringGroup: IWateringGroupModel = await WateringGroupModel.create(
+          { devices: deviceIds, ...rest }
+        );
+        console.log({ wateringGroup });
+        // Add Wateringgroup to user.
+        await UserModel.updateOne(
+          { _id: wateringGroup.ownedBy },
+          { $push: { wateringGroups: wateringGroup._id } }
+        );
 
-      res.status(201).json(wateringGroup);
+        res.status(201).json(wateringGroup);
+      }
     } catch (error) {
       console.error(error);
       res.status(400).send();

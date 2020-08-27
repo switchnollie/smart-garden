@@ -2,6 +2,7 @@ import { Schema, model, Document } from "mongoose";
 import { IWateringGroupModel } from "./wateringGroup";
 
 export interface IDeviceModel extends Document {
+  _id: string;
   type: string;
   displayName: string;
   logBuckets: string[];
@@ -11,6 +12,7 @@ export interface IDeviceModel extends Document {
 }
 
 const DeviceSchema = new Schema({
+  _id: String,
   type: String,
   displayName: String,
   lastValue: Schema.Types.Mixed,
