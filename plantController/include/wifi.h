@@ -10,7 +10,7 @@
 class WIFI
 {
 public:
-    WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(char[], String)> callback_send_user_data);
+    WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(DynamicJsonDocument, String)> callback_send_user_data);
     void begin();
     int status();
     void handle_client();
@@ -32,14 +32,14 @@ private:
     String user_id = "";
 
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
-    std::function<String(char[], String)> send_user_data_callback_implementation;
+    std::function<String(DynamicJsonDocument, String)> send_user_data_callback_implementation;
     void send_user_data_to_backend();
     void send_water_group_to_backend();
 
     const char *host = "smartgarden.timweise.com";
 };
 
-WIFI::WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(char[], String)> callback_send_user_data)
+WIFI::WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(DynamicJsonDocument, String)> callback_send_user_data)
 {
     init_mqtt_topics_callback_implementation = callback_mqtt;
     send_user_data_callback_implementation = callback_send_user_data;
@@ -271,15 +271,11 @@ void WIFI::send_user_data_to_backend()
 {
     Serial.println("Sending user data to backend");
 
-    DynamicJsonDocument JSONencoder(1024);
-    JSONencoder["username"] = web_server.arg("userId");
-    JSONencoder["password"] = web_server.arg("pass");
+    DynamicJsonDocument doc(1024);
+    doc["username"] = web_server.arg("userId");
+    doc["password"] = web_server.arg("pass");
 
-    //Print json object to string
-    char JSONmessageBuffer[300];
-    serializeJsonPretty(JSONencoder, JSONmessageBuffer);
-
-    user_id = send_user_data_callback_implementation(JSONmessageBuffer, "/api/user/register");
+    user_id = send_user_data_callback_implementation(doc, "/api/user/register");
     Serial.println("User ID: " + user_id);
     if (user_id.length() > 0)
     {
@@ -294,24 +290,20 @@ void WIFI::send_user_data_to_backend()
 void WIFI::send_water_group_to_backend()
 {
     Serial.println("Sending group data to backend");
-    DynamicJsonDocument JSONencoder(1024);
-    DynamicJsonDocument JSONdevice(1024);
+    DynamicJsonDocument doc(1024);
+    DynamicJsonDocument nested_doc(1024);
 
-    JSONencoder["displayName"] = web_server.arg("groupId");
-    JSONencoder["ownedBy"] = user_id;
+    doc["displayName"] = web_server.arg("groupId");
+    doc["ownedBy"] = user_id;
 
-    JsonArray devices = JSONencoder.createNestedArray("devices");
-    JSONdevice["_id"] = ESP.getFlashChipId();
-    JSONdevice["displayName"] = "Plant";
-    JSONdevice["type"] = "moisture";
+    JsonArray devices = doc.createNestedArray("devices");
+    nested_doc["_id"] = ESP.getFlashChipId();
+    nested_doc["displayName"] = "Plant";
+    nested_doc["type"] = "moisture";
 
-    devices.add(JSONdevice);
+    devices.add(nested_doc);
 
-    //Print json object to string
-    char JSONmessageBuffer[300];
-    serializeJsonPretty(JSONencoder, JSONmessageBuffer);
-
-    String group_id = send_user_data_callback_implementation(JSONmessageBuffer, "/api/wateringroup");
+    String group_id = send_user_data_callback_implementation(doc, "/api/wateringgroup");
 
     Serial.println("Group ID: " + group_id);
 

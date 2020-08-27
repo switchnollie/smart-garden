@@ -13,6 +13,7 @@ void connect_mqtt_client();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 void read_mqtt_parameters();
 void init_mqtt_topics(String username, String group_id);
+String send_user_data(DynamicJsonDocument, String);
 
 const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
@@ -25,7 +26,7 @@ Ticker pump_tic_stop;
 Ticker water_level_tic;
 
 //WIFI
-WIFI wifi_controller(init_mqtt_topics);
+WIFI wifi_controller(init_mqtt_topics, send_user_data);
 File root_ca_file;
 
 //MQTT
@@ -49,6 +50,112 @@ int pump_duration = 10000;
 // messages are 10 Bit decimals -> max. 4 characters + \0 needed
 #define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
+
+String send_user_data(DynamicJsonDocument doc, String url)
+{
+    if (esp_client.connected())
+    {
+        Serial.println("Stopping current connection");
+        esp_client.stop();
+    }
+
+    Serial.print("Connecting to ");
+    Serial.println(host);
+
+    if (esp_client.connect(host, 443)) //Soft WDT Reset with >5s
+    {
+        Serial.println("Posting data to " + (String)host + url + "...");
+        serializeJsonPretty(doc, Serial);
+
+        esp_client.println("POST " + url + " HTTP/1.1");
+        esp_client.println(String("Host: ") + host);
+        esp_client.println("Content-Type: application/json");
+        esp_client.println("Connection: close");
+        esp_client.print("Content-Length: ");
+        esp_client.println(measureJsonPretty(doc));
+        esp_client.println();
+
+        // Write JSON document
+        serializeJsonPretty(doc, esp_client);
+
+        if (esp_client.println() == 0)
+        {
+            Serial.println("\nFailed to send request");
+            return "";
+        }
+
+        Serial.println("\nRequest sent.");
+
+        //https://arduinojson.org/v6/example/http-client/
+        // Check HTTP status
+        char status[32] = {0};
+
+        while (!esp_client.available())
+            delay(1);
+
+        Serial.println("Reading response...");
+
+        esp_client.readBytesUntil('\r', status, sizeof(status));
+
+        if (strcmp(status, "HTTP/1.1 200 OK") != 0)
+        {
+            Serial.print(F("Unexpected response: "));
+            Serial.println(status);
+            esp_client.stop();
+            return "";
+        }
+        else
+        {
+            Serial.print("Status Code: ");
+            Serial.println(status);
+        }
+
+        // Skip HTTP headers
+        char endOfHeaders[] = "\r\n\r\n";
+        if (!esp_client.find(endOfHeaders))
+        {
+            Serial.println(F("Invalid response"));
+            esp_client.stop();
+            return "";
+        }
+
+        // Allocate the JSON document
+        // Use arduinojson.org/v6/assistant to compute the capacity.
+        size_t capacity;
+        if(url.compareTo("/api/user/register")){
+            capacity = JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1) + 101;
+        }else{
+            capacity = JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1) + 101;
+        }
+
+        DynamicJsonDocument doc(capacity);
+
+        // Parse JSON object
+        DeserializationError error = deserializeJson(doc, esp_client);
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.c_str());
+            return "";
+        }
+
+        // Extract values
+        Serial.println(F("Response:"));
+        String username = doc["username"].as<char *>();
+        Serial.println(username);
+
+        // Disconnect
+        esp_client.stop();
+        return username;
+    }
+    else
+    {
+        Serial.println("Failed to connect to API Endpoint!");
+        esp_client.stop();
+        Serial.println("\n[Disconnected]");
+        return "";
+    }
+}
 
 void read_mqtt_parameters()
 {

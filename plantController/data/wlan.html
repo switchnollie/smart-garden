@@ -121,11 +121,6 @@
       fetch(`/changewlan?ssid=${ssid}&pass=${password}&apPass=${apPassword}`)
         .then(() => {
           window.location.pathname = "/user";
-          if (res.status == 200) {
-
-          } else {
-            alert(res.data);
-          }
         })
         .catch(() => {
           alert("Could not connect. Please try again.");

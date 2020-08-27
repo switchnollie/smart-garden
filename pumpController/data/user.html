@@ -112,11 +112,7 @@
 
       fetch(`/changeuser?user-id=${username}&pass=${password}`)
         .then(() => {
-          if (res.status === 200) {
-            //window.location.pathname = "/groups.html"; //TODO
-          } else {
-            alert("Wrong username or password. Please try again.");
-          }
+          window.location.pathname = "/groups";
         }).catch(() => {
           alert("Error sending data. Please try again.");
         });

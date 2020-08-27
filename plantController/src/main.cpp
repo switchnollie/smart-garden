@@ -5,9 +5,10 @@
 #include <FS.h>
 #include <wifi.h>
 #include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
 
 void init_mqtt_topics(String username, String groupid);
-String send_user_data(char[], String);
+String send_user_data(DynamicJsonDocument, String);
 void connect_mqtt_client();
 void intialize_mqtt();
 void publish_moisture_level();
@@ -42,7 +43,7 @@ char messageBuffer[MSG_BUFFER_SIZE];
 
 Ticker moisture_level_tic;
 
-String send_user_data(char JSONmessageBuffer[], String url)
+String send_user_data(DynamicJsonDocument doc, String url)
 {
     if (esp_client.connected())
     {
@@ -56,14 +57,24 @@ String send_user_data(char JSONmessageBuffer[], String url)
     if (esp_client.connect(host, 443)) //Soft WDT Reset with >5s
     {
         Serial.println("Posting data to " + (String)host + url + "...");
-        Serial.printf("Data: %s", JSONmessageBuffer);
-        esp_client.println(String("POST ") + url + " HTTP/1.1");
+        serializeJsonPretty(doc, Serial);
+
+        esp_client.println("POST " + url + " HTTP/1.1");
         esp_client.println(String("Host: ") + host);
-        esp_client.println("Content-Type: application/json"); //multipart/form-data
-        esp_client.println("Content-Length: " + strlen(JSONmessageBuffer));
+        esp_client.println("Content-Type: application/json");
+        esp_client.println("Connection: close");
+        esp_client.print("Content-Length: ");
+        esp_client.println(measureJsonPretty(doc));
         esp_client.println();
-        esp_client.println(JSONmessageBuffer);
-        esp_client.println("Connection: closed");
+
+        // Write JSON document
+        serializeJsonPretty(doc, esp_client);
+
+        if (esp_client.println() == 0)
+        {
+            Serial.println("\nFailed to send request");
+            return "";
+        }
 
         Serial.println("\nRequest sent.");
 
@@ -71,21 +82,11 @@ String send_user_data(char JSONmessageBuffer[], String url)
         // Check HTTP status
         char status[32] = {0};
 
-        delay(1000);
+        while (!esp_client.available())
+            delay(1);
 
         Serial.println("Reading response...");
 
-        //TODO REMOVE
-        if (url.compareTo("/api/user/register"))
-        {
-            return "5f2d2b58d65dd0c3e0ac05e7";
-        }
-        else
-        {
-            return "5f2d2bfe7824f2b9fd33cb66";
-        }
-        while (!esp_client.available());
-        
         esp_client.readBytesUntil('\r', status, sizeof(status));
 
         if (strcmp(status, "HTTP/1.1 200 OK") != 0)
@@ -94,6 +95,11 @@ String send_user_data(char JSONmessageBuffer[], String url)
             Serial.println(status);
             esp_client.stop();
             return "";
+        }
+        else
+        {
+            Serial.print("Status Code: ");
+            Serial.println(status);
         }
 
         // Skip HTTP headers
@@ -107,7 +113,13 @@ String send_user_data(char JSONmessageBuffer[], String url)
 
         // Allocate the JSON document
         // Use arduinojson.org/v6/assistant to compute the capacity.
-        const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+        size_t capacity;
+        if(url.compareTo("/api/user/register")){
+            capacity = JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1) + 101;
+        }else{
+            capacity = JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1) + 101;
+        }
+
         DynamicJsonDocument doc(capacity);
 
         // Parse JSON object
@@ -166,6 +178,9 @@ void init_mqtt_topics(String user_id, String groupid)
     mqtt_initialized = true;
 
     EEPROM.commit();
+
+    Serial.println("Restarting ESP...");
+    ESP.restart();
 }
 
 void read_mqtt_parameters()
@@ -232,7 +247,7 @@ void reconnect_MQTT()
         char mqtt_id[10];
         sprintf(mqtt_id, "%d", ESP.getFlashChipId());
         //TODO REMOVE
-        //Serial.printf("Client ID: %s", mqtt_id);
+        Serial.printf("Client ID: %s", mqtt_id);
 
         // Attempt to connect
         if (mqtt_client.connect("5f2d2f46c254098c1222a484")) //TODO mqtt_id
@@ -255,7 +270,7 @@ void clear_eeprom()
 {
     // Reset EEPROM bytes to '0' for the length of the data structure
     EEPROM.begin(512);
-    for (int i = 0; i < 512; i++)
+    for (int i = 97; i < 512; i++)
     {
         EEPROM.write(i, 0);
     }
