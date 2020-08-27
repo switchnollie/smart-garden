@@ -7,9 +7,10 @@
 #include <ArduinoJson.h>
 #include <WiFiClientSecure.h>
 
-class WIFI {
+class WIFI
+{
 public:
-    WIFI(std::function<void(String, String)> callback);
+    WIFI(std::function<void(String, String)> callback, std::function<String(DynamicJsonDocument, String)> callback_send_user_data);
     void begin();
     int status();
     void handle_client();
@@ -27,15 +28,21 @@ private:
 
     ESP8266WebServer web_server;
     ESP8266HTTPUpdateServer http_updater;
-    const char* dns_host = "esp8266";
+    const char *dns_host = "esp8266";
     String user_id = "";
+
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
+    std::function<String(DynamicJsonDocument, String)> send_user_data_callback_implementation;
+    void send_user_data_to_backend();
+    void send_water_group_to_backend();
 
     const char *host = "smartgarden.timweise.com";
 };
 
-WIFI::WIFI(std::function<void(String, String)> callback) {
+WIFI::WIFI(std::function<void(String, String)> callback, std::function<String(DynamicJsonDocument, String)> callback_send_user_data)
+{
     init_mqtt_topics_callback_implementation = callback;
+    send_user_data_callback_implementation = callback_send_user_data;
 }
 
 void WIFI::begin()
@@ -46,11 +53,13 @@ void WIFI::begin()
     connect_to_wlan();
 }
 
-int WIFI::status() {
+int WIFI::status()
+{
     return WiFi.status();
 }
 
-void WIFI::handle_client() {
+void WIFI::handle_client()
+{
     web_server.handleClient();
     MDNS.update();
 }
@@ -58,9 +67,9 @@ void WIFI::handle_client() {
 void WIFI::start_web_server()
 {
     //WIFI ACCESS POINT
-    WiFi.softAPConfig(IPAddress(192, 168, 4, 1),                       //Eigene Adresse
-        IPAddress(192, 168, 4, 1),                       //Gateway Adresse
-        IPAddress(255, 255, 255, 0)); //Subnetz-Maske
+    WiFi.softAPConfig(IPAddress(192, 168, 4, 1),    //Eigene Adresse
+                      IPAddress(192, 168, 4, 1),    //Gateway Adresse
+                      IPAddress(255, 255, 255, 0)); //Subnetz-Maske
 
     String ap_pass = read_ap_password();
     WiFi.softAP("ESP Pump", ap_pass.c_str());
@@ -69,28 +78,30 @@ void WIFI::start_web_server()
     web_server.serveStatic("/init", SPIFFS, "/wlan.html");
     web_server.on("/changewlan", [this]() {
         change_wlan();
-        });
+    });
 
     //User credentials
     web_server.serveStatic("/user", SPIFFS, "/user.html");
     web_server.on("/changeuser", [this]() {
-        user_id = web_server.arg("user-id");
-        });
+        send_user_data_to_backend();
+    });
 
     //Groups
     web_server.serveStatic("/groups", SPIFFS, "/groups.html");
     web_server.on("/initmqtttopics", [this]() {
-        init_mqtt_topics_callback_implementation(user_id, web_server.arg("groupid"));
-        web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
-        });
+        send_water_group_to_backend();
+    });
 
     //redirect
     web_server.onNotFound([this]() { //this cant be used in lambda function
         web_server.sendHeader("Location", "/init");
         web_server.send(302, "text/plain", "Path not available!");
-        });
+    });
 
-    MDNS.begin(dns_host);
+    if (!MDNS.begin(dns_host))
+    {
+        Serial.println("Fehler beim Aufsetzen des DNS!");
+    }
     http_updater.setup(&web_server);
 
     web_server.begin(80);
@@ -99,7 +110,8 @@ void WIFI::start_web_server()
     Serial.printf("Webserver gestarted! Öffne http://%s.local/<Pfad> zur Bedienung!\n", dns_host);
 }
 
-String  WIFI::read_wlan_ssid() {
+String WIFI::read_wlan_ssid()
+{
     //Reading SSID from EEPROM
     Serial.println("Reading EEPROM ssid");
     String ssid;
@@ -113,7 +125,8 @@ String  WIFI::read_wlan_ssid() {
     return ssid;
 }
 
-String  WIFI::read_wlan_pass() {
+String WIFI::read_wlan_pass()
+{
     //Reading PASS from EEPROM
     Serial.println("Reading EEPROM pass");
     String pass = "";
@@ -124,14 +137,22 @@ String  WIFI::read_wlan_pass() {
     return pass;
 }
 
-void WIFI::connect_to_wlan() {
+void WIFI::connect_to_wlan()
+{
     EEPROM.begin(512);
 
     String ssid = read_wlan_ssid();
     String pass = read_wlan_pass();
 
-    Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
-    WiFi.begin(ssid.c_str(), pass.c_str());
+    if (strlen((char *)ssid.c_str()) > 0)
+    {
+        Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
+        WiFi.begin(ssid.c_str(), pass.c_str());
+    }
+    else
+    {
+        Serial.println("Waiting for WLAN initialization!");
+    }
 
     while (WiFi.status() != WL_CONNECTED)
     {
@@ -143,7 +164,6 @@ void WIFI::connect_to_wlan() {
     Serial.println("Succesfully Connected!!!");
     return;
 }
-
 
 void WIFI::change_wlan()
 {
@@ -167,10 +187,10 @@ void WIFI::change_wlan()
             Serial.println("Succesfully Connected! Sending response...");
             web_server.send(200, "text/plane", "Succesfully Connected");
         }
-        else {
+        else
+        {
             web_server.send(400, "text/plain", "Error setting WLAN. Try again!");
         }
-
     }
 }
 
@@ -199,35 +219,37 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
     EEPROM.commit();
 }
 
-void WIFI::change_ap_password() {
+void WIFI::change_ap_password()
+{
     String pass = web_server.arg("ap-pass");
 
     Serial.println("Writing AP password: ");
     EEPROM.begin(512);
     for (int i = 0; i < pass.length(); ++i)
     {
-        EEPROM.write(300 + i, pass[i]);
+        EEPROM.write(100 + i, pass[i]);
         Serial.print("*");
     }
 
     EEPROM.commit();
 }
 
-String WIFI::read_ap_password() {
+String WIFI::read_ap_password()
+{
     //Reading PASS from EEPROM
     Serial.println("Reading AP password...");
     EEPROM.begin(512);
     String pass = "";
-    for (int i = 300; i < 340; ++i)
+    for (int i = 100; i < 140; ++i)
     {
         pass += char(EEPROM.read(i));
     }
-    if (!pass) {
+    if (strlen((char *)pass.c_str()) == 0)
+    {
         return "ESPPASSWORD";
     }
     return pass;
 }
-
 
 bool WIFI::test_wifi()
 {
@@ -246,4 +268,62 @@ bool WIFI::test_wifi()
     Serial.println("");
     Serial.println("Connect timed out...");
     return false;
+}
+
+void WIFI::send_user_data_to_backend()
+{
+    Serial.println("Sending user data to backend");
+
+    DynamicJsonDocument doc(1024);
+    doc["username"] = web_server.arg("userId");
+    doc["password"] = web_server.arg("pass");
+
+    user_id = send_user_data_callback_implementation(doc, "/api/user/register");
+    Serial.println("User ID: " + user_id);
+    if (user_id.length() > 0)
+    {
+        web_server.send(200, "text/plain", "Successfully sent user data!");
+    }
+    else
+    {
+        web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
+    }
+}
+
+void WIFI::send_water_group_to_backend()
+{
+    Serial.println("Sending group data to backend");
+    DynamicJsonDocument doc(1024);
+    DynamicJsonDocument doc_waterlevel(1024);
+    DynamicJsonDocument doc_pump(1024);
+
+    doc["displayName"] = web_server.arg("groupId");
+    doc["ownedBy"] = user_id;
+
+    JsonArray device_waterlevel = doc.createNestedArray("devices");
+    doc_waterlevel["_id"] = ESP.getFlashChipId()+"-w";
+    doc_waterlevel["displayName"] = "Water level Sens";
+    doc_waterlevel["type"] = "waterlevel";
+
+    JsonArray device_pump = doc.createNestedArray("devices");
+    doc_pump["_id"] = ESP.getFlashChipId();
+    doc_pump["displayName"] = "Pump";
+    doc_pump["type"] = "pump";
+
+    device_waterlevel.add(doc_waterlevel);
+    device_pump.add(doc_pump);
+
+    String group_id = send_user_data_callback_implementation(doc, "/api/wateringgroup");
+
+    Serial.println("Group ID: " + group_id);
+
+    if (group_id.length() > 0)
+    {
+        web_server.send(200, "text/plain", "Successfully sent user data!");
+        init_mqtt_topics_callback_implementation(user_id, group_id);
+    }
+    else
+    {
+        web_server.send(400, "text/plain", "Failed to set group!");
+    }
 }

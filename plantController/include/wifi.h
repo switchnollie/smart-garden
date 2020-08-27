@@ -10,7 +10,7 @@
 class WIFI
 {
 public:
-    WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(char[])> callback_send_user_data);
+    WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(DynamicJsonDocument, String)> callback_send_user_data);
     void begin();
     int status();
     void handle_client();
@@ -32,13 +32,14 @@ private:
     String user_id = "";
 
     std::function<void(String, String)> init_mqtt_topics_callback_implementation;
-    std::function<String(char[])> send_user_data_callback_implementation;
+    std::function<String(DynamicJsonDocument, String)> send_user_data_callback_implementation;
     void send_user_data_to_backend();
+    void send_water_group_to_backend();
 
     const char *host = "smartgarden.timweise.com";
 };
 
-WIFI::WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(char[])> callback_send_user_data)
+WIFI::WIFI(std::function<void(String, String)> callback_mqtt, std::function<String(DynamicJsonDocument, String)> callback_send_user_data)
 {
     init_mqtt_topics_callback_implementation = callback_mqtt;
     send_user_data_callback_implementation = callback_send_user_data;
@@ -88,8 +89,7 @@ void WIFI::start_web_server()
     //Groups
     web_server.serveStatic("/groups", SPIFFS, "/groups.html");
     web_server.on("/initmqtttopics", [this]() {
-        init_mqtt_topics_callback_implementation(user_id, web_server.arg("groupid"));
-        web_server.send(200, "text/plain", "MQTT Topics erfolgreich gesetzt");
+        send_water_group_to_backend();
     });
 
     //redirect
@@ -144,9 +144,15 @@ void WIFI::connect_to_wlan()
     String ssid = read_wlan_ssid();
     String pass = read_wlan_pass();
 
-    Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
-    WiFi.begin(ssid.c_str(), pass.c_str());
-
+    if (strlen((char *)ssid.c_str()) > 0)
+    {
+        Serial.printf("Trying to connec to %s", (char *)ssid.c_str());
+        WiFi.begin(ssid.c_str(), pass.c_str());
+    }
+    else
+    {
+        Serial.println("Waiting for WLAN initialization!");
+    }
     while (WiFi.status() != WL_CONNECTED)
     {
         //Wait till connected
@@ -180,7 +186,8 @@ void WIFI::change_wlan()
         }
         else
         {
-            web_server.send(400, "text/plain", "Error setting WLAN. Try again!");
+            Serial.println("Error setting WLAN");
+            web_server.send(400, "text/plane", "Error connecting to WLAN");
         }
     }
 }
@@ -211,13 +218,13 @@ void WIFI::write_wlan_parameters(String ssid, String pass)
 
 void WIFI::change_ap_password()
 {
-    String pass = web_server.arg("ap-pass");
+    String pass = web_server.arg("apPass");
 
     Serial.println("Writing AP password: ");
     EEPROM.begin(512);
     for (int i = 0; i < pass.length(); ++i)
     {
-        EEPROM.write(300 + i, pass[i]);
+        EEPROM.write(100 + i, pass[i]);
         Serial.print(pass[i]);
     }
 
@@ -230,11 +237,11 @@ String WIFI::read_ap_password()
     Serial.println("Reading AP password: ");
     EEPROM.begin(512);
     String pass = "";
-    for (int i = 300; i < 340; ++i)
+    for (int i = 100; i < 140; ++i)
     {
         pass += char(EEPROM.read(i));
     }
-    if (!pass)
+    if (strlen((char *)pass.c_str()) == 0)
     {
         return "ESPPASSWORD";
     }
@@ -263,24 +270,50 @@ bool WIFI::test_wifi()
 void WIFI::send_user_data_to_backend()
 {
     Serial.println("Sending user data to backend");
-    StaticJsonDocument<300> JSONbuffer;
-    JsonObject JSONencoder = JSONbuffer.to<JsonObject>();
 
-    JSONencoder["username"] = web_server.arg("user-id");
-    JSONencoder["password"] = web_server.arg("pass");
+    DynamicJsonDocument doc(1024);
+    doc["username"] = web_server.arg("userId");
+    doc["password"] = web_server.arg("pass");
 
-    //Print json object to string
-    char JSONmessageBuffer[300];
-    serializeJsonPretty(JSONencoder, JSONmessageBuffer);
-    Serial.println(JSONmessageBuffer);
-
-    user_id = send_user_data_callback_implementation(JSONmessageBuffer);
-    if (user_id)
+    user_id = send_user_data_callback_implementation(doc, "/api/user/register");
+    Serial.println("User ID: " + user_id);
+    if (user_id.length() > 0)
     {
         web_server.send(200, "text/plain", "Successfully sent user data!");
     }
     else
     {
         web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
+    }
+}
+
+void WIFI::send_water_group_to_backend()
+{
+    Serial.println("Sending group data to backend");
+    DynamicJsonDocument doc(1024);
+    DynamicJsonDocument nested_doc(1024);
+
+    doc["displayName"] = web_server.arg("groupId");
+    doc["ownedBy"] = user_id;
+
+    JsonArray devices = doc.createNestedArray("devices");
+    nested_doc["_id"] = ESP.getFlashChipId();
+    nested_doc["displayName"] = "Plant";
+    nested_doc["type"] = "moisture";
+
+    devices.add(nested_doc);
+
+    String group_id = send_user_data_callback_implementation(doc, "/api/wateringgroup");
+
+    Serial.println("Group ID: " + group_id);
+
+    if (group_id.length() > 0)
+    {
+        web_server.send(200, "text/plain", "Successfully sent user data!");
+        init_mqtt_topics_callback_implementation(user_id, group_id);
+    }
+    else
+    {
+        web_server.send(400, "text/plain", "Failed to set group!");
     }
 }

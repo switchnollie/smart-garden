@@ -5,9 +5,10 @@
 #include <FS.h>
 #include <wifi.h>
 #include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
 
 void init_mqtt_topics(String username, String groupid);
-String send_user_data(char[]);
+String send_user_data(DynamicJsonDocument, String);
 void connect_mqtt_client();
 void intialize_mqtt();
 void publish_moisture_level();
@@ -29,6 +30,7 @@ const uint16_t BROKER_PORT = 8883;
 WiFiClientSecure esp_client;
 PubSubClient mqtt_client(host, BROKER_PORT, esp_client);
 const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
+String authorization_code = "";
 
 //Publish moisture
 const char *MOISTURE_TOPIC = "";
@@ -42,38 +44,69 @@ char messageBuffer[MSG_BUFFER_SIZE];
 
 Ticker moisture_level_tic;
 
-String send_user_data(char JSONmessageBuffer[])
+String send_user_data(DynamicJsonDocument doc, String url)
 {
+    String response = "";
+
     if (esp_client.connected())
     {
         Serial.println("Stopping current connection");
         esp_client.stop();
     }
 
-    Serial.print("connecting to ");
+    Serial.print("Connecting to ");
     Serial.println(host);
 
     if (esp_client.connect(host, 443)) //Soft WDT Reset with >5s
-     {
-        Serial.println("Sending Data...");
+    {
+        Serial.println("Posting data to " + (String)host + url + "...");
+        serializeJsonPretty(doc, Serial);
 
-        esp_client.println("POST /api/user HTTPS/1.1");
+        esp_client.println("POST " + url + " HTTP/1.1");
         esp_client.println(String("Host: ") + host);
         esp_client.println("Content-Type: application/json");
-        esp_client.println("Content-Length: " + strlen(JSONmessageBuffer));
+        if (authorization_code.length() > 0)
+        {
+            esp_client.println("Authorization: " + authorization_code);
+        }
+        esp_client.println("Connection: close");
+        esp_client.print("Content-Length: ");
+        esp_client.println(measureJsonPretty(doc));
         esp_client.println();
-        esp_client.println(JSONmessageBuffer);
+
+        // Write JSON document
+        serializeJsonPretty(doc, esp_client);
+
+        if (esp_client.println() == 0)
+        {
+            Serial.println("\nFailed to send request");
+            return response;
+        }
+
+        Serial.println("\nRequest sent.");
 
         //https://arduinojson.org/v6/example/http-client/
         // Check HTTP status
         char status[32] = {0};
+
+        while (!esp_client.available())
+            delay(1);
+
+        Serial.println("Reading response...");
+
         esp_client.readBytesUntil('\r', status, sizeof(status));
-        if (strcmp(status, "HTTP/1.1 200 OK") != 0)
+
+        if (strcmp(status, "HTTP/1.1 200 OK") != 0 && strcmp(status, "HTTP/1.1 201 Created") != 0)
         {
             Serial.print(F("Unexpected response: "));
             Serial.println(status);
             esp_client.stop();
-            return "";
+            return response;
+        }
+        else
+        {
+            Serial.print("Status Code: ");
+            Serial.println(status);
         }
 
         // Skip HTTP headers
@@ -82,12 +115,13 @@ String send_user_data(char JSONmessageBuffer[])
         {
             Serial.println(F("Invalid response"));
             esp_client.stop();
-            return "";
+            return response;
         }
 
         // Allocate the JSON document
         // Use arduinojson.org/v6/assistant to compute the capacity.
-        const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+        size_t capacity = 2000;
+
         DynamicJsonDocument doc(capacity);
 
         // Parse JSON object
@@ -96,17 +130,29 @@ String send_user_data(char JSONmessageBuffer[])
         {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.c_str());
-            return "";
+            return response;
         }
 
         // Extract values
         Serial.println(F("Response:"));
-        String username = doc["username"].as<char *>();
-        Serial.println(username);
+
+        if (url == "/api/user/register")
+        {
+            authorization_code = doc["token"].as<char *>();
+            response = doc["user"]["_id"].as<char *>();
+
+            if(authorization_code.length() > 0){
+                Serial.println("Authorization Code received.");
+            }
+        }
+        else
+        {
+             response = doc["_id"].as<char *>();
+        }
 
         // Disconnect
         esp_client.stop();
-        return username;
+        return response;
     }
     else
     {
@@ -117,19 +163,21 @@ String send_user_data(char JSONmessageBuffer[])
     }
 }
 
-void init_mqtt_topics(String username, String groupid)
+void init_mqtt_topics(String user_id, String groupid)
 {
 
-    String prefix = username + "/" + groupid + "/" + ESP.getFlashChipId() + "/";
+    String prefix = user_id + "/" + groupid + "/" + ESP.getFlashChipId() + "/";
 
     String moisture = prefix + "moisture";
+
+    //TODO TOPIC verändert sich hier von normal zu kryptisch
     MOISTURE_TOPIC = moisture.c_str();
     Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
 
     EEPROM.begin(512);
 
     //Clear data
-    for (int i = 100; i < 160; i++)
+    for (int i = 140; i < 220; i++)
     {
         EEPROM.write(i, 0);
     }
@@ -137,7 +185,7 @@ void init_mqtt_topics(String username, String groupid)
     Serial.println("\nWriting moisture topic...");
     for (int i = 0; i < strlen(MOISTURE_TOPIC); ++i)
     {
-        EEPROM.write(100 + i, MOISTURE_TOPIC[i]);
+        EEPROM.write(140 + i, MOISTURE_TOPIC[i]);
         Serial.print(MOISTURE_TOPIC[i]);
     }
 
@@ -152,13 +200,12 @@ void read_mqtt_parameters()
 {
     Serial.println("Reading moisture topic...");
     String moisture = "";
-    for (int i = 100; i < 160; ++i)
+    for (int i = 140; i < 220; ++i)
     {
         moisture += char(EEPROM.read(i));
     }
     MOISTURE_TOPIC = moisture.c_str();
-    //TODO REMOVE
-    MOISTURE_TOPIC = "5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture";
+
     Serial.printf("Water level topic: %s\n", MOISTURE_TOPIC);
 }
 
@@ -211,11 +258,11 @@ void reconnect_MQTT()
         Serial.print("Attempting MQTT connection...");
         char mqtt_id[10];
         sprintf(mqtt_id, "%d", ESP.getFlashChipId());
-        //TODO REMOVE
+
         Serial.printf("Client ID: %s", mqtt_id);
 
         // Attempt to connect
-        if (mqtt_client.connect("5f2d2f46c254098c1222a484")) //TODO mqtt_id
+        if (mqtt_client.connect(mqtt_id)) 
         {
             Serial.println("connected");
         }
@@ -235,7 +282,7 @@ void clear_eeprom()
 {
     // Reset EEPROM bytes to '0' for the length of the data structure
     EEPROM.begin(512);
-    for (int i = 0; i < 512; i++)
+    for (int i = 97; i < 512; i++)
     {
         EEPROM.write(i, 0);
     }
@@ -265,8 +312,6 @@ void load_root_ca()
 
 void connect_mqtt_client()
 {
-    esp_client.setFingerprint(fingerprint);
-
     Serial.print("MQTT: connecting to ");
     Serial.println(host);
     if (!esp_client.connect(host, 8883))
@@ -283,6 +328,13 @@ void connect_mqtt_client()
     {
         Serial.println("MQTT TLS certificate doesn't match");
     }
+}
+
+void init_esp_client()
+{
+    esp_client.allowSelfSignedCerts();
+    esp_client.loadCACert(root_ca_file);
+    esp_client.setFingerprint(fingerprint);
 }
 
 void init_mqtt()
@@ -302,8 +354,10 @@ void setup()
 
     //TODO REMOVE
     delay(5000);
+    clear_eeprom();
 
     load_root_ca();
+    init_esp_client();
 
     wifi_controller.begin();
     init_mqtt();

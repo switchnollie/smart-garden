@@ -14,6 +14,7 @@
       background: linear-gradient(255deg, rgb(19, 23, 31) 0%, rgb(32, 38, 53) 100%);
       color: #fff;
     }
+
     body {
       height: 100%;
       display: flex;
@@ -58,7 +59,7 @@
       padding: 2rem;
       border-radius: 4px;
       box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
-      background: linear-gradient(255deg,#2D3750 0%,#3D4760 100%);
+      background: linear-gradient(255deg, #2D3750 0%, #3D4760 100%);
     }
 
     form {
@@ -67,7 +68,9 @@
       align-items: stretch;
     }
 
-    input[type=text], input[type=password], input[type=email] {
+    input[type=text],
+    input[type=password],
+    input[type=email] {
       padding: 0.5rem 0;
       color: #fff;
       font-size: 1rem;
@@ -75,10 +78,11 @@
       border: none;
       margin: 0.5rem 0;
       outline: none;
-      border-bottom: 1px solid rgba(255,255,255,0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
     }
+
     input::placeholder {
-      color: rgba(255,255,255,0.5);
+      color: rgba(255, 255, 255, 0.5);
     }
   </style>
 </head>
@@ -98,8 +102,8 @@
       <input id="ssid-field" type="text" placeholder="SSID">
       <input id="password-field" type="password" placeholder="Password">
       <button type="submit">Submit</button>
-      </div>
-    </form>
+  </div>
+  </form>
   <script type="text/javascript">
     const ssidField = document.querySelector("#ssid-field");
     const passwordField = document.querySelector("#password-field");
@@ -116,11 +120,7 @@
 
       fetch(`/changewlan?ssid=${ssid}&pass=${password}&ap-pass=${apPassword}`)
         .then(() => {
-          if (res.status === 200) {
-            window.location.pathname = "/user.html";
-          } else {
-            alert(res.data);
-          }
+          window.location.pathname = "/user";
         })
         .catch(() => {
           alert("Could not connect. Please try again.");
