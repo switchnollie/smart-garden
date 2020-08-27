@@ -98,7 +98,7 @@ void WIFI::start_web_server()
         web_server.send(302, "text/plain", "Path not available!");
     });
 
-        if (!MDNS.begin(dns_host))
+    if (!MDNS.begin(dns_host))
     {
         Serial.println("Fehler beim Aufsetzen des DNS!");
     }
@@ -227,7 +227,7 @@ void WIFI::change_ap_password()
     EEPROM.begin(512);
     for (int i = 0; i < pass.length(); ++i)
     {
-        EEPROM.write(300 + i, pass[i]);
+        EEPROM.write(100 + i, pass[i]);
         Serial.print("*");
     }
 
@@ -240,7 +240,7 @@ String WIFI::read_ap_password()
     Serial.println("Reading AP password...");
     EEPROM.begin(512);
     String pass = "";
-    for (int i = 300; i < 340; ++i)
+    for (int i = 100; i < 140; ++i)
     {
         pass += char(EEPROM.read(i));
     }
@@ -294,23 +294,30 @@ void WIFI::send_water_group_to_backend()
 {
     Serial.println("Sending group data to backend");
     DynamicJsonDocument doc(1024);
-    DynamicJsonDocument nested_doc(1024);
+    DynamicJsonDocument doc_waterlevel(1024);
+    DynamicJsonDocument doc_pump(1024);
 
     doc["displayName"] = web_server.arg("groupId");
     doc["ownedBy"] = user_id;
 
-    JsonArray devices = doc.createNestedArray("devices");
-    nested_doc["_id"] = ESP.getFlashChipId();
-    nested_doc["displayName"] = "Pump";
-    nested_doc["type"] = "pump";
+    JsonArray device_waterlevel = doc.createNestedArray("devices");
+    doc_waterlevel["_id"] = ESP.getFlashChipId()+"-w";
+    doc_waterlevel["displayName"] = "Water level Sens";
+    doc_waterlevel["type"] = "waterlevel";
 
-    devices.add(nested_doc);
+    JsonArray device_pump = doc.createNestedArray("devices");
+    doc_pump["_id"] = ESP.getFlashChipId();
+    doc_pump["displayName"] = "Pump";
+    doc_pump["type"] = "pump";
+
+    device_waterlevel.add(doc_waterlevel);
+    device_pump.add(doc_pump);
 
     String group_id = send_user_data_callback_implementation(doc, "/api/wateringgroup");
 
     Serial.println("Group ID: " + group_id);
 
-    if (user_id.length() > 0)
+    if (group_id.length() > 0)
     {
         web_server.send(200, "text/plain", "Successfully sent user data!");
         init_mqtt_topics_callback_implementation(user_id, group_id);

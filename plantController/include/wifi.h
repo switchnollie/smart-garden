@@ -224,7 +224,7 @@ void WIFI::change_ap_password()
     EEPROM.begin(512);
     for (int i = 0; i < pass.length(); ++i)
     {
-        EEPROM.write(300 + i, pass[i]);
+        EEPROM.write(100 + i, pass[i]);
         Serial.print(pass[i]);
     }
 
@@ -237,7 +237,7 @@ String WIFI::read_ap_password()
     Serial.println("Reading AP password: ");
     EEPROM.begin(512);
     String pass = "";
-    for (int i = 300; i < 340; ++i)
+    for (int i = 100; i < 140; ++i)
     {
         pass += char(EEPROM.read(i));
     }
@@ -307,7 +307,7 @@ void WIFI::send_water_group_to_backend()
 
     Serial.println("Group ID: " + group_id);
 
-    if (user_id.length() > 0)
+    if (group_id.length() > 0)
     {
         web_server.send(200, "text/plain", "Successfully sent user data!");
         init_mqtt_topics_callback_implementation(user_id, group_id);

@@ -96,7 +96,7 @@ Durch die Nutzer ID, die Pflanzengruppe und die `ESP Flash Chip ID` wird das MQT
 
 ### Startup
 ![](https://imgur.com/QuZfXrD.gif)
-  
+
 ### Funktionsweise
 
 In der unteren Abbildung ist ein Sequenzdiagramm zu sehen, welches die Funktionsweise und Kommunikationsablauf des Systems beschreibt.

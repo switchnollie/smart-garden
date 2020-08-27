@@ -30,6 +30,7 @@ const uint16_t BROKER_PORT = 8883;
 WiFiClientSecure esp_client;
 PubSubClient mqtt_client(host, BROKER_PORT, esp_client);
 const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
+String authorization_code = "";
 
 //Publish moisture
 const char *MOISTURE_TOPIC = "";
@@ -45,6 +46,8 @@ Ticker moisture_level_tic;
 
 String send_user_data(DynamicJsonDocument doc, String url)
 {
+    String response = "";
+
     if (esp_client.connected())
     {
         Serial.println("Stopping current connection");
@@ -62,6 +65,10 @@ String send_user_data(DynamicJsonDocument doc, String url)
         esp_client.println("POST " + url + " HTTP/1.1");
         esp_client.println(String("Host: ") + host);
         esp_client.println("Content-Type: application/json");
+        if (authorization_code.length() > 0)
+        {
+            esp_client.println("Authorization: " + authorization_code);
+        }
         esp_client.println("Connection: close");
         esp_client.print("Content-Length: ");
         esp_client.println(measureJsonPretty(doc));
@@ -73,7 +80,7 @@ String send_user_data(DynamicJsonDocument doc, String url)
         if (esp_client.println() == 0)
         {
             Serial.println("\nFailed to send request");
-            return "";
+            return response;
         }
 
         Serial.println("\nRequest sent.");
@@ -89,12 +96,12 @@ String send_user_data(DynamicJsonDocument doc, String url)
 
         esp_client.readBytesUntil('\r', status, sizeof(status));
 
-        if (strcmp(status, "HTTP/1.1 200 OK") != 0)
+        if (strcmp(status, "HTTP/1.1 200 OK") != 0 && strcmp(status, "HTTP/1.1 201 Created") != 0)
         {
             Serial.print(F("Unexpected response: "));
             Serial.println(status);
             esp_client.stop();
-            return "";
+            return response;
         }
         else
         {
@@ -108,17 +115,12 @@ String send_user_data(DynamicJsonDocument doc, String url)
         {
             Serial.println(F("Invalid response"));
             esp_client.stop();
-            return "";
+            return response;
         }
 
         // Allocate the JSON document
         // Use arduinojson.org/v6/assistant to compute the capacity.
-        size_t capacity;
-        if(url.compareTo("/api/user/register")){
-            capacity = JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1) + 101;
-        }else{
-            capacity = JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1) + 101;
-        }
+        size_t capacity = 2000;
 
         DynamicJsonDocument doc(capacity);
 
@@ -128,17 +130,29 @@ String send_user_data(DynamicJsonDocument doc, String url)
         {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.c_str());
-            return "";
+            return response;
         }
 
         // Extract values
         Serial.println(F("Response:"));
-        String username = doc["username"].as<char *>();
-        Serial.println(username);
+
+        if (url == "/api/user/register")
+        {
+            authorization_code = doc["token"].as<char *>();
+            response = doc["user"]["_id"].as<char *>();
+
+            if(authorization_code.length() > 0){
+                Serial.println("Authorization Code received.");
+            }
+        }
+        else
+        {
+             response = doc["_id"].as<char *>();
+        }
 
         // Disconnect
         esp_client.stop();
-        return username;
+        return response;
     }
     else
     {
@@ -155,13 +169,15 @@ void init_mqtt_topics(String user_id, String groupid)
     String prefix = user_id + "/" + groupid + "/" + ESP.getFlashChipId() + "/";
 
     String moisture = prefix + "moisture";
+
+    //TODO TOPIC verändert sich hier von normal zu kryptisch
     MOISTURE_TOPIC = moisture.c_str();
     Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
 
     EEPROM.begin(512);
 
     //Clear data
-    for (int i = 100; i < 160; i++)
+    for (int i = 140; i < 220; i++)
     {
         EEPROM.write(i, 0);
     }
@@ -169,7 +185,7 @@ void init_mqtt_topics(String user_id, String groupid)
     Serial.println("\nWriting moisture topic...");
     for (int i = 0; i < strlen(MOISTURE_TOPIC); ++i)
     {
-        EEPROM.write(100 + i, MOISTURE_TOPIC[i]);
+        EEPROM.write(140 + i, MOISTURE_TOPIC[i]);
         Serial.print(MOISTURE_TOPIC[i]);
     }
 
@@ -178,22 +194,18 @@ void init_mqtt_topics(String user_id, String groupid)
     mqtt_initialized = true;
 
     EEPROM.commit();
-
-    Serial.println("Restarting ESP...");
-    ESP.restart();
 }
 
 void read_mqtt_parameters()
 {
     Serial.println("Reading moisture topic...");
     String moisture = "";
-    for (int i = 100; i < 160; ++i)
+    for (int i = 140; i < 220; ++i)
     {
         moisture += char(EEPROM.read(i));
     }
     MOISTURE_TOPIC = moisture.c_str();
-    //TODO REMOVE
-    MOISTURE_TOPIC = "5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f46c254098c1222a484/moisture";
+
     Serial.printf("Water level topic: %s\n", MOISTURE_TOPIC);
 }
 
@@ -246,11 +258,11 @@ void reconnect_MQTT()
         Serial.print("Attempting MQTT connection...");
         char mqtt_id[10];
         sprintf(mqtt_id, "%d", ESP.getFlashChipId());
-        //TODO REMOVE
+
         Serial.printf("Client ID: %s", mqtt_id);
 
         // Attempt to connect
-        if (mqtt_client.connect("5f2d2f46c254098c1222a484")) //TODO mqtt_id
+        if (mqtt_client.connect(mqtt_id)) 
         {
             Serial.println("connected");
         }
