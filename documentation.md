@@ -11,7 +11,25 @@ Zusätzlich soll der Wasserstand im Tank über einen Wasserstandsensor gemessen 
 
 ## Hardware
 
+### Bauteile
+* WeMOS D1 Mini (2x)
+* WeMOS DC Power Shield
+* 12V DC Power Supply
+* Maker Factory  Analoger Wasserpegelsensor (von Maker Factory)
+* Maker Factory Analoger Boden-Feuchtigkeitssensor
+* 12V Peristaltische Pumpe
+* Seeed Studio SPDT Relais Modul
+* DC Hohlstecker
+* Kaltgerätestecker
+* Kabel (für AC und für DC)
+* Bread Board
+* Jumper Kabel
+
+### Schaltplan (Pumpencontroller)
+
 <img src="./documentationAssets/schaltplan.jpeg" alt="Schaltplan" style="max-height:75%;" />
+
+### Aufbau
 
 In der unteren Abbildung ist der Aufbau der Hardware abgebildet. Die Stromversorgung des Pflanzencontrollers ist per USB sichergestellt und dessen Feuchtigkeitssensor ist in der Pflanze.
 
