@@ -15,8 +15,8 @@ void publish_moisture_level();
 
 const uint8_t MOISTURE_PIN = A0;
 const uint8_t MOTOR_PIN = D8;
-int motorState = LOW;
-const long SENS_INTERVAL = 2000;
+
+const long SENS_INTERVAL = 5000;
 
 File root_ca_file;
 
