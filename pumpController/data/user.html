@@ -168,9 +168,8 @@
       e.preventDefault();
       const username = userField.value;
       const password = passwordField.value;
-      const register = checkbox.checked;
 
-      fetch(`/changeuser?userId=${username}&pass=${password}&register=${register}&login=${isLogin}`)
+      fetch(`/changeuser?userId=${username}&pass=${password}&register=${!isLogin}`)
         .then(() => {
           window.location.pathname = "/groups";
         }).catch(() => {
