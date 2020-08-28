@@ -134,7 +134,7 @@
         const groupId = groupField.value;
 
         fetch(`/initmqtttopics?groupId=${groupId}`)
-          .then(() => {
+          .then((res) => {
             if (res.status === 200) {
               alert("Your plant controller was successfully added to the system.");
             } else {

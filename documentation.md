@@ -44,7 +44,9 @@ Es wird ein `Maker Factory Analoger Boden-Feuchtigkeitssensor` benutzt, dessen S
 
 ### Aufbau
 
-In der unteren Abbildung ist der Aufbau der Hardware abgebildet. Die Stromversorgung des Pflanzencontrollers ist wie beschrieben per USB sichergestellt und dessen Feuchtigkeitssensor steckt in der Pflanzenerde.
+In den unteren Abbildung ist der Aufbau der Hardware abgebildet. Die Stromversorgung des Pflanzencontrollers ist wie beschrieben per USB sichergestellt und dessen Feuchtigkeitssensor steckt in der Pflanzenerde.
+
+<img src="./documentationAssets/hardware_setup.jpg" alt="Hardware Aufbau" style="max-width:75%;" />
 
 Zusätzlich mündet ein Wasserschlauch in der Pflanze, welcher am anderen Ende zur peristaltischen Pumpe führt. Ein zweiter, ansaugender Schlauch führt von der Pumpe in einen Wasserbehälter, aus welchem später beim Pumpen das Wasser kommt.
 
@@ -52,7 +54,8 @@ Außerdem befindet sich der Wasserstandssensor in dem Wasserbehälter, dessen An
 
 Zum Herstellen der Verbindungen, i.B. der beiden Spannungspegel 12V für die Pumpe und 3.3V für die Betriebsspannung des WeMOS wird ein Steckbrett bentutzt.
 
-<img src="./documentationAssets/hardware_setup.jpg" alt="Hardware Aufbau" style="max-width:75%;" />
+<img src="./documentationAssets/schaltplan_pump_stecker.png" alt="Hardware Aufbau" style="max-width:75%;" />
+
 
 ## Systemarchitektur
 

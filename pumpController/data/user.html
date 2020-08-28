@@ -89,33 +89,38 @@
       display: flex;
       margin-bottom: 1em;
     }
-    .mode-toggle > button {
+
+    .mode-toggle>button {
       flex: 1;
       height: 2em;
       display: flex;
       justify-content: center;
       align-items: center;
-      border: 1px solid rgba(255,255,255,0.5);
+      border: 1px solid rgba(255, 255, 255, 0.5);
       background: none;
       transition: color 0.2s ease, background 0.2s ease;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255, 255, 255, 0.5);
       outline: none;
       box-shadow: none;
     }
-    .mode-toggle > button.active {
+
+    .mode-toggle>button.active {
       color: #FFF;
       border-color: #0087FF;
       background: #0087FF
     }
-    .mode-toggle > button:hover:not(.active) {
+
+    .mode-toggle>button:hover:not(.active) {
       color: #fff;
       border-color: #fff;
     }
-    .mode-toggle > button:first-child {
+
+    .mode-toggle>button:first-child {
       border-bottom-right-radius: 0;
       border-top-right-radius: 0;
     }
-    .mode-toggle > button:last-child {
+
+    .mode-toggle>button:last-child {
       border-bottom-left-radius: 0;
       border-top-left-radius: 0;
     }
@@ -152,13 +157,13 @@
       })
     }
 
-    loginButton.onclick = function() {
+    loginButton.onclick = function () {
       isLogin = true;
       loginButton.classList.add("active");
       registerButton.classList.remove("active");
     }
 
-    registerButton.onclick = function() {
+    registerButton.onclick = function () {
       isLogin = false;
       registerButton.classList.add("active");
       loginButton.classList.remove("active");
@@ -170,8 +175,12 @@
       const password = passwordField.value;
 
       fetch(`/changeuser?userId=${username}&pass=${password}&register=${!isLogin}`)
-        .then(() => {
-          window.location.pathname = "/groups";
+        .then((res) => {
+          if (res.status === 200) {
+            window.location.pathname = "/groups";
+          } else {
+            alert(`Server Error: ${res.status}`);
+          }
         }).catch(() => {
           alert("Error sending data. Please try again.");
         });

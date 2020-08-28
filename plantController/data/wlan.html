@@ -119,8 +119,12 @@
       console.log(document.getElementById("ssid-field"));
 
       fetch(`/changewlan?ssid=${ssid}&pass=${password}&apPass=${apPassword}`)
-        .then(() => {
-          window.location.pathname = "/user";
+        .then((res) => {
+          if (res.status === 200) {
+            window.location.pathname = "/user";
+          } else {
+            alert(`Server Error: ${res.status}`);
+          } 
         })
         .catch(() => {
           alert("Could not connect. Please try again.");
