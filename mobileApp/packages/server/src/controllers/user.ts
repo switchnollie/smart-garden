@@ -31,15 +31,20 @@ const UserController = {
   async register(req: Request, res: Response): Promise<void> {
     const { salt, hash } = genPassword(req.body.password);
 
-    const newUser = new User({
-      userName: req.body.username,
-      hash,
-      salt,
-    });
     try {
-      const user = await newUser.save();
-      const { token, expires } = issueJWT(user);
-      res.json({ success: true, user, token, expiresIn: expires });
+      const existingUser = await User.findOne({userName: req.body.username});
+      if (!!existingUser) {
+        res.status(409).send();
+      } else {
+        const newUser = new User({
+          userName: req.body.username,
+          hash,
+          salt,
+        });
+        const user = await newUser.save();
+        const { token, expires } = issueJWT(user);
+        res.json({ success: true, user, token, expiresIn: expires });
+      }
     } catch (error) {
       console.error(error);
       res.status(400).send();

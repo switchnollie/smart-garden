@@ -4,7 +4,7 @@ import { IDeviceModel } from "./device";
 export interface IWateringGroupModel extends Document {
   displayName: string;
   ownedBy: string;
-  devices: IDeviceModel["_id"];
+  devices: IDeviceModel["_id"][];
   moistureThreshold: number;
   lastPumped: Date;
 }
