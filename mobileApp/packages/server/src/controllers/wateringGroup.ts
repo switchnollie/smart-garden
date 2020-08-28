@@ -81,10 +81,11 @@ const WateringGroupController = {
         });
         let wateringGroup: IWateringGroupModel;
         if (!!existingWateringGroup) {
-          wateringGroup = await WateringGroupModel.findByIdAndUpdate(existingWateringGroup._id,
+          wateringGroup = await WateringGroupModel.findByIdAndUpdate(
+            existingWateringGroup._id,
             // @ts-ignore
             { $push: { devices: deviceIds } },
-            {new: true}
+            { new: true }
           );
           console.log({ wateringGroup });
         } else {
@@ -100,6 +101,15 @@ const WateringGroupController = {
             { $push: { wateringGroups: wateringGroup._id } }
           );
         }
+        // Update `groupedBy`-Field of the new devices
+        await Promise.all(
+          deviceIds.map((deviceId) =>
+            DeviceModel.updateOne(
+              { _id: deviceId },
+              { groupedBy: wateringGroup._id, ownedBy: wateringGroup.ownedBy }
+            )
+          )
+        );
 
         res.status(201).json(wateringGroup);
       }
