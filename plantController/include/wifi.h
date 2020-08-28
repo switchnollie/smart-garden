@@ -310,7 +310,7 @@ void WIFI::send_water_group_to_backend()
     doc["ownedBy"] = user_id;
 
     JsonArray devices = doc.createNestedArray("devices");
-    nested_doc["_id"] = ESP.getFlashChipId();
+    nested_doc["_id"] = ESP.getChipId();
     nested_doc["displayName"] = "Plant";
     nested_doc["type"] = "moisture";
 

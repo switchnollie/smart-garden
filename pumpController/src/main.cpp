@@ -16,7 +16,7 @@ void init_mqtt_topics(String username, String group_id);
 String send_user_data(DynamicJsonDocument, String);
 
 const uint8_t MOTOR_PIN = D8;
-const uint8_t WATERLEVEL_PIN = D0;
+const uint8_t WATERLEVEL_PIN = A0;
 
 //https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
 
@@ -253,7 +253,7 @@ void reconnect_MQTT()
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
         char mqtt_id[10];
-        sprintf(mqtt_id, "%d", ESP.getFlashChipId());
+        sprintf(mqtt_id, "%d", ESP.getChipId());
         Serial.printf("Client ID: %s", mqtt_id);
         if (mqtt_client.connect(mqtt_id))
         {
@@ -414,7 +414,7 @@ void write_mqtt_parameters(String water_level, String pump, String pump_duration
 
 void init_mqtt_topics(String user_id, String groupid)
 {
-    String prefix = user_id + "/" + groupid + "/" + ESP.getFlashChipId() + "/";
+    String prefix = user_id + "/" + groupid + "/" + ESP.getChipId() + "/";
 
     String water_level = prefix + "water_level";
     WATER_LEVEL_TOPIC = strdup(water_level.c_str());

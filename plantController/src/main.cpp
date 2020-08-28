@@ -161,8 +161,8 @@ String send_user_data(DynamicJsonDocument doc, String url)
 
 void init_mqtt_topics(String user_id, String groupid)
 {
-
-    String prefix = user_id + "/" + groupid + "/" + ESP.getFlashChipId() + "/";
+    
+    String prefix = user_id + "/" + groupid + "/" + ESP.getChipId() + "/";
 
     String moisture = prefix + "moisture";
 
@@ -253,7 +253,7 @@ void reconnect_MQTT()
     {
         Serial.print("Attempting MQTT connection...");
         char mqtt_id[10];
-        sprintf(mqtt_id, "%d", ESP.getFlashChipId());
+        sprintf(mqtt_id, "%d", ESP.getChipId());
 
         Serial.printf("Client ID: %s", mqtt_id);
 
@@ -348,7 +348,6 @@ void setup()
     pinMode(MOISTURE_PIN, INPUT);
 
     //TODO REMOVE
-    delay(5000);
     clear_eeprom();
 
     load_root_ca();

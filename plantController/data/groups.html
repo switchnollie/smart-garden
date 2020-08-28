@@ -132,11 +132,6 @@
       fetch(`/initmqtttopics?groupId=${groupId}`)
         .then(() => {
           alert("Your plant controller was successfully added to the system.");
-          if (res.status === 200) {
-
-          } else {
-            alert(res.data);
-          }
         })
     };
   </script>

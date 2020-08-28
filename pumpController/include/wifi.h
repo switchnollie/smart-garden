@@ -314,11 +314,11 @@ void WIFI::send_water_group_to_backend()
 
     JsonArray devices = doc.createNestedArray("devices");
 
-    doc_waterlevel["_id"] = (String)ESP.getFlashChipId() + "-w";
+    doc_waterlevel["_id"] = (String)ESP.getChipId() + "-w";
     doc_waterlevel["displayName"] = "Water level Sens";
     doc_waterlevel["type"] = "waterlevel";
 
-    doc_pump["_id"] = ESP.getFlashChipId();
+    doc_pump["_id"] = ESP.getChipId();
     doc_pump["displayName"] = "Pump";
     doc_pump["type"] = "pump";
 
