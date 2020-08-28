@@ -38,8 +38,12 @@ function initBroker(db) {
       console.error(error);
       return callback(error);
     }
-    // TODO: Implement Authentication!!
-    if (deviceId !== clientId && !clientId.startsWith("admin-")) {
+    const clientIdWaterlevel = clientId + "-w";
+    if (
+      deviceId !== clientId &&
+      deviceId !== clientIdWaterlevel &&
+      !clientId.startsWith("admin-")
+    ) {
       const error = new Error(
         "the mqtt client id doesn't match the deviceId in the message topic"
       );
