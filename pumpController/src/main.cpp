@@ -241,15 +241,16 @@ void read_mqtt_topics()
 
 void reconnect_MQTT()
 {
-    //TLS Connection with wifi client
-    if (!esp_client.connected())
-    {
-        connect_mqtt_client();
-    }
 
     // Loop until we're reconnected
     while (!mqtt_client.connected())
     {
+        //TLS Connection with wifi client
+        if (!esp_client.connected())
+        {
+            connect_mqtt_client();
+        }
+
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
         char mqtt_id[10];

@@ -142,13 +142,14 @@ String send_user_data(DynamicJsonDocument doc, String url)
             authorization_code = doc["token"].as<char *>();
             response = doc["user"]["_id"].as<char *>();
 
-            if(authorization_code.length() > 0){
+            if (authorization_code.length() > 0)
+            {
                 Serial.println("Authorization Code received.");
             }
         }
         else
         {
-             response = doc["_id"].as<char *>();
+            response = doc["_id"].as<char *>();
         }
 
         // Disconnect
@@ -166,7 +167,7 @@ String send_user_data(DynamicJsonDocument doc, String url)
 
 void init_mqtt_topics(String user_id, String groupid)
 {
-    
+
     String prefix = user_id + "/" + groupid + "/" + ESP.getChipId() + "/";
     String moisture = prefix + "moisture";
 
@@ -244,15 +245,16 @@ void read_mqtt_topics()
 
 void reconnect_MQTT()
 {
-    //Secure Connection with wifi client
-    if (!esp_client.connected())
-    {
-        connect_mqtt_client();
-    }
 
     // Loop until we're reconnected
     while (!mqtt_client.connected())
     {
+        //Secure Connection with wifi client
+        if (!esp_client.connected())
+        {
+            connect_mqtt_client();
+        }
+
         Serial.print("Attempting MQTT connection...");
         char mqtt_id[10];
         sprintf(mqtt_id, "%d", ESP.getChipId());
@@ -260,7 +262,7 @@ void reconnect_MQTT()
         Serial.printf("Client ID: %s", mqtt_id);
 
         // Attempt to connect
-        if (mqtt_client.connect(mqtt_id)) 
+        if (mqtt_client.connect(mqtt_id))
         {
             Serial.println("connected");
         }
@@ -349,9 +351,6 @@ void setup()
 
     pinMode(MOISTURE_PIN, INPUT);
 
-    //TODO REMOVE
-    clear_eeprom();
-
     load_root_ca();
     init_esp_client();
 
@@ -390,4 +389,3 @@ void publish_moisture_level()
         mqtt_client.publish(MOISTURE_TOPIC, messageBuffer);
     }
 }
-
