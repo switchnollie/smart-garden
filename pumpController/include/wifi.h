@@ -176,7 +176,7 @@ void WIFI::change_wlan()
     String pass = web_server.arg("pass");
     Serial.println("Changing WLAN parameters");
     Serial.printf("SSID: %s\n", ssid.c_str());
-    Serial.printf("Password: %s\n", pass.c_str());
+
     if (ssid.length() > 0 && pass.length() > 0)
     {
         write_wlan_parameters(ssid, pass);
@@ -278,7 +278,19 @@ void WIFI::send_user_data_to_backend()
     doc["username"] = web_server.arg("userId");
     doc["password"] = web_server.arg("pass");
 
-    user_id = send_user_data_callback_implementation(doc, "/api/user/register");
+    String url;
+    String register_user = web_server.arg("register");
+
+    if (web_server.arg("register") == "false")
+    { 
+        url = "/api/user/login";
+    }
+    else
+    {
+        url = "/api/user/register";
+    }
+
+    user_id = send_user_data_callback_implementation(doc, url);
     Serial.println("User ID: " + user_id);
     if (user_id.length() > 0)
     {
@@ -286,7 +298,7 @@ void WIFI::send_user_data_to_backend()
     }
     else
     {
-        web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
+        web_server.send(400, "text/plain", "Error processing user data!");
     }
 }
 
@@ -300,18 +312,18 @@ void WIFI::send_water_group_to_backend()
     doc["displayName"] = web_server.arg("groupId");
     doc["ownedBy"] = user_id;
 
-    JsonArray device_waterlevel = doc.createNestedArray("devices");
-    doc_waterlevel["_id"] = ESP.getFlashChipId()+"-w";
+    JsonArray devices = doc.createNestedArray("devices");
+
+    doc_waterlevel["_id"] = (String)ESP.getFlashChipId() + "-w";
     doc_waterlevel["displayName"] = "Water level Sens";
     doc_waterlevel["type"] = "waterlevel";
 
-    JsonArray device_pump = doc.createNestedArray("devices");
     doc_pump["_id"] = ESP.getFlashChipId();
     doc_pump["displayName"] = "Pump";
     doc_pump["type"] = "pump";
 
-    device_waterlevel.add(doc_waterlevel);
-    device_pump.add(doc_pump);
+    devices.add(doc_waterlevel);
+    devices.add(doc_pump);
 
     String group_id = send_user_data_callback_implementation(doc, "/api/wateringgroup");
 

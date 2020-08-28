@@ -17,13 +17,13 @@ String send_user_data(DynamicJsonDocument, String);
 
 const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = D0;
-const char *ssid;
-const char *passphrase;
+
 //https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
 
 Ticker pump_tic_start;
 Ticker pump_tic_stop;
 Ticker water_level_tic;
+const long SENS_INTERVAL = 10000;
 
 //WIFI
 WIFI wifi_controller(init_mqtt_topics, send_user_data);
@@ -39,6 +39,7 @@ String authorization_code = "";
 
 //Water level of pump controller
 const char *WATER_LEVEL_TOPIC = "";
+
 //Request pump to pumpcontroller
 const char *PUMP_TOPIC = "";
 //Time duration for pumping
@@ -144,18 +145,19 @@ String send_user_data(DynamicJsonDocument doc, String url)
         // Extract values
         Serial.println(F("Response:"));
 
-        if (url == "/api/user/register")
+        if (url == "/api/user/register" || url == "/api/user/login")
         {
             authorization_code = doc["token"].as<char *>();
             response = doc["user"]["_id"].as<char *>();
 
-            if(authorization_code.length() > 0){
+            if (authorization_code.length() > 0)
+            {
                 Serial.println("Authorization Code received.");
             }
         }
         else
         {
-             response = doc["_id"].as<char *>();
+            response = doc["_id"].as<char *>();
         }
 
         // Disconnect
@@ -179,7 +181,7 @@ void read_mqtt_parameters()
     {
         water_level += char(EEPROM.read(i));
     }
-    WATER_LEVEL_TOPIC = water_level.c_str();
+    WATER_LEVEL_TOPIC = strdup(water_level.c_str());
     Serial.printf("Water level topic: %s\n", WATER_LEVEL_TOPIC);
 
     Serial.println("Reading pump topic...");
@@ -188,9 +190,7 @@ void read_mqtt_parameters()
     {
         pump += char(EEPROM.read(i));
     }
-    PUMP_TOPIC = pump.c_str();
-    //TODO REMOVE
-    PUMP_TOPIC = "5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f515e9536fb08962ba5/pump";
+    PUMP_TOPIC = strdup(pump.c_str());
     Serial.printf("Pump topic: %s\n", PUMP_TOPIC);
 
     Serial.println("Reading pump duration topic...");
@@ -199,7 +199,7 @@ void read_mqtt_parameters()
     {
         pump_duration += char(EEPROM.read(i));
     }
-    PUMP_DURATION_TOPIC = pump_duration.c_str();
+    PUMP_DURATION_TOPIC = strdup(pump_duration.c_str());
     Serial.printf("Pump duration topic: %s\n", PUMP_DURATION_TOPIC);
 }
 
@@ -255,7 +255,7 @@ void reconnect_MQTT()
         char mqtt_id[10];
         sprintf(mqtt_id, "%d", ESP.getFlashChipId());
         Serial.printf("Client ID: %s", mqtt_id);
-        if (mqtt_client.connect(mqtt_id)) 
+        if (mqtt_client.connect(mqtt_id))
         {
             Serial.println("connected");
             mqtt_client.subscribe(PUMP_TOPIC);
@@ -277,13 +277,13 @@ void clear_eeprom()
 {
     // Reset EEPROM bytes to '0' for the length of the data structure
     EEPROM.begin(512);
-    for (int i = 0; i < 512; i++)
+    for (int i = 97; i < 512; i++)
     {
         EEPROM.write(i, 0);
     }
+    delay(200);
     EEPROM.commit();
-
-    Serial.println("EEPROM cleared");
+    EEPROM.end();
 }
 
 void load_root_ca()
@@ -327,6 +327,13 @@ void connect_mqtt_client()
     }
 }
 
+void init_esp_client()
+{
+    esp_client.allowSelfSignedCerts();
+    esp_client.loadCACert(root_ca_file);
+    esp_client.setFingerprint(fingerprint);
+}
+
 void init_mqtt()
 {
     read_mqtt_topics();
@@ -345,10 +352,11 @@ void setup()
 
     load_root_ca();
 
+    init_esp_client();
     wifi_controller.begin();
-    read_mqtt_topics();
-
     init_mqtt();
+
+    water_level_tic.attach_ms(SENS_INTERVAL, publishWaterLevel);
 }
 
 void loop()
@@ -367,7 +375,7 @@ void loop()
 
     mqtt_client.loop();
 }
-void write_mqtt_parameters()
+void write_mqtt_parameters(String water_level, String pump, String pump_duration)
 {
     //Clear data
     EEPROM.begin(512);
@@ -377,24 +385,24 @@ void write_mqtt_parameters()
     }
 
     Serial.println("\nWriting water level topic...");
-    for (int i = 0; i < strlen(WATER_LEVEL_TOPIC); ++i)
+    for (int i = 0; i < water_level.length(); ++i)
     {
-        EEPROM.write(140 + i, WATER_LEVEL_TOPIC[i]);
-        Serial.print(WATER_LEVEL_TOPIC[i]);
+        EEPROM.write(140 + i, water_level[i]);
+        Serial.print(water_level[i]);
     }
 
     Serial.println("\nWriting pump topic...");
-    for (int i = 0; i < strlen(PUMP_TOPIC); ++i)
+    for (int i = 0; i < pump.length(); ++i)
     {
-        EEPROM.write(220 + i, PUMP_TOPIC[i]);
-        Serial.print(PUMP_TOPIC[i]);
+        EEPROM.write(220 + i, pump[i]);
+        Serial.print(pump[i]);
     }
 
     Serial.println("\nWriting pump duration topic...");
-    for (int i = 0; i < strlen(PUMP_DURATION_TOPIC); ++i)
+    for (int i = 0; i < pump_duration.length(); ++i)
     {
-        EEPROM.write(300 + i, PUMP_DURATION_TOPIC[i]);
-        Serial.print(PUMP_DURATION_TOPIC[i]);
+        EEPROM.write(300 + i, pump_duration[i]);
+        Serial.print(pump_duration[i]);
     }
 
     //Write initialized bit
@@ -404,25 +412,25 @@ void write_mqtt_parameters()
     EEPROM.commit();
 }
 
-void init_mqtt_topics(String username, String groupid)
+void init_mqtt_topics(String user_id, String groupid)
 {
-    String prefix = username + "/" + groupid + "/" + ESP.getFlashChipId() + "/";
+    String prefix = user_id + "/" + groupid + "/" + ESP.getFlashChipId() + "/";
 
     String water_level = prefix + "water_level";
-    WATER_LEVEL_TOPIC = water_level.c_str();
+    WATER_LEVEL_TOPIC = strdup(water_level.c_str());
     Serial.printf("Water level topic: %s", WATER_LEVEL_TOPIC);
 
     String pump = prefix + "pump";
-    PUMP_TOPIC = pump.c_str();
+    PUMP_TOPIC = strdup(pump.c_str());
     Serial.printf("Pump topic: %s", PUMP_TOPIC);
 
     String pump_duration = prefix + "pump_duration";
-    PUMP_DURATION_TOPIC = pump_duration.c_str();
+    PUMP_DURATION_TOPIC = strdup(pump_duration.c_str());
     Serial.printf("Pump duration topic: %s", PUMP_DURATION_TOPIC);
 
     EEPROM.begin(512);
 
-    write_mqtt_parameters();
+    write_mqtt_parameters(water_level, pump, pump_duration);
 }
 
 void pumpStart()
@@ -451,27 +459,23 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
     Serial.println("Received MQTT message");
     Serial.printf("Topic: %s", topic);
 
-    pump();
-
-    //TODO didnt match
-    // if (topic == PUMP_TOPIC)
-    // {
-    //     pump();
-    // }
-    // else if (topic == PUMP_DURATION_TOPIC)
-    // {
-    //     pump_duration = (int)payload[0];
-    // }
+    if (strcmp(topic, PUMP_TOPIC) == 0)
+    {
+        pump();
+    }
+    else if (strcmp(topic, PUMP_DURATION_TOPIC) == 0)
+    {
+        pump_duration = (int)payload[0];
+    }
 }
 
 void publishWaterLevel()
 {
-    //TODO incomment
-    // if (mqtt_client.connected())
-    // {
-    //     int water_level = analogRead(WATERLEVEL_PIN);
-    //     sprintf(messageBuffer, "%d", water_level);
-    //     Serial.printf("Publishing %d to topic %s\n", water_level, WATER_LEVEL_TOPIC);
-    //     mqtt_client.publish(WATER_LEVEL_TOPIC, messageBuffer);
-    // }
+    if (mqtt_client.connected())
+    {
+        int water_level = analogRead(WATERLEVEL_PIN);
+        sprintf(messageBuffer, "%d", water_level);
+        Serial.printf("Publishing %d to topic %s\n", water_level, WATER_LEVEL_TOPIC);
+        mqtt_client.publish(WATER_LEVEL_TOPIC, messageBuffer);
+    }
 }

@@ -12,19 +12,15 @@ String send_user_data(DynamicJsonDocument, String);
 void connect_mqtt_client();
 void intialize_mqtt();
 void publish_moisture_level();
-void mqtt_callback(char *topic, byte *payload, unsigned int length);
 
 const uint8_t MOISTURE_PIN = A0;
 const uint8_t MOTOR_PIN = D8;
 int motorState = LOW;
 const long SENS_INTERVAL = 2000;
 
-const char *ssid;
-const char *passphrase;
-WIFI wifi_controller(init_mqtt_topics, send_user_data);
-
 File root_ca_file;
 
+WIFI wifi_controller(init_mqtt_topics, send_user_data);
 const char *host = "smartgarden.timweise.com";
 const uint16_t BROKER_PORT = 8883;
 WiFiClientSecure esp_client;
@@ -136,7 +132,7 @@ String send_user_data(DynamicJsonDocument doc, String url)
         // Extract values
         Serial.println(F("Response:"));
 
-        if (url == "/api/user/register")
+        if (url == "/api/user/register" || url == "/api/user/login")
         {
             authorization_code = doc["token"].as<char *>();
             response = doc["user"]["_id"].as<char *>();
@@ -171,7 +167,7 @@ void init_mqtt_topics(String user_id, String groupid)
     String moisture = prefix + "moisture";
 
     //TODO TOPIC verändert sich hier von normal zu kryptisch
-    MOISTURE_TOPIC = moisture.c_str();
+    MOISTURE_TOPIC = strdup(moisture.c_str());
     Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
 
     EEPROM.begin(512);
@@ -204,7 +200,7 @@ void read_mqtt_parameters()
     {
         moisture += char(EEPROM.read(i));
     }
-    MOISTURE_TOPIC = moisture.c_str();
+    MOISTURE_TOPIC = strdup(moisture.c_str());
 
     Serial.printf("Water level topic: %s\n", MOISTURE_TOPIC);
 }
@@ -342,7 +338,6 @@ void init_mqtt()
     read_mqtt_topics();
     connect_mqtt_client();
     mqtt_client.setServer(host, BROKER_PORT);
-    mqtt_client.setCallback(mqtt_callback);
 }
 
 void setup()
@@ -390,19 +385,8 @@ void publish_moisture_level()
     {
         int moistureLevel = analogRead(MOISTURE_PIN);
         sprintf(messageBuffer, "%d", moistureLevel);
-        Serial.print("Publishing message ");
-        Serial.println(messageBuffer);
-        Serial.printf("Moisture topic: %s\n", MOISTURE_TOPIC);
+        Serial.printf("Publishing %d to topic %s\n", moistureLevel, MOISTURE_TOPIC);
         mqtt_client.publish(MOISTURE_TOPIC, messageBuffer);
     }
 }
 
-void mqtt_callback(char *topic, byte *payload, unsigned int length)
-{
-    Serial.print("Received MQTT message");
-    Serial.print(topic);
-    for (int i = 0; i < length; i++)
-    {
-        Serial.print((char)payload[i]);
-    }
-}

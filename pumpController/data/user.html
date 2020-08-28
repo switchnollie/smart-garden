@@ -14,6 +14,7 @@
       background: linear-gradient(255deg, rgb(19, 23, 31) 0%, rgb(32, 38, 53) 100%);
       color: #fff;
     }
+
     body {
       height: 100%;
       display: flex;
@@ -58,7 +59,7 @@
       padding: 2rem;
       border-radius: 4px;
       box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
-      background: linear-gradient(255deg,#2D3750 0%,#3D4760 100%);
+      background: linear-gradient(255deg, #2D3750 0%, #3D4760 100%);
     }
 
     form {
@@ -67,7 +68,9 @@
       align-items: stretch;
     }
 
-    input[type=text], input[type=password], input[type=email] {
+    input[type=text],
+    input[type=password],
+    input[type=email] {
       padding: 0.5rem 0;
       color: #fff;
       font-size: 1rem;
@@ -75,10 +78,11 @@
       border: none;
       margin: 0.5rem 0;
       outline: none;
-      border-bottom: 1px solid rgba(255,255,255,0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
     }
+
     input::placeholder {
-      color: rgba(255,255,255,0.5);
+      color: rgba(255, 255, 255, 0.5);
     }
   </style>
 </head>
@@ -90,18 +94,23 @@
     <form class="wifi-form">
       <input id="user-field" type="text" placeholder="Enter your Username">
       <input id="password-field" type="password" placeholder="Enter your Password">
+      <div>
+        <label id="checkbox-label">Create new user?</label>
+        <input type="checkbox" id="checkbox" />
+      </div>
       <button type="submit">Submit</button>
     </form>
   </div>
   <script type="text/javascript">
     const userField = document.querySelector("#user-field");
     const passwordField = document.querySelector("#password-field");
+    const checkbox = document.getElementById("checkbox");
     const wifiForm = document.querySelector(".wifi-form");
     console.log(document.getElementById("user-field"));
 
     function fakeAPICall() {
-      return new Promise(function(resolve, reject) {
-        setTimeout(function () {resolve();}, 500);
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () { resolve(); }, 500);
       })
     }
 
@@ -109,8 +118,9 @@
       e.preventDefault();
       const username = userField.value;
       const password = passwordField.value;
+      const register = checkbox.checked;
 
-      fetch(`/changeuser?user-id=${username}&pass=${password}`)
+      fetch(`/changeuser?userId=${username}&pass=${password}&register=${register}`)
         .then(() => {
           window.location.pathname = "/groups";
         }).catch(() => {

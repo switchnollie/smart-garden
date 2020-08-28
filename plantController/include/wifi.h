@@ -275,7 +275,20 @@ void WIFI::send_user_data_to_backend()
     doc["username"] = web_server.arg("userId");
     doc["password"] = web_server.arg("pass");
 
-    user_id = send_user_data_callback_implementation(doc, "/api/user/register");
+    String url;
+    String register_user = web_server.arg("register");
+
+    if (web_server.arg("register") == "false")
+    {
+        url = "/api/user/login";
+    }
+    else
+    {
+        url = "/api/user/register";
+    }
+
+    user_id = send_user_data_callback_implementation(doc, url);
+
     Serial.println("User ID: " + user_id);
     if (user_id.length() > 0)
     {
@@ -283,7 +296,7 @@ void WIFI::send_user_data_to_backend()
     }
     else
     {
-        web_server.send(400, "text/plain", "Failed to connect to API Endpoint!");
+        web_server.send(400, "text/plain", "Error processing user data!");
     }
 }
 
