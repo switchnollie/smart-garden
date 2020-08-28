@@ -84,35 +84,84 @@
     input::placeholder {
       color: rgba(255, 255, 255, 0.5);
     }
+
+    .mode-toggle {
+      display: flex;
+      margin-bottom: 1em;
+    }
+    .mode-toggle > button {
+      flex: 1;
+      height: 2em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.5);
+      background: none;
+      transition: color 0.2s ease, background 0.2s ease;
+      color: rgba(255,255,255,0.5);
+      outline: none;
+      box-shadow: none;
+    }
+    .mode-toggle > button.active {
+      color: #FFF;
+      border-color: #0087FF;
+      background: #0087FF
+    }
+    .mode-toggle > button:hover:not(.active) {
+      color: #fff;
+      border-color: #fff;
+    }
+    .mode-toggle > button:first-child {
+      border-bottom-right-radius: 0;
+      border-top-right-radius: 0;
+    }
+    .mode-toggle > button:last-child {
+      border-bottom-left-radius: 0;
+      border-top-left-radius: 0;
+    }
   </style>
 </head>
 
 <body>
   <h1>User credentials</h1>
   <div class="card">
+    <div class="mode-toggle">
+      <button id="login-toggle">Login</button>
+      <button id="register-toggle" class="active">Register</button>
+    </div>
     <h2>Please enter your User Credentials</h2>
     <form class="wifi-form">
       <input id="user-field" type="text" placeholder="Enter your Username">
       <input id="password-field" type="password" placeholder="Enter your Password">
-      <div>
-        <label id="checkbox-label">Create new user?</label>
-        <input type="checkbox" id="checkbox" />
-      </div>
       <button type="submit">Submit</button>
     </form>
   </div>
 
   <script type="text/javascript">
+    let isLogin = false;
     const userField = document.querySelector("#user-field");
     const passwordField = document.querySelector("#password-field");
     const checkbox = document.getElementById("checkbox");
     const wifiForm = document.querySelector(".wifi-form");
-    console.log(document.getElementById("user-field"));
+    const loginButton = document.querySelector("#login-toggle");
+    const registerButton = document.querySelector("#register-toggle");
 
     function fakeAPICall() {
       return new Promise(function (resolve, reject) {
         setTimeout(function () { resolve(); }, 500);
       })
+    }
+
+    loginButton.onclick = function() {
+      isLogin = true;
+      loginButton.classList.add("active");
+      registerButton.classList.remove("active");
+    }
+
+    registerButton.onclick = function() {
+      isLogin = false;
+      registerButton.classList.add("active");
+      loginButton.classList.remove("active");
     }
 
     wifiForm.onsubmit = function (e) {
@@ -121,7 +170,7 @@
       const password = passwordField.value;
       const register = checkbox.checked;
 
-      fetch(`/changeuser?userId=${username}&pass=${password}&register=${register}`)
+      fetch(`/changeuser?userId=${username}&pass=${password}&register=${register}&login=${isLogin}`)
         .then(() => {
           window.location.pathname = "/groups";
         }).catch(() => {
