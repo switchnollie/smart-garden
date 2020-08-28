@@ -7,9 +7,13 @@ import DeviceModel, { IDeviceModel } from "../models/device";
 import UserModel from "../models/user";
 
 const WateringGroupController = {
-  async findAll(_: Request, res: Response): Promise<void> {
+  async findAll(req: Request, res: Response): Promise<void> {
     try {
-      const wateringGroups = await WateringGroupModel.find({}, "-__v")
+      console.log((req.user! as any)._id);
+      const wateringGroups = await WateringGroupModel.find(
+        { ownedBy: (req.user! as any)._id },
+        "-__v"
+      )
         .populate({
           path: "devices",
           select: "-__v -groupedBy",
@@ -65,23 +69,37 @@ const WateringGroupController = {
   async create(req: Request, res: Response): Promise<void> {
     try {
       const { devices: devicesInfo, ...rest } = req.body;
-      console.log({ devicesInfo, rest });
       if (Array.isArray(devicesInfo) && devicesInfo.length > 0) {
         // Add Devices
         await Promise.all(
           devicesInfo.map((device) => DeviceModel.create(device))
         );
-        const deviceIds = devicesInfo.map((device) => device._id);
-        // Add Watering Group
-        const wateringGroup: IWateringGroupModel = await WateringGroupModel.create(
-          { devices: deviceIds, ...rest }
-        );
-        console.log({ wateringGroup });
-        // Add Wateringgroup to user.
-        await UserModel.updateOne(
-          { _id: wateringGroup.ownedBy },
-          { $push: { wateringGroups: wateringGroup._id } }
-        );
+        const deviceIds: string[] = devicesInfo.map((device) => device._id);
+        // If a wateringGroup with the provided name is already created, just add the devices to the group
+        const existingWateringGroup = await WateringGroupModel.findOne({
+          displayName: rest.displayName,
+        });
+        let wateringGroup: IWateringGroupModel;
+        if (!!existingWateringGroup) {
+          wateringGroup = await WateringGroupModel.findByIdAndUpdate(existingWateringGroup._id,
+            // @ts-ignore
+            { $push: { devices: deviceIds } },
+            {new: true}
+          );
+          console.log({ wateringGroup });
+        } else {
+          // Add Watering Group
+          wateringGroup = await WateringGroupModel.create({
+            devices: deviceIds,
+            ...rest,
+          });
+          console.log({ wateringGroup });
+          // Add Wateringgroup to user.
+          await UserModel.updateOne(
+            { _id: wateringGroup.ownedBy },
+            { $push: { wateringGroups: wateringGroup._id } }
+          );
+        }
 
         res.status(201).json(wateringGroup);
       }

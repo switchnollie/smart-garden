@@ -31,7 +31,7 @@ const initialWateringGroups = [
   {
     _id: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
     displayName: "Orchid",
-    ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
+    ownedBy: mongoose.Types.ObjectId("5f39934ab02e6b565372e49d"),
     lastPumped: nowTimestamp,
     moistureThreshold: 55,
     minimalPumpInterval: 604800000,
@@ -49,7 +49,7 @@ const initialDevices = [
     displayName: "Moisture Sensor 1",
     lastValue: 42,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
-    ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
+    ownedBy: mongoose.Types.ObjectId("5f39934ab02e6b565372e49d"),
     type: "moisture",
     logBuckets: [mongoose.Types.ObjectId("5f2d6fb18fd7805f913cc40a")]
   },
@@ -58,7 +58,7 @@ const initialDevices = [
     displayName: "Pump 1",
     lastValue: 1,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
-    ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
+    ownedBy: mongoose.Types.ObjectId("5f39934ab02e6b565372e49d"),
     type: "pump",
     logBuckets: [mongoose.Types.ObjectId("5f2d728d1407c5e120a3980e")]
   },
@@ -67,7 +67,7 @@ const initialDevices = [
     displayName: "Waterlevel Sensor 1",
     lastValue: 42,
     groupedBy: mongoose.Types.ObjectId("5f2d2bfe7824f2b9fd33cb66"),
-    ownedBy: mongoose.Types.ObjectId("5f2d2b58d65dd0c3e0ac05e7"),
+    ownedBy: mongoose.Types.ObjectId("5f39934ab02e6b565372e49d"),
     type: "waterlevel",
     logBuckets: [mongoose.Types.ObjectId("5f2d72f56a21f09e868acf71")]
   }
