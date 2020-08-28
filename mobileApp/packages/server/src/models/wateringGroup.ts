@@ -21,9 +21,9 @@ const WateringGroupSchema = new Schema({
       ref: "device",
     },
   ],
-  moistureThreshold: Number,
+  moistureThreshold: {type: Number, default: 411},
   lastPumped: Schema.Types.Date,
-  minimalPumpInterval: Number,
+  minimalPumpInterval: {type: Number, default: 86400000},
 });
 
 export default model<IWateringGroupModel>("WateringGroup", WateringGroupSchema);
