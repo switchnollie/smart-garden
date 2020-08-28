@@ -16,30 +16,35 @@ void publish_moisture_level();
 const uint8_t MOISTURE_PIN = A0;
 const uint8_t MOTOR_PIN = D8;
 
+Ticker moisture_level_tic;
 const long SENS_INTERVAL = 5000;
 
-File root_ca_file;
-
+//WIFI
 WIFI wifi_controller(init_mqtt_topics, send_user_data);
+
+//MQTT
 const char *host = "smartgarden.timweise.com";
 const uint16_t BROKER_PORT = 8883;
 WiFiClientSecure esp_client;
 PubSubClient mqtt_client(host, BROKER_PORT, esp_client);
-const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
-String authorization_code = "";
-
-//Publish moisture
 const char *MOISTURE_TOPIC = "";
 //Flag to indicate initialization of topics
 bool mqtt_initialized = false;
 const int MQTT_INIT_EEPROM_INDEX = 99;
 
+//Authentification
+const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
+File root_ca_file;
+String authorization_code = "";
+
 // messages are 10 Bit decimals -> max. 4 characters + \0 needed
 #define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
 
-Ticker moisture_level_tic;
-
+/*
+Sends user data to api/user/register or api/user/login user in initialization routine
+Reads token and user id from response
+*/
 String send_user_data(DynamicJsonDocument doc, String url)
 {
     String response = "";
@@ -163,15 +168,12 @@ void init_mqtt_topics(String user_id, String groupid)
 {
     
     String prefix = user_id + "/" + groupid + "/" + ESP.getChipId() + "/";
-
     String moisture = prefix + "moisture";
 
-    //TODO TOPIC verändert sich hier von normal zu kryptisch
     MOISTURE_TOPIC = strdup(moisture.c_str());
     Serial.printf("Moisture topic: %s", MOISTURE_TOPIC);
 
     EEPROM.begin(512);
-
     //Clear data
     for (int i = 140; i < 220; i++)
     {
@@ -242,7 +244,7 @@ void read_mqtt_topics()
 
 void reconnect_MQTT()
 {
-    //TLS Connection with wifi client
+    //Secure Connection with wifi client
     if (!esp_client.connected())
     {
         connect_mqtt_client();

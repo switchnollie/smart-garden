@@ -18,41 +18,41 @@ String send_user_data(DynamicJsonDocument, String);
 const uint8_t MOTOR_PIN = D8;
 const uint8_t WATERLEVEL_PIN = A0;
 
-//https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/examples/WebUpdater/WebUpdater.ino
-
 Ticker pump_tic_start;
 Ticker pump_tic_stop;
 Ticker water_level_tic;
 const long SENS_INTERVAL = 10000;
+int pump_duration = 10000;
 
 //WIFI
 WIFI wifi_controller(init_mqtt_topics, send_user_data);
-File root_ca_file;
 
 //MQTT
 const char *host = "smartgarden.timweise.com";
 const uint16_t port = 8883;
 WiFiClientSecure esp_client;
 PubSubClient mqtt_client(host, port, esp_client);
-const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
-String authorization_code = "";
-
-//Water level of pump controller
-const char *WATER_LEVEL_TOPIC = "";
-
-//Request pump to pumpcontroller
-const char *PUMP_TOPIC = "";
-//Time duration for pumping
-const char *PUMP_DURATION_TOPIC = "";
 //Flag to indicate initialization of topics
 bool mqtt_initialized = false;
 const int MQTT_INIT_EEPROM_INDEX = 99;
+//TOPICS
+const char *WATER_LEVEL_TOPIC = "";
+const char *PUMP_TOPIC = "";
+const char *PUMP_DURATION_TOPIC = "";
 
-int pump_duration = 10000;
+//Authentification
+const char *fingerprint = "90:18:60:66:E5:2E:4B:38:09:0D:39:30:9F:64:1E:50:55:11:86:5A";
+File root_ca_file;
+String authorization_code = "";
+
 // messages are 10 Bit decimals -> max. 4 characters + \0 needed
 #define MSG_BUFFER_SIZE 5
 char messageBuffer[MSG_BUFFER_SIZE];
 
+/*
+Sends user data to api/user/register or api/user/login user in initialization routine
+Reads token and user id from response
+*/
 String send_user_data(DynamicJsonDocument doc, String url)
 {
     String response = "";
@@ -445,8 +445,10 @@ void pumpStop()
     digitalWrite(MOTOR_PIN, LOW);
 }
 
-//Creates two function calls; one for immediatly starting the pump
-//Other for stopping the pump after certain duration from user
+/*
+Creates two function calls; one for immediatly starting the pump
+Other for stopping the pump after certain duration from user 
+*/
 void pump()
 {
     Serial.printf("Starting to pump for %d seconds", pump_duration);
