@@ -68,3 +68,10 @@ mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f
 ```sh
 mosquitto_pub -h smartgarden.timweise.com -p 8883 -t 5f2d2b58d65dd0c3e0ac05e7/5f2d2bfe7824f2b9fd33cb66/5f2d2f515e9536fb08962ba5/pump -m 1 --cafile letsencryptRootCa.pem -i admin-app
 ```
+
+## Initializing Controller
+1) Connect to ESP WLAN (SSID = "Plant"/"Pump", PW = "ESPPASSWORD")
+2) Call 192.168.4.1/init or esp8266.local/init
+3) Enter new password for Access-Point and WLAN credentials
+4) Type in user data. Click register if first initialization
+5) Enter plant group name
