@@ -38,7 +38,7 @@ Der folgende Schaltplan beschreibt die technische Verknüpfung der Bauteile für
 
 #### Planzencontroller
 Der Pflanzencontroller wird mit 5V Spannung per USB versorgt.
-Es wird ein `Maker Factory Analoger Boden-Feuchtigkeitssensor` benutzt, dessen Strom von einem weiteren `WeMOS D1 Mini` kommt.
+Es wird ein `Maker Factory Analoger Boden-Feuchtigkeitssensor` benutzt, dessen Strom von einem weiteren `WeMOS D1 Mini` bereitgestellt wird.
 Über den Pin `A0` kann der Sensor ausgelesen werden.
 
 <img src="./documentationAssets/schaltplan_plant.png" alt="Schaltplan" style="max-height:75%;" />
@@ -53,7 +53,7 @@ Zusätzlich mündet ein Wasserschlauch in der Pflanze, welcher am anderen Ende z
 
 Außerdem befindet sich der Wasserstandssensor in dem Wasserbehälter, dessen Analogausgang mit dem Pumpencontroller verbunden ist. Die Pumpe wird bei geschlossenem Relaiskontakt mit 12V Gleichspannung versorgt, das Relais wird über einen Digitalausgang des WeMOS D1 mini angesteuert. 
 
-Zum Herstellen der Verbindungen, i.B. der beiden Spannungspegel 12V für die Pumpe und 3.3V für die Betriebsspannung des WeMOS wird ein Steckbrett bentutzt (siehe Abbildung unten).
+Zum Herstellen der Verbindungen, i.B. der beiden Spannungspegel 12V für die Pumpe und 3.3V für die Betriebsspannung des WeMOS wird ein Steckbrett benutzt (siehe Abbildung unten).
 
 <img src="./documentationAssets/schaltplan_pump_stecker.png" alt="Hardware Aufbau" style="max-width:75%;" />
 
@@ -64,18 +64,18 @@ Auf der Hardwareseite besteht das System aus Pumpencontrollern mit jeweils einer
 
 Diese kommunizieren mittels MQTT über TLS verschlüsselt mit einem Broker, welcher Regeln für das Auslösen weiterer Aktionen implementiert.
 
-Darüberhinaus lassen sich Systemkonfigurationen über eine mobile Webanwendung vornehmen, über welche auch Echtzeitwerte des Systems einsehbar sind.
+Darüber hinaus lassen sich Systemkonfigurationen über eine mobile Webanwendung vornehmen, über welche auch Echtzeitwerte des Systems einsehbar sind.
 
 Konkret sind die über die Webanwendung konfigurierbaren Parameter die Feuchtigkeitsschwelle, ab der spätestens bewässert wird und das minimale Pumpintervall, d.h. wann spätestens nach einer Bewässerung erneut bewässert wird, auch wenn die Feuchtigkeitssensoren keine Messwerte unter der konfigurierten Schwelle melden.
 
-Die Authorisierung erfolgt durch das Matching mit einem definierten Topicformat, welches die Form `<userId>/<groupId>/<deviceId>/<actionType/telemetryType>` hat.
+Die Autorisierung erfolgt durch das Matching mit einem definierten Topicformat, welches die Form `<userId>/<groupId>/<deviceId>/<actionType/telemetryType>` hat.
 Die über `groupId` identifizierten Gruppen sind dabei Zusammenstellungen mehrerer Controller, welche ein separates Bewässerungssystem bilden (ein Bewässerungssystem kann aus mehreren Pflanzen- und Pumpencontrollern bestehen).
 Der implementierte `actionType` ist `pump` (Pumpe aktivieren) und die implementierten `telemetryTypes` sind `moisture` (neuer Feuchtigkeitsmesswert) und `waterLevel` (neuer Wasserstands-Messwert).
 
 Sowohl die Messdaten, als auch die Konfigurationen der Systemnutzer und deren Bewässerungsgruppen und Geräte (Pflanzencontroller, Pumpencontroller und Wasserstandssensor werden als Einzelgeräte konfiguriert) werden in einer zentralen Datenbank erfasst.
 Es handelt sich dabei um eine extern gehostete MongoDB-Instanz, die nach dem Prinzip _Database as a Service_ bereitgestellt und genutzt wird.
 
-Für die Konfiguration und den Abruf aller Nutzer- und Gerätedaten steht des Weiteren ein Anwendungsserver mit REST-API zur Verfügung, welcher darüberhinaus jedoch auch als Webserver für die mobile Webanwendung fungiert. Wie auch der Broker befindet sich dieser Server hinter einem Reverse-Proxy/ Application Gateway, welcher Verbindungen nur verschlüsselt über HTTPS akzeptiert.
+Für die Konfiguration und den Abruf aller Nutzer- und Gerätedaten steht des Weiteren ein Anwendungsserver mit REST-API zur Verfügung, welcher darüber hinaus jedoch auch als Webserver für die mobile Webanwendung fungiert. Wie auch der Broker befindet sich dieser Server hinter einem Reverse-Proxy/ Application Gateway, welcher Verbindungen nur verschlüsselt über HTTPS akzeptiert.
 
 Dieses System aus MQTT-Broker, Anwendungsserver und Reverse-Proxy ist mithilfe von Containern realisiert, die über Docker Compose als Microservices miteinander kommunizieren.
 
@@ -106,7 +106,7 @@ Bei erfolgreichem Verbinden mit dem WLAN wird der Nutzer auf eine Seite weiterge
 
 Im nächsten Schritt kann der Nutzer eine Pflanzengruppe anlegen. Um das System skalierbar zu halten, wird diese Möglichkeit geboten, damit der Nutzer verschiedene Pflanzengruppen unabhängig voneinander nutzen kann. Dies kann beispielsweise für verschiedene Pflanzen oder verschiedene Gärten genutzt werden.
 
-Wieder wird ein HTTPS-POST Request an den Server gesendet. Dieser beinhaltet das Token zur Authentifizierung, sowie die eindeutige Geräte-ID und den Name der Gruppe. Durch die Nutzer ID, die Pflanzengruppe und die `ESP Chip ID` wird das MQTT-Topic konstruiert. Der Server speichert dieses Topic in der Datenbank und schickt als Response die Gruppen ID an den Controller, der dort auch das Topic konstruiert und im EEPROM speichert.
+Wieder wird ein HTTPS-POST Request an den Server gesendet. Dieser beinhaltet das Token zur Authentifizierung des Nutzers, sowie die eindeutige Geräte-ID (`ESP Chip ID`) und den Name der Gruppe. Durch die Nutzer ID, die generierte ID für die Pflanzengruppe und die Geräte-ID wird das MQTT-Topic konstruiert. Der Server speichert dieses Topic in der Datenbank und schickt als Antwort die Gruppen ID an den Controller, der dort auch das Topic konstruiert und im EEPROM speichert.
 
 Die Initialisierung ist im unteren Video abgebildet.
 
@@ -116,8 +116,8 @@ Die Initialisierung ist im unteren Video abgebildet.
 
 Im folgenden Abschnitt wird die Funktionsweise des Systems und die Kommunikation der Komponenten beschrieben.
 
-Zuerst werden in den beiden Controllern ein Zertifikat für die Authorisierung für MQTT und HTTPS beim Server ausgelesen, womit ein `WifiClientSecure` konfiguriert wird. 
-Als nächstes wird bei beiden Controllern ein Webserver gestartet, um Konfigurationen vom Nutzer zu erlauben. Danach verbindet sich der Controller mit dem WLAN.
+Zuerst wird beiden Controllern ein Zertifikat für die Autorisierung für MQTT und HTTPS beim Server aus dem SPIFFS-Speicher ausgelesen, womit ein `WifiClientSecure` konfiguriert wird. 
+Als nächstes wird jeweils ein Webserver gestartet, um Konfigurationen vom Nutzer zu erlauben. Danach verbindet sich der Controller mit dem WLAN.
 Nach diesen Schritten versuchen die Controller sich als MQTT Client bei dem `MQTT-Broker` anzumelden. Jede Kommunikation an die API durchläuft einen `HAProxy`.
 Dieser dient dazu eine verschlüsselte Kommunikation sicherzustellen und je nach Port (Port 8883 für MQTT und Port 443 für HTTPS) den entsprechenden Request weiterzuleiten.
 
@@ -125,11 +125,13 @@ Dieser dient dazu eine verschlüsselte Kommunikation sicherzustellen und je nach
 
 Nach dem erfolgreichen Verbinden mit dem MQTT-Broker subscribed der Pumpencontroller auf das `PUMP_TOPIC`, welches genutzt wird um die peristaltische Pumpe anzusteuern.
 
-Nun wird die `Ticker-Libary` von beiden Controllern benutzt, um in einem gewissen Zeitintervall jeweils den Feuchtigkeitswert der Pflanze und den Wasserstand des Wasserbehälters zu publishen.
+Nun wird die `Ticker-Libary` von beiden Controllern benutzt, um in einem gewissen Zeit Intervall jeweils den Feuchtigkeitswert der Pflanze und den Wasserstand des Wasserbehälters zu publishen.
 
-Die Daten der Sensoren kann der Anwendungsserver aus der `Mongo-Datenbank` lesen. Falls ein `Web-Client` diese Daten einsehen will, kann dieser nach dem Einloggen die Web-Applikation nutzen und per API-Request `/api/wateringgroups` über den Proxy die Daten abfragen. Zusätzlich können folgende Werte festlegt werden: einen Schwellwert, ab welcher Feuchtigkeit die Pumpe die Pflanze bewässern soll und ein Intervall, in dem gepumpt wird, sollte dies davor nicht passiert sein. Diese Werte werden pro Benutzer in der `Mongo-Datenbank` abgespeichert.
+Die Daten der Sensoren kann der Anwendungsserver aus der `Mongo-Datenbank` lesen. Falls ein `Web-Client` diese Daten einsehen will, kann dieser nach dem Einloggen die Web-Applikation nutzen und per API-Request `/api/wateringgroups` über den Proxy die Daten abfragen. Zusätzlich können in der Web-Applikation folgende Werte festlegt werden: einen Schwellwert, ab welcher Feuchtigkeit die Pumpe die Pflanze bewässern soll und ein Intervall, in dem bewässert wird, sollte dies in diesem Zeitraum nicht erfolgt sein. Diese Werte werden pro Benutzer in der Datenbank abgespeichert.
 
-Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Befehl ist eine Nachricht an den MQTT-Broker auf dem `PUMP_TOPIC`.
+Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern (siehe Video unten). Jeder Pump-Befehl ist eine Nachricht an den MQTT-Broker auf dem `PUMP_TOPIC`.
+
+![](https://imgur.com/VgzblBo.gif)
 
 ### WiFi Management
 
@@ -139,12 +141,12 @@ Diese beinhaltet den Webserver, DNS, Verbindungsmanagement mit dem WLAN und das 
 
 ### MQTT Management
 
-Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` verwendet. Um eine sichere Verbindung zu gewährleisten wird wieder `WifiClientSecure` benutzt. Zur Authorisierung wird ein Zertifikat, welches im SPIFFS-Speicher hinterlegt ist und ein zugehöriger Fingerprint genutzt. Nach erfolgreicher Authorisierung und Verbindung mit dem Server, wird eine Nutzer ID für den PubSubClient generiert. Hierfür wird die `ESP Chip ID` genutzt. Mit der Nutzer ID wird eine Verbindung zum MQTT-Broker aufgebaut und die entsprechenden MQTT-Topics abonniert.
+Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` verwendet. Um eine sichere Verbindung zu gewährleisten wird wieder `WifiClientSecure` benutzt. Zur Autorisierung wird ein Zertifikat, welches im SPIFFS-Speicher hinterlegt ist und ein zugehöriger Fingerprint genutzt. Nach erfolgreicher Autorisierung und Verbindung mit dem Server, wird eine Nutzer ID für den PubSubClient generiert. Hierfür wird die `ESP Chip ID` genutzt. Mit der Nutzer ID wird eine Verbindung zum MQTT-Broker aufgebaut und die entsprechenden MQTT-Topics abonniert.
 
 
 ### Firmware-Update "Over the Air"
 
-Um den Kunden neue Versionen ausliefern zu können, läuft ein Update-Server auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
+Um den Kunden neue Versionen ausliefern zu können, läuft ein Update-Server auf den Controllern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
 
 ![](https://imgur.com/aE9hgzg.gif)
 
@@ -195,7 +197,7 @@ app.get("*", (req, res) => {
 
 Über ein Formular in der Webanwendung authentifiziert sich der Nutzer außerdem über eine Login-Route gegenüber dem Server, der im Falle korrekt übermittelter Nutzer-Credentials einen JSON-Webtoken ausstellt.
 
-Die clientseitigen Routen sind geschützt und können nur aufgerufen werden, falls ein valides Token im Browserspeicher (localStorage) zur Verfügung steht, die API-Routen sind darüberhinaus durch die Passport-Middleware geschützt, welche das Token auf Validität überprüft.
+Die clientseitigen Routen sind geschützt und können nur aufgerufen werden, falls ein valides Token im Browserspeicher (localStorage) zur Verfügung steht, die API-Routen sind darüber hinaus durch die Passport-Middleware geschützt, welche das Token auf Validität überprüft.
 
 Für das Auslösen einer Bewässerung wird im Anwendungsserver ein Endpunkt unter `/api/action/pump` bereitgestellt.
 Bei eingehenden, authentifizierten Anfragen löst der Callback ein MQTT-Publish auf dem Topic aller der Gruppe zugeordneten Pumpen aus.
@@ -204,9 +206,3 @@ Außerdem sind Ansichten zur Anzeige des aktuellen Wasser- und Feuchtigkeitsstan
 
 <img alt="App Steuerung" src="./documentationAssets/AppDemo.gif" style="width:50%;">
 
-
-### Peristaltische Pumpe ansteuern
-
-Nach Einloggen in die Web-Applikation kann über den direkt Pump-Befehl an die Pflanzengruppe die Pumpe angesteuert werden.
-
-![](https://imgur.com/VgzblBo.gif)
