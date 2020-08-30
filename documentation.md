@@ -30,15 +30,16 @@ Zusätzlich soll der Wasserstand im Tank über einen Wasserstandsensor gemessen 
 
 Der folgende Schaltplan beschreibt die technische Verknüpfung der Bauteile für die Kontrollstation mit peristaltischer Pumpe und Wasserstandssensor.
 230V aus der Steckdose werden von einem `12V DC Power Supply` runterreguliert und an die `12V Peristaltische Pumpe`, an den `COM`-Ausgang eines `Seeed Studio SPDT Relais Modul` und an einen `WeMOS DC Power Shield` weitergeleitet, welcher die 12V für den `WeMOS D1 Mini` auf 5V wandelt.
- Vom `GND` und `5V` Pin vom Wemos wird der Strom für den `Maker Factory  Analoger Wasserpegelsensor` bereitgestellt. Über den Pin `A0` kann der Wert ausgelesen werden. 
- Am `Seeed Studio SPDT Relais Modul` wird wieder durch `GND` und `5V` Pin vom Wemos Strom angelegt. 
+ Vom Wemos wird der Strom für den `Maker Factory  Analoger Wasserpegelsensor` bereitgestellt. Über den Pin `A0` kann der Wert ausgelesen werden. 
+
+ Am `Seeed Studio SPDT Relais Modul` wird wieder vom Wemos Strom angelegt. 
   Der Ausgang `N0` wird mit dem Pluspol der Pumpe verbunden. Durch den Pin `D8` vom Wemos kann das Relais geschaltet und somit die Pumpe angesteuert werden.
 <img src="./documentationAssets/schaltplan_pump.png" alt="Schaltplan" style="max-height:75%;" />
 
 #### Planzencontroller
 Der Pflanzencontroller wird mit 5V Spannung per USB versorgt.
-Es wird ein `Maker Factory Analoger Boden-Feuchtigkeitssensor` benutzt, dessen Strom jeweils vom `GND` und `5V` eines `WeMOS D1 Mini` kommt.
-Über den Pin `A0` vom Wemos kann der Sensor ausgelesen werden.
+Es wird ein `Maker Factory Analoger Boden-Feuchtigkeitssensor` benutzt, dessen Strom von einem weiteren `WeMOS D1 Mini` kommt.
+Über den Pin `A0` kann der Sensor ausgelesen werden.
 
 <img src="./documentationAssets/schaltplan_plant.png" alt="Schaltplan" style="max-height:75%;" />
 
