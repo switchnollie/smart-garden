@@ -86,7 +86,7 @@ Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm
 <img src="./documentationAssets/Architecture.png" alt="Systemarchitektur Smart Garden" width="333" />
 
 
-## Pump-/Pflanzencontroller
+## Pumpen-/Pflanzencontroller
 
 ### Initialisierung
 
