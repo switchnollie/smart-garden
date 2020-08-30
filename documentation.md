@@ -129,7 +129,7 @@ Nun wird die `Ticker-Libary` von beiden Controllern benutzt, um in einem gewisse
 
 Die Daten der Sensoren kann der Anwendungsserver aus der `Mongo-Datenbank` lesen. Falls ein `Web-Client` diese Daten einsehen will, kann dieser nach dem Einloggen die Web-Applikation nutzen und per API-Request `/api/wateringgroups` über den Proxy die Daten abfragen. Zusätzlich können in der Web-Applikation folgende Werte festlegt werden: einen Schwellwert, ab welcher Feuchtigkeit die Pumpe die Pflanze bewässern soll und ein Intervall, in dem bewässert wird, sollte dies in diesem Zeitraum nicht erfolgt sein. Diese Werte werden pro Benutzer in der Datenbank abgespeichert.
 
-Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern (siehe Video unten). Jeder Pump-Befehl ist eine Nachricht an den MQTT-Broker auf dem `PUMP_TOPIC`.
+Wie im unteren Video zu sehen, besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Befehl ist eine Nachricht an den MQTT-Broker auf dem `PUMP_TOPIC`.
 
 ![](https://imgur.com/VgzblBo.gif)
 
