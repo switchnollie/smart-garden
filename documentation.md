@@ -85,7 +85,8 @@ Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm
 
 <img src="./documentationAssets/Architecture.png" alt="Systemarchitektur Smart Garden" width="333" />
 
-## Ablauf
+
+## Pump-/Pflanzencontroller
 
 ### Initialisierung
 
@@ -139,6 +140,13 @@ Diese beinhaltet den Webserver, DNS, Verbindungsmanagement mit dem WLAN und das 
 ### MQTT Management
 
 Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` verwendet. Um eine sichere Verbindung zu gewährleisten wird wieder `WifiClientSecure` benutzt. Zur Authorisierung wird ein Zertifikat, welches im SPIFFS-Speicher hinterlegt ist und ein zugehöriger Fingerprint genutzt. Nach erfolgreicher Authorisierung und Verbindung mit dem Server, wird eine Nutzer ID für den PubSubClient generiert. Hierfür wird die `ESP Chip ID` genutzt. Mit der Nutzer ID wird eine Verbindung zum MQTT-Broker aufgebaut und die entsprechenden MQTT-Topics abonniert.
+
+
+### Firmware-Update "Over the Air"
+
+Um den Kunden neue Versionen ausliefern zu können, läuft ein Update-Server auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
+
+![](https://imgur.com/aE9hgzg.gif)
 
 ## Komponenten
 
@@ -197,20 +205,7 @@ Außerdem sind Ansichten zur Anzeige des aktuellen Wasser- und Feuchtigkeitsstan
 <img alt="App Steuerung" src="./documentationAssets/AppDemo.gif" style="width:50%;">
 
 
-## Präsentation
-
-### Neustart
-
-In folgenden Video ist das Verhalten des WeMOS D1 Mini nach einem Neustart zu sehen.
-![](https://imgur.com/4u1nMRQ.gif)
-
-### Firmware-Update "Over the Air"
-
-Um den Kunden neue Versionen ausliefern zu können, läuft ein Update-Server auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
-
-![](https://imgur.com/aE9hgzg.gif)
-
-### Peristaltische Pumpe über Web-Applikation ansteuern
+### Peristaltische Pumpe ansteuern
 
 Nach Einloggen in die Web-Applikation kann über den direkt Pump-Befehl an die Pflanzengruppe die Pumpe angesteuert werden.
 
