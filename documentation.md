@@ -110,7 +110,8 @@ Wieder wird ein HTTPS-POST Request an den Server gesendet. Dieser beinhaltet das
 
 Die Initialisierung ist im unteren Video abgebildet.
 
-![](https://imgur.com/CtXrkMH.gif)
+<img alt="Neustart" src="./documentationAssets/initialization.gif">
+
 
 ### Funktionsweise
 
@@ -131,7 +132,8 @@ Die Daten der Sensoren kann der Anwendungsserver aus der `Mongo-Datenbank` lesen
 
 Wie im unteren Video zu sehen, besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Befehl ist eine Nachricht an den MQTT-Broker auf dem `PUMP_TOPIC`.
 
-![](https://imgur.com/VgzblBo.gif)
+<img alt="Neustart" src="./documentationAssets/pump.gif" style="width:80%;">
+
 
 ### WiFi Management
 
@@ -143,12 +145,12 @@ Diese beinhaltet den Webserver, DNS, Verbindungsmanagement mit dem WLAN und das 
 
 Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` verwendet. Um eine sichere Verbindung zu gewährleisten wird wieder `WifiClientSecure` benutzt. Zur Autorisierung wird ein Zertifikat, welches im SPIFFS-Speicher hinterlegt ist und ein zugehöriger Fingerprint genutzt. Nach erfolgreicher Autorisierung und Verbindung mit dem Server, wird eine Nutzer ID für den PubSubClient generiert. Hierfür wird die `ESP Chip ID` genutzt. Mit der Nutzer ID wird eine Verbindung zum MQTT-Broker aufgebaut und die entsprechenden MQTT-Topics abonniert.
 
-
 ### Firmware-Update "Over the Air"
 
 Um den Kunden neue Versionen ausliefern zu können, läuft ein Update-Server auf den Controllern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
 
-![](https://imgur.com/aE9hgzg.gif)
+
+<img alt="Firmware Update" src="./documentationAssets/firmware_update.gif">
 
 ## Komponenten
 
