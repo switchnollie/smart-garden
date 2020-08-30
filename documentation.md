@@ -4,8 +4,8 @@
 
 ## Zielsetzung
 
-Ziel des Projekts ist, ein autonomes Bewässerungssystem umzusetzen.
-Dies soll durch eine Überwachung des Feuchtigkeitsgehalts der Pflanzenerde mithilfe von Feuchtigkeitssensoren und einer peristaltischen Pumpe, welche über Schläuche Wasser von einem Tank in die Pflanzenerde befördert, realisiert werden.
+Ziel des Projekts ist die Umsetzung eines autonomen Bewässerungssystems.
+Dieses soll durch eine Überwachung des Feuchtigkeitsgehalts der Pflanzenerde mithilfe von Feuchtigkeitssensoren und einer peristaltischen Pumpe, welche über Schläuche Wasser von einem Tank in die Pflanzenerde befördert, realisiert werden.
 
 Zusätzlich soll der Wasserstand im Tank über einen Wasserstandsensor gemessen werden und übliche Parameter und Metriken über eine mobile Webanwendung einsehbar und steuerbar sein.
 
@@ -29,14 +29,14 @@ Zusätzlich soll der Wasserstand im Tank über einen Wasserstandsensor gemessen 
 #### Pumpencontroller
 
 Der folgende Schaltplan beschreibt die technische Verknüpfung der Bauteile für die Kontrollstation mit peristaltischer Pumpe und Wasserstandssensor.
-230V aus der Steckdose werden von einem `12V DC Power Supply` runterreguliert und an die `12V Peristaltische Pumpe`, an den `COM`-Ausgang eines `Seeed Studio SPDT Relais Modul` und an einen `WeMOS DC Power Shield` weitergeleitet, welcher den Strom für den `WeMOS D1 Mini` auf 5V drosselt.
+230V aus der Steckdose werden von einem `12V DC Power Supply` runterreguliert und an die `12V Peristaltische Pumpe`, an den `COM`-Ausgang eines `Seeed Studio SPDT Relais Modul` und an einen `WeMOS DC Power Shield` weitergeleitet, welcher die 12V für den `WeMOS D1 Mini` auf 5V wandelt.
  Vom `GND` und `5V` Pin vom Wemos wird der Strom für den `Maker Factory  Analoger Wasserpegelsensor` bereitgestellt. Über den Pin `A0` kann der Wert ausgelesen werden. 
  Am `Seeed Studio SPDT Relais Modul` wird wieder durch `GND` und `5V` Pin vom Wemos Strom angelegt. 
-  Der Ausgang `NO` wird zum Pluspol der Pumpe gelegt. Durch den Pin `D8` vom Wemos kann nun Strom angelegt, das Relais geschaltet und somit die Pumpe angesteuert werden.
+  Der Ausgang `N0` wird mit dem Pluspol der Pumpe verbunden. Durch den Pin `D8` vom Wemos kann das Relais geschaltet und somit die Pumpe angesteuert werden.
 <img src="./documentationAssets/schaltplan_pump.png" alt="Schaltplan" style="max-height:75%;" />
 
 #### Planzencontroller
-Für den Pflanencontroller im unteren Schaltplan reichen 3V Strom von einem USB-Anschluss.
+Der Pflanzencontroller wird mit 5V Spannung per USB versorgt.
 Es wird ein `Maker Factory Analoger Boden-Feuchtigkeitssensor` benutzt, dessen Strom jeweils vom `GND` und `5V` eines `WeMOS D1 Mini` kommt.
 Über den Pin `A0` vom Wemos kann der Sensor ausgelesen werden.
 
@@ -52,7 +52,7 @@ Zusätzlich mündet ein Wasserschlauch in der Pflanze, welcher am anderen Ende z
 
 Außerdem befindet sich der Wasserstandssensor in dem Wasserbehälter, dessen Analogausgang mit dem Pumpencontroller verbunden ist. Die Pumpe wird bei geschlossenem Relaiskontakt mit 12V Gleichspannung versorgt, das Relais wird über einen Digitalausgang des WeMOS D1 mini angesteuert. 
 
-Zum Herstellen der Verbindungen, i.B. der beiden Spannungspegel 12V für die Pumpe und 3.3V für die Betriebsspannung des WeMOS wird ein Steckbrett bentutzt.
+Zum Herstellen der Verbindungen, i.B. der beiden Spannungspegel 12V für die Pumpe und 3.3V für die Betriebsspannung des WeMOS wird ein Steckbrett bentutzt (siehe Abbildung unten).
 
 <img src="./documentationAssets/schaltplan_pump_stecker.png" alt="Hardware Aufbau" style="max-width:75%;" />
 
@@ -88,11 +88,11 @@ Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm
 
 ### Initialisierung
 
-Zur Einrichtung der Controller ist ein lokaler Webserver mit DNS implementiert. Die Controller laufen im `Access-Point` und `Station Modus`, wodurch der ESP in der Lage ist, einen Access-Point anzubieten und gleichzeitig Daten über WLAN an den Server über das Internet zu senden.
+Zur Einrichtung der Controller ist ein lokaler Webserver mit DNS implementiert. Die Controller laufen im `Access-Point` und `Station Modus`, wodurch der ESP in der Lage ist, einen Access-Point anzubieten und gleichzeitig Daten über WLAN an den Server zu senden.
 
 <img src="./documentationAssets/initialization.png" alt="Sequenzdiagramm Funktionsweise System" style="max-height:75%;" />
 
-Über die Internetadresse `esp8266.local/wlan` kann der Kunde nach dem Einwählen in das ESP-WiFi die Initialisierungsroutine starten.
+Über die Internetadresse `esp8266.local/init` kann der Kunde nach dem Einwählen in das ESP-WiFi die Initialisierungsroutine starten.
 
 Die relevanten Webseiten werden mit dem SPIFFS-Speicher ausgeliefert, einem internen Speicher auf dem Microcontroller.
 
@@ -106,12 +106,16 @@ Im nächsten Schritt kann der Nutzer eine Pflanzengruppe anlegen. Um das System 
 
 Wieder wird ein HTTPS-POST Request an den Server gesendet. Dieser beinhaltet das Token zur Authentifizierung, sowie die eindeutige Geräte-ID und den Name der Gruppe. Durch die Nutzer ID, die Pflanzengruppe und die `ESP Chip ID` wird das MQTT-Topic konstruiert. Der Server speichert dieses Topic in der Datenbank und schickt als Response die Gruppen ID an den Controller, der dort auch das Topic konstruiert und im EEPROM speichert.
 
+Die Initialisierung ist im unteren Video abgebildet.
+
 ![](https://imgur.com/CtXrkMH.gif)
 
 ### Funktionsweise
 
-Zuerst wird ein Zertifikat für die Authorisierung für MQTT und HTTPS beim Server ausgelesen, womit ein `WifiClientSecure` konfiguriert wird. 
-Als nächstes wird bei beiden Controllern der Webserver gestartet, um Konfigurationen vom Nutzer zu erlauben. Danach verbindet sich der Controller mit dem WLAN.
+Im folgenden Abschnitt wird die Funktionsweise des Systems und die Kommunikation der Komponenten beschrieben.
+
+Zuerst werden in den beiden Controllern ein Zertifikat für die Authorisierung für MQTT und HTTPS beim Server ausgelesen, womit ein `WifiClientSecure` konfiguriert wird. 
+Als nächstes wird bei beiden Controllern ein Webserver gestartet, um Konfigurationen vom Nutzer zu erlauben. Danach verbindet sich der Controller mit dem WLAN.
 Nach diesen Schritten versuchen die Controller sich als MQTT Client bei dem `MQTT-Broker` anzumelden. Jede Kommunikation an die API durchläuft einen `HAProxy`.
 Dieser dient dazu eine verschlüsselte Kommunikation sicherzustellen und je nach Port (Port 8883 für MQTT und Port 443 für HTTPS) den entsprechenden Request weiterzuleiten.
 
@@ -121,9 +125,7 @@ Nach dem erfolgreichen Verbinden mit dem MQTT-Broker subscribed der Pumpencontro
 
 Nun wird die `Ticker-Libary` von beiden Controllern benutzt, um in einem gewissen Zeitintervall jeweils den Feuchtigkeitswert der Pflanze und den Wasserstand des Wasserbehälters zu publishen.
 
-Auf diesen beiden MQTT-Topics subscribed der Anwendungsserver. Vorab liest er jedoch die Daten aus der `Mongo-Datenbank`, sodass er dem `Web-Client` die entsprechenden Daten anzeigen kann.
-
-Der `Web-Client` kann über den Proxy die Web-Applikation anfragen, sich einloggen, seine Daten einsehen und folgende Werte festlegen: einen Schwellwert, ab welcher Feuchtigkeit die Pumpe die Pflanze bewässern soll und ein Intervall, in dem gepumpt wird, sollte dies davor nicht passiert sein. Diese Werte werden pro Benutzer in der `Mongo-Datenbank` abgespeichert.
+Die Daten der Sensoren kann der Anwendungsserver aus der `Mongo-Datenbank` lesen. Falls ein `Web-Client` diese Daten einsehen will, kann dieser nach dem Einloggen die Web-Applikation nutzen und per API-Request `/api/wateringgroups` über den Proxy die Daten abfragen. Zusätzlich können folgende Werte festlegt werden: einen Schwellwert, ab welcher Feuchtigkeit die Pumpe die Pflanze bewässern soll und ein Intervall, in dem gepumpt wird, sollte dies davor nicht passiert sein. Diese Werte werden pro Benutzer in der `Mongo-Datenbank` abgespeichert.
 
 Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Befehl ist eine Nachricht an den MQTT-Broker auf dem `PUMP_TOPIC`.
 
@@ -131,17 +133,13 @@ Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Be
 
 Zur Kapselung und Verbesserung der Code Qualität ist eine Headerdatei implementiert, die das komplette WiFi Management übernimmt.
 Diese beinhaltet den Webserver, DNS, Verbindungsmanagement mit dem WLAN und das Senden von Daten per HTTPS Client an den Server.
-Über den Webserver kann die Initialisierung erfolgen. Zusätzlich wird dieser dauerhaft betrieben, um Änderungen am WLAN oder an den MQTT-Topics und das Firmware-Update zu erlauben.
+Über den Webserver kann die Initialisierung erfolgen. Zusätzlich ist dieser dauerhaft erreichbar, um Änderungen am WLAN oder an den MQTT-Topics und das Firmware-Update zu erlauben.
 
 ### MQTT Management
 
 Zur Verbindung und Kommunikation über MQTT wird der MQTT-Client `PubSubClient` verwendet. Um eine sichere Verbindung zu gewährleisten wird wieder `WifiClientSecure` benutzt. Zur Authorisierung wird ein Zertifikat, welches im SPIFFS-Speicher hinterlegt ist und ein zugehöriger Fingerprint genutzt. Nach erfolgreicher Authorisierung und Verbindung mit dem Server, wird eine Nutzer ID für den PubSubClient generiert. Hierfür wird die `ESP Chip ID` genutzt. Mit der Nutzer ID wird eine Verbindung zum MQTT-Broker aufgebaut und die entsprechenden MQTT-Topics abonniert.
 
 ## Komponenten
-
-### Pflanzen-/Pumpencontroller
-Beide Controller verfügen über die bisher beschrieben Funktionen. 
-Zusätzlich veröffentlicht der Pflanzencontroller mit einem Feuchtigkeitssensor Daten über MQTT. Der Pumpencontroller veröffentlich einerseits den Wasserstand des Wasserbehälters über MQTT und dessen Pumpe kann über ein MQTT-Topic ausgelöst werden.
 
 ### MQTT-Broker
 
