@@ -127,18 +127,6 @@ Der `Web-Client` kann über den Proxy die Web-Applikation anfragen, sich einlogg
 
 Zusätzlich besteht die Möglichkeit die Pumpe direkt anzusteuern. Jeder Pump-Befehl ist eine Nachricht an den MQTT-Broker auf dem `PUMP_TOPIC`.
 
-
-### Neustart
-
-In folgenden Video ist das Verhalten des WeMOS D1 Mini nach einem Neustart zu sehen.
-![](https://imgur.com/QuZfXrD.gif)
-
-### Firmware-Update "Over the Air"
-
-Um den Kunden neue Versionen ausliefern zu können, läuft ein Update-Server auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
-
-![](https://imgur.com/aE9hgzg.gif)
-
 ### WiFi Management
 
 Zur Kapselung und Verbesserung der Code Qualität ist eine Headerdatei implementiert, die das komplette WiFi Management übernimmt.
@@ -208,3 +196,23 @@ Bei eingehenden, authentifizierten Anfragen löst der Callback ein MQTT-Publish 
 Außerdem sind Ansichten zur Anzeige des aktuellen Wasser- und Feuchtigkeitsstands und zur Konfiguration der Bewässerungsgruppen, sowie für den Logot verfügbar.
 
 <img alt="App Steuerung" src="./documentationAssets/AppDemo.gif" style="width:50%;">
+
+
+## Präsentation
+
+### Neustart
+
+In folgenden Video ist das Verhalten des WeMOS D1 Mini nach einem Neustart zu sehen.
+![](https://imgur.com/4u1nMRQ.gif)
+
+### Firmware-Update "Over the Air"
+
+Um den Kunden neue Versionen ausliefern zu können, läuft ein Update-Server auf den Microcontrollern. Nach Downloaden der Binärdatei kann diese über `esp8266.local/update` hochgeladen und die neue Version aufgespielt werden.
+
+![](https://imgur.com/aE9hgzg.gif)
+
+### Peristaltische Pumpe über Web-Applikation ansteuern
+
+Nach Einloggen in die Web-Applikation kann über den direkt Pump-Befehl an die Pflanzengruppe die Pumpe angesteuert werden.
+
+![](https://imgur.com/VgzblBo.gif)
