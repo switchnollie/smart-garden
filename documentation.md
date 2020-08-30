@@ -82,7 +82,7 @@ Das System ist auf einem Digital Ocean Droplet (einem sog. _Virtual Private Serv
 
 Eine Übersicht über die Systemarchitektur bietet folgendes Komponentendiagramm:
 
-<img src="./documentationAssets/Architecture.png" alt="Systemarchitektur Smart Garden" style="max-width:75%;" />
+<img src="./documentationAssets/Architecture.png" alt="Systemarchitektur Smart Garden" width="333" />
 
 ## Ablauf
 
